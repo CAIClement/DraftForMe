@@ -1,0 +1,52 @@
+.team-display-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.team-champion-card {
+  position: relative;
+  width: 100%;
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.champion-image-container {
+  position: relative;
+  width: 100%;
+  padding-top: 56.25%;
+}
+
+.champion-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.remove-button {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background-color: rgba(0, 0, 0, 0.5);
+  color: white;
+}
+
+.remove-button:hover {
+  background-color: rgba(0, 0, 0, 0.7);
+}
+
+.champion-name {
+  padding: 8px;
+  text-align: center;
+}
+
+.empty-slot {
+  height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 2px dashed rgba(255, 255, 255, 0.1);
+} 
