@@ -1,0 +1,15 @@
+# Riot Games API Configuration
+# Get your API key from: https://developer.riotgames.com/
+RIOT_API_KEY=
+
+# API Rate Limiting
+RIOT_API_RATE_LIMIT_PER_SECOND=20
+RIOT_API_RATE_LIMIT_PER_MINUTE=100
+
+# Cache Configuration
+CACHE_TYPE=simple
+CACHE_DEFAULT_TIMEOUT=300
+
+# Flask Configuration
+FLASK_ENV=development
+FLASK_DEBUG=True 
