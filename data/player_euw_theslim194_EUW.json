@@ -1,0 +1,136 @@
+{
+  "summoner_name": "theslim194#EUW",
+  "region": "euw",
+  "tier": "platinum",
+  "lp": 32,
+  "most_played": [
+    {
+      "champion": "Braum",
+      "win_rate": 50.0,
+      "games": 2,
+      "wins": 1,
+      "losses": 1,
+      "kda": "1.5/6.5/15.5"
+    },
+    {
+      "champion": "Thresh",
+      "win_rate": 100.0,
+      "games": 1,
+      "wins": 1,
+      "losses": 0,
+      "kda": "1/3/22"
+    },
+    {
+      "champion": "Tryndamere",
+      "win_rate": 100.0,
+      "games": 1,
+      "wins": 1,
+      "losses": 0,
+      "kda": "12/6/7"
+    },
+    {
+      "champion": "Jax",
+      "win_rate": 100.0,
+      "games": 1,
+      "wins": 1,
+      "losses": 0,
+      "kda": "13/7/15"
+    },
+    {
+      "champion": "Blitzcrank",
+      "win_rate": 100.0,
+      "games": 1,
+      "wins": 1,
+      "losses": 0,
+      "kda": "2/4/7"
+    },
+    {
+      "champion": "Jhin",
+      "win_rate": 100.0,
+      "games": 1,
+      "wins": 1,
+      "losses": 0,
+      "kda": "7/2/11"
+    },
+    {
+      "champion": "Ambessa",
+      "win_rate": 0.0,
+      "games": 1,
+      "wins": 0,
+      "losses": 1,
+      "kda": "4/7/4"
+    },
+    {
+      "champion": "Cho'Gath",
+      "win_rate": 0.0,
+      "games": 1,
+      "wins": 0,
+      "losses": 1,
+      "kda": "11/3/2"
+    },
+    {
+      "champion": "Nautilus",
+      "win_rate": 0.0,
+      "games": 1,
+      "wins": 0,
+      "losses": 1,
+      "kda": "0/6/5"
+    },
+    {
+      "champion": "Leona",
+      "win_rate": 0.0,
+      "games": 1,
+      "wins": 0,
+      "losses": 1,
+      "kda": "1/12/24"
+    },
+    {
+      "champion": "Caitlyn",
+      "win_rate": 0.0,
+      "games": 1,
+      "wins": 0,
+      "losses": 1,
+      "kda": "0/8/3"
+    },
+    {
+      "champion": "Jinx",
+      "win_rate": 0.0,
+      "games": 1,
+      "wins": 0,
+      "losses": 1,
+      "kda": "3/8/0"
+    },
+    {
+      "champion": "Kayle",
+      "win_rate": 0.0,
+      "games": 1,
+      "wins": 0,
+      "losses": 1,
+      "kda": "9/6/11"
+    },
+    {
+      "champion": "Smolder",
+      "win_rate": 0.0,
+      "games": 1,
+      "wins": 0,
+      "losses": 1,
+      "kda": "7/1/6"
+    },
+    {
+      "champion": "Nunu & Willump",
+      "win_rate": 0.0,
+      "games": 1,
+      "wins": 0,
+      "losses": 1,
+      "kda": "5/6/4"
+    },
+    {
+      "champion": "Neeko",
+      "win_rate": 0.0,
+      "games": 1,
+      "wins": 0,
+      "losses": 1,
+      "kda": "4/5/8"
+    }
+  ]
+}

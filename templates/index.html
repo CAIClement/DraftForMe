@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DraftForMe - Pick Assistant</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+<!-- HEADER -->
+<header id="app-header">
+    <div class="header-left">
+        <h1>DraftForMe</h1>
+        <span class="subtitle">Pick Assistant</span>
+    </div>
+    <div class="header-right">
+        <select id="sel-region">
+            <option value="euw">EUW</option>
+            <option value="na">NA</option>
+            <option value="kr">KR</option>
+            <option value="eune">EUNE</option>
+            <option value="oce">OCE</option>
+            <option value="jp">JP</option>
+            <option value="br">BR</option>
+            <option value="tr">TR</option>
+        </select>
+    </div>
+</header>
+
+<!-- SETUP : Summoner + Role (tout sur une ligne) -->
+<section id="setup-panel">
+    <div class="setup-row">
+        <div class="setup-group">
+            <label>Summoner (Riot ID)</label>
+            <div class="input-row">
+                <input type="text" id="input-summoner" placeholder="Nom#Tag  (ex: Faker-KR1)">
+                <button id="btn-load-profile" class="btn-primary" onclick="loadAll()">Charger</button>
+            </div>
+        </div>
+        <div class="setup-group">
+            <label>Mon Role</label>
+            <div class="role-selector">
+                <button class="role-btn" data-role="top" onclick="selectRole('top')">Top</button>
+                <button class="role-btn" data-role="jungle" onclick="selectRole('jungle')">Jungle</button>
+                <button class="role-btn active" data-role="middle" onclick="selectRole('middle')">Mid</button>
+                <button class="role-btn" data-role="bottom" onclick="selectRole('bottom')">ADC</button>
+                <button class="role-btn" data-role="support" onclick="selectRole('support')">Support</button>
+            </div>
+        </div>
+        <div class="setup-group">
+            <span id="stats-status" class="status-text"></span>
+        </div>
+    </div>
+    <!-- Pool du joueur -->
+    <div id="player-pool-bar" class="hidden">
+        <span class="pool-label">Mon Pool :</span>
+        <div id="player-pool-icons"></div>
+        <button class="btn-small" onclick="openPoolEditor()">Modifier</button>
+    </div>
+</section>
+
+<!-- MAIN LAYOUT : 3 colonnes -->
+<main id="main-layout">
+
+    <!-- LEFT : Picks ennemis + Bans -->
+    <section id="enemy-panel">
+        <div class="panel-section">
+            <h3>Picks Adverses</h3>
+            <p class="hint">Clique sur un champion ci-dessous pour l'ajouter comme pick ennemi.</p>
+            <div id="enemy-picks-list" class="pick-list"></div>
+            <button class="btn-small btn-danger" onclick="clearEnemyPicks()" style="margin-top:8px">Effacer</button>
+        </div>
+        <div class="panel-section">
+            <h3>Bans</h3>
+            <div id="bans-list" class="pick-list"></div>
+            <button class="btn-small btn-danger" onclick="clearBans()" style="margin-top:8px">Effacer</button>
+        </div>
+        <div class="panel-section">
+            <h3>Mode</h3>
+            <div class="mode-buttons">
+                <button id="btn-mode-pick" class="mode-btn active" onclick="setClickMode('enemy')">Ajouter Pick Ennemi</button>
+                <button id="btn-mode-ban" class="mode-btn" onclick="setClickMode('ban')">Ajouter Ban</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- CENTER : Champion Grid -->
+    <section id="champion-grid-section">
+        <div class="grid-toolbar">
+            <input type="text" id="champ-search" placeholder="Rechercher un champion..." oninput="filterChampions()">
+        </div>
+        <div id="champion-grid" class="champion-grid"></div>
+    </section>
+
+    <!-- RIGHT : Recommandations + Charts -->
+    <aside id="sidebar-right">
+        <div id="recommendations-panel">
+            <h3>Suggestions de Pick</h3>
+            <div id="rec-context" class="rec-context"></div>
+            <div id="rec-list"></div>
+        </div>
+        <div id="charts-panel">
+            <h3>Justification</h3>
+            <div class="chart-container">
+                <canvas id="chart-winrate"></canvas>
+            </div>
+            <div class="chart-container">
+                <canvas id="chart-scores"></canvas>
+            </div>
+        </div>
+    </aside>
+</main>
+
+<!-- MODAL : Pool Editor -->
+<div id="modal-overlay" class="modal-overlay hidden" onclick="closeModal()">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <h2>Modifier mon Champion Pool</h2>
+        <p class="modal-hint">Cliquez sur un champion pour l'ajouter/retirer de votre pool.</p>
+        <input type="text" id="pool-search" placeholder="Rechercher..." oninput="filterPoolGrid()">
+        <div id="pool-editor-grid" class="champion-grid small-grid"></div>
+        <div class="modal-actions">
+            <button class="btn-primary" onclick="closeModal()">Valider</button>
+        </div>
+    </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast" class="toast hidden"></div>
+
+<!-- LOADING OVERLAY -->
+<div id="loading-overlay" class="loading-overlay hidden">
+    <div class="loading-content">
+        <span class="spinner big"></span>
+        <p id="loading-text">Chargement des stats depuis op.gg...</p>
+    </div>
+</div>
+
+<script src="/static/js/app.js"></script>
+</body>
+</html>
