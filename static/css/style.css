@@ -85,6 +85,28 @@ select:focus, input[type="text"]:focus { border-color: var(--gold); }
 .hidden { display: none !important; }
 .hint { font-size: 0.75rem; color: var(--text-dim); margin-bottom: 8px; }
 
+/* Slider priority */
+.slider-row { display: flex; align-items: center; gap: 8px; }
+.slider-label-left, .slider-label-right { font-size: 0.7rem; color: var(--text-dim); white-space: nowrap; }
+.slider-label-left { color: var(--gold); }
+.slider-label-right { color: var(--blue); }
+.slider-value {
+    font-size: 0.75rem; font-weight: 700; color: var(--text-bright);
+    background: var(--bg-card); padding: 2px 8px; border-radius: 10px; min-width: 30px; text-align: center;
+}
+input[type="range"] {
+    -webkit-appearance: none; width: 140px; height: 6px; border-radius: 3px;
+    background: linear-gradient(90deg, var(--gold), var(--blue)); outline: none; cursor: pointer;
+}
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%;
+    background: var(--text-bright); border: 2px solid var(--bg-dark); cursor: pointer;
+}
+input[type="range"]::-moz-range-thumb {
+    width: 18px; height: 18px; border-radius: 50%;
+    background: var(--text-bright); border: 2px solid var(--bg-dark); cursor: pointer;
+}
+
 /* Pool bar */
 #player-pool-bar {
     display: flex; align-items: center; gap: 10px; margin-top: 10px;
@@ -221,6 +243,54 @@ select:focus, input[type="text"]:focus { border-color: var(--gold); }
 #charts-panel { padding: 14px; flex: 1; }
 .chart-container { margin-bottom: 14px; background: var(--bg-card); border-radius: var(--radius); padding: 10px; }
 .chart-container canvas { width: 100% !important; max-height: 180px; }
+
+/* ---- DETAIL PANEL (champion popup) ---- */
+.detail-panel {
+    background: var(--bg-panel); border: 1px solid var(--border-gold); border-radius: 12px;
+    padding: 24px 28px; width: 94%; max-width: 680px; max-height: 90vh; overflow-y: auto;
+    position: relative;
+}
+.detail-close {
+    position: absolute; top: 12px; right: 16px; background: none; border: none;
+    color: var(--text-dim); font-size: 1.6rem; cursor: pointer; transition: var(--transition);
+}
+.detail-close:hover { color: var(--text-bright); }
+
+.detail-header { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; }
+.detail-header img { width: 80px; height: 80px; border-radius: 50%; border: 3px solid var(--gold); }
+.detail-title h2 { font-size: 1.4rem; color: var(--text-bright); }
+.detail-title #detail-tags { display: flex; gap: 4px; margin-top: 4px; }
+.detail-title #detail-score-big {
+    font-size: 1.8rem; font-weight: 700; color: var(--blue); margin-top: 4px;
+}
+
+.detail-stats-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 8px; margin-bottom: 20px;
+}
+.stat-card {
+    background: var(--bg-card); border-radius: var(--radius); padding: 10px 12px; text-align: center;
+}
+.stat-card .stat-value { font-size: 1.2rem; font-weight: 700; color: var(--text-bright); }
+.stat-card .stat-label { font-size: 0.7rem; color: var(--text-dim); margin-top: 2px; text-transform: uppercase; }
+
+.detail-section { margin-bottom: 18px; }
+.detail-section h4 { font-size: 0.8rem; color: var(--gold); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+
+.detail-weights { display: flex; gap: 10px; flex-wrap: wrap; }
+.weight-bar {
+    flex: 1; min-width: 100px; background: var(--bg-card); border-radius: var(--radius); padding: 10px;
+}
+.weight-bar .wb-label { font-size: 0.7rem; color: var(--text-dim); margin-bottom: 4px; }
+.weight-bar .wb-track { height: 8px; background: var(--bg-input); border-radius: 4px; overflow: hidden; }
+.weight-bar .wb-fill { height: 100%; border-radius: 4px; transition: width 0.3s; }
+.weight-bar .wb-fill.meta { background: var(--blue); }
+.weight-bar .wb-fill.player { background: var(--gold); }
+.weight-bar .wb-fill.counter { background: var(--purple); }
+.weight-bar .wb-score { font-size: 1rem; font-weight: 700; color: var(--text-bright); margin-top: 4px; }
+
+.detail-chart { max-height: 220px; }
+.detail-chart canvas { max-height: 200px; }
 
 /* ---- MODAL ---- */
 .modal-overlay {

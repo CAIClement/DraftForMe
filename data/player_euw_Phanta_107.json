@@ -1,0 +1,90 @@
+{
+  "summoner_name": "Phanta#107",
+  "region": "euw",
+  "tier": null,
+  "lp": 111,
+  "most_played": [
+    {
+      "champion": "Akshan",
+      "win_rate": 68.0,
+      "games": 122,
+      "kda": "3.69:1"
+    },
+    {
+      "champion": "Ryze",
+      "win_rate": 52.0,
+      "games": 25,
+      "kda": "3.15:1"
+    },
+    {
+      "champion": "Hwei",
+      "win_rate": 53.0,
+      "games": 15,
+      "kda": "2.64:1"
+    },
+    {
+      "champion": "Quinn",
+      "win_rate": 57.0,
+      "games": 14,
+      "kda": "2.51:1"
+    },
+    {
+      "champion": "Aurora",
+      "win_rate": 56.0,
+      "games": 9,
+      "kda": "3.24:1"
+    },
+    {
+      "champion": "Pyke",
+      "win_rate": 40.0,
+      "games": 5,
+      "kda": "2.53:1"
+    },
+    {
+      "champion": "Taliyah",
+      "win_rate": 100.0,
+      "games": 4,
+      "kda": "15.60:1"
+    },
+    {
+      "champion": "Naafiri",
+      "win_rate": 67.0,
+      "games": 3,
+      "wins": 2,
+      "losses": 1,
+      "kda": "8/6.3/8"
+    },
+    {
+      "champion": "Mel",
+      "win_rate": 33.0,
+      "games": 3,
+      "wins": 1,
+      "losses": 2,
+      "kda": "11.3/5.3/6.3"
+    },
+    {
+      "champion": "Akali",
+      "win_rate": 50.0,
+      "games": 2,
+      "wins": 1,
+      "losses": 1,
+      "kda": "4/5/4.5"
+    },
+    {
+      "champion": "Neeko",
+      "win_rate": 0.0,
+      "games": 2,
+      "wins": 0,
+      "losses": 2,
+      "kda": "3.5/6.5/5"
+    },
+    {
+      "champion": "Zaahen",
+      "win_rate": 0.0,
+      "games": 1,
+      "wins": 0,
+      "losses": 1,
+      "kda": "4/9/5"
+    }
+  ]
+}

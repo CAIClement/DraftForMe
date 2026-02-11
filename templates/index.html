@@ -13,7 +13,6 @@
 <header id="app-header">
     <div class="header-left">
         <h1>DraftForMe</h1>
-        <span class="subtitle">Pick Assistant</span>
     </div>
     <div class="header-right">
         <select id="sel-region">
@@ -29,13 +28,13 @@
     </div>
 </header>
 
-<!-- SETUP : Summoner + Role (tout sur une ligne) -->
+<!-- SETUP -->
 <section id="setup-panel">
     <div class="setup-row">
         <div class="setup-group">
             <label>Summoner (Riot ID)</label>
             <div class="input-row">
-                <input type="text" id="input-summoner" placeholder="Nom#Tag  (ex: Faker-KR1)">
+                <input type="text" id="input-summoner" placeholder="Nom#Tag  (ex: theslim194#EUW)">
                 <button id="btn-load-profile" class="btn-primary" onclick="loadAll()">Charger</button>
             </div>
         </div>
@@ -50,10 +49,16 @@
             </div>
         </div>
         <div class="setup-group">
-            <span id="stats-status" class="status-text"></span>
+            <label>Priorite</label>
+            <div class="slider-row">
+                <span class="slider-label-left">Mon Pool</span>
+                <input type="range" id="priority-slider" min="0" max="100" value="50" oninput="onPriorityChange()">
+                <span class="slider-label-right">Meta</span>
+                <span id="priority-value" class="slider-value">50</span>
+            </div>
         </div>
+        <span id="stats-status" class="status-text"></span>
     </div>
-    <!-- Pool du joueur -->
     <div id="player-pool-bar" class="hidden">
         <span class="pool-label">Mon Pool :</span>
         <div id="player-pool-icons"></div>
@@ -61,27 +66,26 @@
     </div>
 </section>
 
-<!-- MAIN LAYOUT : 3 colonnes -->
+<!-- MAIN LAYOUT -->
 <main id="main-layout">
-
-    <!-- LEFT : Picks ennemis + Bans -->
+    <!-- LEFT : Enemy Picks + Bans -->
     <section id="enemy-panel">
         <div class="panel-section">
             <h3>Picks Adverses</h3>
-            <p class="hint">Clique sur un champion ci-dessous pour l'ajouter comme pick ennemi.</p>
+            <p class="hint">Clique un champion pour l'ajouter.</p>
             <div id="enemy-picks-list" class="pick-list"></div>
-            <button class="btn-small btn-danger" onclick="clearEnemyPicks()" style="margin-top:8px">Effacer</button>
+            <button class="btn-small btn-danger" onclick="clearEnemyPicks()" style="margin-top:6px">Effacer</button>
         </div>
         <div class="panel-section">
             <h3>Bans</h3>
             <div id="bans-list" class="pick-list"></div>
-            <button class="btn-small btn-danger" onclick="clearBans()" style="margin-top:8px">Effacer</button>
+            <button class="btn-small btn-danger" onclick="clearBans()" style="margin-top:6px">Effacer</button>
         </div>
         <div class="panel-section">
-            <h3>Mode</h3>
+            <h3>Mode Clic</h3>
             <div class="mode-buttons">
-                <button id="btn-mode-pick" class="mode-btn active" onclick="setClickMode('enemy')">Ajouter Pick Ennemi</button>
-                <button id="btn-mode-ban" class="mode-btn" onclick="setClickMode('ban')">Ajouter Ban</button>
+                <button id="btn-mode-pick" class="mode-btn active" onclick="setClickMode('enemy')">Pick Ennemi</button>
+                <button id="btn-mode-ban" class="mode-btn" onclick="setClickMode('ban')">Ban</button>
             </div>
         </div>
     </section>
@@ -94,15 +98,15 @@
         <div id="champion-grid" class="champion-grid"></div>
     </section>
 
-    <!-- RIGHT : Recommandations + Charts -->
+    <!-- RIGHT : Suggestions -->
     <aside id="sidebar-right">
         <div id="recommendations-panel">
-            <h3>Suggestions de Pick</h3>
+            <h3>Suggestions</h3>
             <div id="rec-context" class="rec-context"></div>
             <div id="rec-list"></div>
         </div>
         <div id="charts-panel">
-            <h3>Justification</h3>
+            <h3>Comparaison</h3>
             <div class="chart-container">
                 <canvas id="chart-winrate"></canvas>
             </div>
@@ -113,11 +117,47 @@
     </aside>
 </main>
 
+<!-- MODAL : Detail champion -->
+<div id="detail-overlay" class="modal-overlay hidden" onclick="closeDetail()">
+    <div class="detail-panel" onclick="event.stopPropagation()">
+        <button class="detail-close" onclick="closeDetail()">&times;</button>
+        <div class="detail-header">
+            <img id="detail-img" src="" alt="">
+            <div class="detail-title">
+                <h2 id="detail-name"></h2>
+                <div id="detail-tags"></div>
+                <div id="detail-score-big"></div>
+            </div>
+        </div>
+        <!-- Stats grid -->
+        <div class="detail-stats-grid" id="detail-stats-grid"></div>
+        <!-- Weights / pourquoi -->
+        <div class="detail-section">
+            <h4>Pourquoi ce champion ?</h4>
+            <div class="detail-weights" id="detail-weights"></div>
+        </div>
+        <!-- Chart comparaison -->
+        <div class="detail-section">
+            <h4>Comparaison avec les autres suggestions</h4>
+            <div class="chart-container detail-chart">
+                <canvas id="chart-detail-compare"></canvas>
+            </div>
+        </div>
+        <!-- Chart radar -->
+        <div class="detail-section">
+            <h4>Profil du champion</h4>
+            <div class="chart-container detail-chart">
+                <canvas id="chart-detail-radar"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- MODAL : Pool Editor -->
 <div id="modal-overlay" class="modal-overlay hidden" onclick="closeModal()">
     <div class="modal-content" onclick="event.stopPropagation()">
         <h2>Modifier mon Champion Pool</h2>
-        <p class="modal-hint">Cliquez sur un champion pour l'ajouter/retirer de votre pool.</p>
+        <p class="modal-hint">Cliquez sur un champion pour l'ajouter/retirer.</p>
         <input type="text" id="pool-search" placeholder="Rechercher..." oninput="filterPoolGrid()">
         <div id="pool-editor-grid" class="champion-grid small-grid"></div>
         <div class="modal-actions">
@@ -129,11 +169,11 @@
 <!-- TOAST -->
 <div id="toast" class="toast hidden"></div>
 
-<!-- LOADING OVERLAY -->
+<!-- LOADING -->
 <div id="loading-overlay" class="loading-overlay hidden">
     <div class="loading-content">
         <span class="spinner big"></span>
-        <p id="loading-text">Chargement des stats depuis op.gg...</p>
+        <p id="loading-text">Chargement...</p>
     </div>
 </div>
 

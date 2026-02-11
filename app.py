@@ -133,6 +133,7 @@ def api_recommend():
     already_picked = body.get("already_picked", [])
     role = body.get("role", "all")
     region = body.get("region", "euw")
+    priority = body.get("priority", 50)  # 0=pool, 100=meta
     top_n = body.get("top_n", 10)
 
     # Charger les stats si pas en cache
@@ -157,6 +158,7 @@ def api_recommend():
         role=role,
         banned_champions=banned,
         already_picked=already_picked,
+        priority=priority,
         top_n=top_n,
     )
     return jsonify(recs)

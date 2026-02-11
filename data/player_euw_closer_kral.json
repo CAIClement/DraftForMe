@@ -1,0 +1,272 @@
+{
+  "summoner_name": "closer#kral",
+  "region": "euw",
+  "tier": null,
+  "lp": 123,
+  "most_played": [
+    {
+      "champion": "Jayce",
+      "win_rate": 67.0,
+      "games": 45,
+      "wins": 30,
+      "losses": 15,
+      "kda": "7.9/4.8/8.4"
+    },
+    {
+      "champion": "Viego",
+      "win_rate": 70.0,
+      "games": 40,
+      "wins": 28,
+      "losses": 12,
+      "kda": "10.9/4.7/5.7"
+    },
+    {
+      "champion": "Zed",
+      "win_rate": 62.0,
+      "games": 34,
+      "wins": 21,
+      "losses": 13,
+      "kda": "8.3/5.6/6.4"
+    },
+    {
+      "champion": "Diana",
+      "win_rate": 67.0,
+      "games": 27,
+      "wins": 18,
+      "losses": 9,
+      "kda": "9.1/5.6/9.1"
+    },
+    {
+      "champion": "Lee Sin",
+      "win_rate": 71.0,
+      "games": 24,
+      "wins": 17,
+      "losses": 7,
+      "kda": "6.2/4.4/6.5"
+    },
+    {
+      "champion": "Qiyana",
+      "win_rate": 70.0,
+      "games": 23,
+      "wins": 16,
+      "losses": 7,
+      "kda": "9.7/3.7/6.4"
+    },
+    {
+      "champion": "Taliyah",
+      "win_rate": 50.0,
+      "games": 14,
+      "wins": 7,
+      "losses": 7,
+      "kda": "6.4/6.5/10.2"
+    },
+    {
+      "champion": "Jarvan IV",
+      "win_rate": 55.0,
+      "games": 11,
+      "wins": 6,
+      "losses": 5,
+      "kda": "8.3/6.5/12.5"
+    },
+    {
+      "champion": "Vayne",
+      "win_rate": 71.0,
+      "games": 7,
+      "wins": 5,
+      "losses": 2,
+      "kda": "5.7/5.3/6"
+    },
+    {
+      "champion": "Elise",
+      "win_rate": 50.0,
+      "games": 6,
+      "wins": 3,
+      "losses": 3,
+      "kda": "4.7/4/6"
+    },
+    {
+      "champion": "Caitlyn",
+      "win_rate": 80.0,
+      "games": 5,
+      "wins": 4,
+      "losses": 1,
+      "kda": "4.4/7.6/5.8"
+    },
+    {
+      "champion": "Ekko",
+      "win_rate": 60.0,
+      "games": 5,
+      "wins": 3,
+      "losses": 2,
+      "kda": "7.6/4.2/5.2"
+    },
+    {
+      "champion": "Orianna",
+      "win_rate": 75.0,
+      "games": 4,
+      "wins": 3,
+      "losses": 1,
+      "kda": "5.3/7/12"
+    },
+    {
+      "champion": "Dr. Mundo",
+      "win_rate": 50.0,
+      "games": 4,
+      "wins": 2,
+      "losses": 2,
+      "kda": "4.3/5.8/9.8"
+    },
+    {
+      "champion": "Ryze",
+      "win_rate": 67.0,
+      "games": 3,
+      "wins": 2,
+      "losses": 1,
+      "kda": "3.7/6.3/6.3"
+    },
+    {
+      "champion": "Corki",
+      "win_rate": 33.0,
+      "games": 3,
+      "wins": 1,
+      "losses": 2,
+      "kda": "4/6.3/4.3"
+    },
+    {
+      "champion": "Ziggs",
+      "win_rate": 50.0,
+      "games": 2,
+      "wins": 1,
+      "losses": 1,
+      "kda": "3/6.5/8.5"
+    },
+    {
+      "champion": "Ezreal",
+      "win_rate": 50.0,
+      "games": 2,
+      "wins": 1,
+      "losses": 1,
+      "kda": "9/8.5/9.5"
+    },
+    {
+      "champion": "Nautilus",
+      "win_rate": 50.0,
+      "games": 2,
+      "wins": 1,
+      "losses": 1,
+      "kda": "1/5.5/15"
+    },
+    {
+      "champion": "Naafiri",
+      "win_rate": 0.0,
+      "games": 2,
+      "wins": 0,
+      "losses": 2,
+      "kda": "5.5/5/2"
+    },
+    {
+      "champion": "Akali",
+      "win_rate": 100.0,
+      "games": 1,
+      "wins": 1,
+      "losses": 0,
+      "kda": "7/6/7"
+    },
+    {
+      "champion": "Sylas",
+      "win_rate": 100.0,
+      "games": 1,
+      "wins": 1,
+      "losses": 0,
+      "kda": "8/4/7"
+    },
+    {
+      "champion": "Jax",
+      "win_rate": 100.0,
+      "games": 1,
+      "wins": 1,
+      "losses": 0,
+      "kda": "4/9/9"
+    },
+    {
+      "champion": "Yasuo",
+      "win_rate": 100.0,
+      "games": 1,
+      "wins": 1,
+      "losses": 0,
+      "kda": "9/8/7"
+    },
+    {
+      "champion": "Malphite",
+      "win_rate": 100.0,
+      "games": 1,
+      "wins": 1,
+      "losses": 0,
+      "kda": "8/6/14"
+    },
+    {
+      "champion": "Nocturne",
+      "win_rate": 100.0,
+      "games": 1,
+      "wins": 1,
+      "losses": 0,
+      "kda": "8/6/14"
+    },
+    {
+      "champion": "Xerath",
+      "win_rate": 0.0,
+      "games": 1,
+      "wins": 0,
+      "losses": 1,
+      "kda": "8/7/10"
+    },
+    {
+      "champion": "Zaahen",
+      "win_rate": 0.0,
+      "games": 1,
+      "wins": 0,
+      "losses": 1,
+      "kda": "4/13/10"
+    },
+    {
+      "champion": "Wukong",
+      "win_rate": 0.0,
+      "games": 1,
+      "wins": 0,
+      "losses": 1,
+      "kda": "6/4/2"
+    },
+    {
+      "champion": "Pantheon",
+      "win_rate": 0.0,
+      "games": 1,
+      "wins": 0,
+      "losses": 1,
+      "kda": "4/13/12"
+    },
+    {
+      "champion": "Lucian",
+      "win_rate": 0.0,
+      "games": 1,
+      "wins": 0,
+      "losses": 1,
+      "kda": "5/7/0"
+    },
+    {
+      "champion": "Quinn",
+      "win_rate": 0.0,
+      "games": 1,
+      "wins": 0,
+      "losses": 1,
+      "kda": "0/14/4"
+    },
+    {
+      "champion": "Karma",
+      "win_rate": 0.0,
+      "games": 1,
+      "wins": 0,
+      "losses": 1,
+      "kda": "2/6/15"
+    }
+  ]
+}

@@ -1,0 +1,64 @@
+{
+  "summoner_name": "ortogold#EUW",
+  "region": "euw",
+  "tier": "diamond",
+  "lp": 172,
+  "most_played": [
+    {
+      "champion": "Kled",
+      "win_rate": 51.0,
+      "games": 53,
+      "wins": 27,
+      "losses": 26,
+      "kda": "5.6/5.6/6.8"
+    },
+    {
+      "champion": "Zaahen",
+      "win_rate": 54.0,
+      "games": 13,
+      "wins": 7,
+      "losses": 6,
+      "kda": "3.8/6.8/5.2"
+    },
+    {
+      "champion": "Pantheon",
+      "win_rate": 100.0,
+      "games": 1,
+      "wins": 1,
+      "losses": 0,
+      "kda": "9/8/10"
+    },
+    {
+      "champion": "Kayle",
+      "win_rate": 0.0,
+      "games": 1,
+      "wins": 0,
+      "losses": 1,
+      "kda": "3/5/0"
+    },
+    {
+      "champion": "Darius",
+      "win_rate": 0.0,
+      "games": 1,
+      "wins": 0,
+      "losses": 1,
+      "kda": "5/11/7"
+    },
+    {
+      "champion": "Katarina",
+      "win_rate": 0.0,
+      "games": 1,
+      "wins": 0,
+      "losses": 1,
+      "kda": "1/7/3"
+    },
+    {
+      "champion": "Jax",
+      "win_rate": 0.0,
+      "games": 1,
+      "wins": 0,
+      "losses": 1,
+      "kda": "0/8/5"
+    }
+  ]
+}
