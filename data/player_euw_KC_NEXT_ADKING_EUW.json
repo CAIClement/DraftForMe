@@ -1,0 +1,256 @@
+{
+  "summoner_name": "KC NEXT ADKING#EUW",
+  "region": "euw",
+  "tier": null,
+  "lp": 839,
+  "most_played": [
+    {
+      "champion": "Kai'Sa",
+      "win_rate": 76.0,
+      "games": 21,
+      "wins": 16,
+      "losses": 5,
+      "kda": "10/3.2/6.7"
+    },
+    {
+      "champion": "Aphelios",
+      "win_rate": 52.0,
+      "games": 21,
+      "wins": 11,
+      "losses": 10,
+      "kda": "8.2/4.4/5.2"
+    },
+    {
+      "champion": "Ezreal",
+      "win_rate": 53.0,
+      "games": 19,
+      "wins": 10,
+      "losses": 9,
+      "kda": "7.6/4.5/7"
+    },
+    {
+      "champion": "Yunara",
+      "win_rate": 56.0,
+      "games": 16,
+      "wins": 9,
+      "losses": 7,
+      "kda": "10.4/4.3/6.2"
+    },
+    {
+      "champion": "Sivir",
+      "win_rate": 77.0,
+      "games": 13,
+      "wins": 10,
+      "losses": 3,
+      "kda": "7.3/3.4/9.7"
+    },
+    {
+      "champion": "Lucian",
+      "win_rate": 100.0,
+      "games": 11,
+      "wins": 11,
+      "losses": 0,
+      "kda": "8.6/2.5/5.3"
+    },
+    {
+      "champion": "Corki",
+      "win_rate": 89.0,
+      "games": 9,
+      "wins": 8,
+      "losses": 1,
+      "kda": "6.7/3.7/5.2"
+    },
+    {
+      "champion": "Varus",
+      "win_rate": 78.0,
+      "games": 9,
+      "wins": 7,
+      "losses": 2,
+      "kda": "8.2/3.2/7.2"
+    },
+    {
+      "champion": "Jhin",
+      "win_rate": 56.0,
+      "games": 9,
+      "wins": 5,
+      "losses": 4,
+      "kda": "7.9/4.1/8.7"
+    },
+    {
+      "champion": "K'Sante",
+      "win_rate": 50.0,
+      "games": 6,
+      "wins": 3,
+      "losses": 3,
+      "kda": "5/4.2/5"
+    },
+    {
+      "champion": "Caitlyn",
+      "win_rate": 60.0,
+      "games": 5,
+      "wins": 3,
+      "losses": 2,
+      "kda": "6.8/3.2/5"
+    },
+    {
+      "champion": "Miss Fortune",
+      "win_rate": 67.0,
+      "games": 3,
+      "wins": 2,
+      "losses": 1,
+      "kda": "8.3/5.7/9.7"
+    },
+    {
+      "champion": "Bard",
+      "win_rate": 33.0,
+      "games": 3,
+      "wins": 1,
+      "losses": 2,
+      "kda": "4.3/5.3/12.3"
+    },
+    {
+      "champion": "Jinx",
+      "win_rate": 100.0,
+      "games": 2,
+      "wins": 2,
+      "losses": 0,
+      "kda": "10.5/0/3.5"
+    },
+    {
+      "champion": "Tristana",
+      "win_rate": 50.0,
+      "games": 2,
+      "wins": 1,
+      "losses": 1,
+      "kda": "7/3.5/5"
+    },
+    {
+      "champion": "Nilah",
+      "win_rate": 50.0,
+      "games": 2,
+      "wins": 1,
+      "losses": 1,
+      "kda": "2/3.5/7.5"
+    },
+    {
+      "champion": "Zeri",
+      "win_rate": 0.0,
+      "games": 2,
+      "wins": 0,
+      "losses": 2,
+      "kda": "3.5/9/4"
+    },
+    {
+      "champion": "Kog'Maw",
+      "win_rate": 0.0,
+      "games": 2,
+      "wins": 0,
+      "losses": 2,
+      "kda": "12/7/6"
+    },
+    {
+      "champion": "Vayne",
+      "win_rate": 100.0,
+      "games": 1,
+      "wins": 1,
+      "losses": 0,
+      "kda": "11/1/6"
+    },
+    {
+      "champion": "Viktor",
+      "win_rate": 100.0,
+      "games": 1,
+      "wins": 1,
+      "losses": 0,
+      "kda": "8/2/10"
+    },
+    {
+      "champion": "Xayah",
+      "win_rate": 100.0,
+      "games": 1,
+      "wins": 1,
+      "losses": 0,
+      "kda": "8/0/8"
+    },
+    {
+      "champion": "Kalista",
+      "win_rate": 100.0,
+      "games": 1,
+      "wins": 1,
+      "losses": 0,
+      "kda": "3/1/5"
+    },
+    {
+      "champion": "Rell",
+      "win_rate": 100.0,
+      "games": 1,
+      "wins": 1,
+      "losses": 0,
+      "kda": "1/5/27"
+    },
+    {
+      "champion": "Nautilus",
+      "win_rate": 100.0,
+      "games": 1,
+      "wins": 1,
+      "losses": 0,
+      "kda": "1/1/9"
+    },
+    {
+      "champion": "Xin Zhao",
+      "win_rate": 100.0,
+      "games": 1,
+      "wins": 1,
+      "losses": 0,
+      "kda": "4/2/10"
+    },
+    {
+      "champion": "Ambessa",
+      "win_rate": 100.0,
+      "games": 1,
+      "wins": 1,
+      "losses": 0,
+      "kda": "13/2/16"
+    },
+    {
+      "champion": "Ahri",
+      "win_rate": 100.0,
+      "games": 1,
+      "wins": 1,
+      "losses": 0,
+      "kda": "12/5/9"
+    },
+    {
+      "champion": "Vi",
+      "win_rate": 100.0,
+      "games": 1,
+      "wins": 1,
+      "losses": 0,
+      "kda": "5/2/6"
+    },
+    {
+      "champion": "Smolder",
+      "win_rate": 0.0,
+      "games": 1,
+      "wins": 0,
+      "losses": 1,
+      "kda": "2/4/3"
+    },
+    {
+      "champion": "Jarvan IV",
+      "win_rate": 0.0,
+      "games": 1,
+      "wins": 0,
+      "losses": 1,
+      "kda": "3/5/16"
+    },
+    {
+      "champion": "Dr. Mundo",
+      "win_rate": 0.0,
+      "games": 1,
+      "wins": 0,
+      "losses": 1,
+      "kda": "3/7/6"
+    }
+  ]
+}

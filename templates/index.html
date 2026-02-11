@@ -11,19 +11,12 @@
 
 <!-- HEADER -->
 <header id="app-header">
-    <div class="header-left">
-        <h1>DraftForMe</h1>
-    </div>
+    <div class="header-left"><h1>DraftForMe</h1></div>
     <div class="header-right">
         <select id="sel-region">
-            <option value="euw">EUW</option>
-            <option value="na">NA</option>
-            <option value="kr">KR</option>
-            <option value="eune">EUNE</option>
-            <option value="oce">OCE</option>
-            <option value="jp">JP</option>
-            <option value="br">BR</option>
-            <option value="tr">TR</option>
+            <option value="euw">EUW</option><option value="na">NA</option><option value="kr">KR</option>
+            <option value="eune">EUNE</option><option value="oce">OCE</option><option value="jp">JP</option>
+            <option value="br">BR</option><option value="tr">TR</option>
         </select>
     </div>
 </header>
@@ -32,28 +25,31 @@
 <section id="setup-panel">
     <div class="setup-row">
         <div class="setup-group">
-            <label>Summoner (Riot ID)</label>
+            <label>Summoner</label>
             <div class="input-row">
-                <input type="text" id="input-summoner" placeholder="Nom#Tag  (ex: theslim194#EUW)">
+                <input type="text" id="input-summoner" placeholder="Nom#Tag">
                 <button id="btn-load-profile" class="btn-primary" onclick="loadAll()">Charger</button>
             </div>
         </div>
         <div class="setup-group">
-            <label>Mon Role</label>
+            <label>Role</label>
             <div class="role-selector">
                 <button class="role-btn" data-role="top" onclick="selectRole('top')">Top</button>
                 <button class="role-btn" data-role="jungle" onclick="selectRole('jungle')">Jungle</button>
-                <button class="role-btn active" data-role="middle" onclick="selectRole('middle')">Mid</button>
-                <button class="role-btn" data-role="bottom" onclick="selectRole('bottom')">ADC</button>
+                <button class="role-btn active" data-role="mid" onclick="selectRole('mid')">Mid</button>
+                <button class="role-btn" data-role="adc" onclick="selectRole('adc')">ADC</button>
                 <button class="role-btn" data-role="support" onclick="selectRole('support')">Support</button>
             </div>
         </div>
         <div class="setup-group">
             <label>Priorite</label>
-            <div class="slider-row">
-                <span class="slider-label-left">Mon Pool</span>
-                <input type="range" id="priority-slider" min="0" max="100" value="50" oninput="onPriorityChange()">
-                <span class="slider-label-right">Meta</span>
+            <div class="prio-row">
+                <div class="prio-buttons">
+                    <button class="prio-btn" data-prio="0" onclick="setPriority(0)">Pool</button>
+                    <button class="prio-btn active" data-prio="50" onclick="setPriority(50)">Mix</button>
+                    <button class="prio-btn" data-prio="100" onclick="setPriority(100)">Meta</button>
+                </div>
+                <input type="range" id="priority-slider" min="0" max="100" value="50" oninput="onSliderChange()">
                 <span id="priority-value" class="slider-value">50</span>
             </div>
         </div>
@@ -66,20 +62,20 @@
     </div>
 </section>
 
-<!-- MAIN LAYOUT -->
+<!-- MAIN LAYOUT : 3 colonnes, pas de scroll -->
 <main id="main-layout">
-    <!-- LEFT : Enemy Picks + Bans -->
+    <!-- LEFT -->
     <section id="enemy-panel">
         <div class="panel-section">
             <h3>Picks Adverses</h3>
             <p class="hint">Clique un champion pour l'ajouter.</p>
             <div id="enemy-picks-list" class="pick-list"></div>
-            <button class="btn-small btn-danger" onclick="clearEnemyPicks()" style="margin-top:6px">Effacer</button>
+            <button class="btn-small btn-danger" onclick="clearEnemyPicks()">Effacer</button>
         </div>
         <div class="panel-section">
             <h3>Bans</h3>
             <div id="bans-list" class="pick-list"></div>
-            <button class="btn-small btn-danger" onclick="clearBans()" style="margin-top:6px">Effacer</button>
+            <button class="btn-small btn-danger" onclick="clearBans()">Effacer</button>
         </div>
         <div class="panel-section">
             <h3>Mode Clic</h3>
@@ -90,29 +86,20 @@
         </div>
     </section>
 
-    <!-- CENTER : Champion Grid -->
+    <!-- CENTER : grille champions -->
     <section id="champion-grid-section">
         <div class="grid-toolbar">
-            <input type="text" id="champ-search" placeholder="Rechercher un champion..." oninput="filterChampions()">
+            <input type="text" id="champ-search" placeholder="Rechercher..." oninput="filterChampions()">
         </div>
         <div id="champion-grid" class="champion-grid"></div>
     </section>
 
-    <!-- RIGHT : Suggestions -->
+    <!-- RIGHT : suggestions uniquement -->
     <aside id="sidebar-right">
         <div id="recommendations-panel">
             <h3>Suggestions</h3>
             <div id="rec-context" class="rec-context"></div>
             <div id="rec-list"></div>
-        </div>
-        <div id="charts-panel">
-            <h3>Comparaison</h3>
-            <div class="chart-container">
-                <canvas id="chart-winrate"></canvas>
-            </div>
-            <div class="chart-container">
-                <canvas id="chart-scores"></canvas>
-            </div>
         </div>
     </aside>
 </main>
@@ -129,23 +116,13 @@
                 <div id="detail-score-big"></div>
             </div>
         </div>
-        <!-- Stats grid -->
         <div class="detail-stats-grid" id="detail-stats-grid"></div>
-        <!-- Weights / pourquoi -->
         <div class="detail-section">
             <h4>Pourquoi ce champion ?</h4>
             <div class="detail-weights" id="detail-weights"></div>
         </div>
-        <!-- Chart comparaison -->
         <div class="detail-section">
-            <h4>Comparaison avec les autres suggestions</h4>
-            <div class="chart-container detail-chart">
-                <canvas id="chart-detail-compare"></canvas>
-            </div>
-        </div>
-        <!-- Chart radar -->
-        <div class="detail-section">
-            <h4>Profil du champion</h4>
+            <h4>Profil</h4>
             <div class="chart-container detail-chart">
                 <canvas id="chart-detail-radar"></canvas>
             </div>
@@ -160,21 +137,13 @@
         <p class="modal-hint">Cliquez sur un champion pour l'ajouter/retirer.</p>
         <input type="text" id="pool-search" placeholder="Rechercher..." oninput="filterPoolGrid()">
         <div id="pool-editor-grid" class="champion-grid small-grid"></div>
-        <div class="modal-actions">
-            <button class="btn-primary" onclick="closeModal()">Valider</button>
-        </div>
+        <div class="modal-actions"><button class="btn-primary" onclick="closeModal()">Valider</button></div>
     </div>
 </div>
 
-<!-- TOAST -->
 <div id="toast" class="toast hidden"></div>
-
-<!-- LOADING -->
 <div id="loading-overlay" class="loading-overlay hidden">
-    <div class="loading-content">
-        <span class="spinner big"></span>
-        <p id="loading-text">Chargement...</p>
-    </div>
+    <div class="loading-content"><span class="spinner big"></span><p id="loading-text">Chargement...</p></div>
 </div>
 
 <script src="/static/js/app.js"></script>

@@ -1,0 +1,771 @@
+[
+  {
+    "rank": 1,
+    "name": "Ahri",
+    "slug": "ahri",
+    "role": "mid",
+    "win_rate": 52.6,
+    "pick_rate": 12.51,
+    "ban_rate": 3.59,
+    "counters": [
+      "smolder",
+      "chogath",
+      "naafiri"
+    ]
+  },
+  {
+    "rank": 2,
+    "name": "Syndra",
+    "slug": "syndra",
+    "role": "mid",
+    "win_rate": 51.24,
+    "pick_rate": 9.05,
+    "ban_rate": 8.73,
+    "counters": [
+      "annie",
+      "fizz",
+      "katarina"
+    ]
+  },
+  {
+    "rank": 3,
+    "name": "Yasuo",
+    "slug": "yasuo",
+    "role": "mid",
+    "win_rate": 50.72,
+    "pick_rate": 8.88,
+    "ban_rate": 15.32,
+    "counters": [
+      "sion",
+      "zilean",
+      "velkoz"
+    ]
+  },
+  {
+    "rank": 4,
+    "name": "Xerath",
+    "slug": "xerath",
+    "role": "mid",
+    "win_rate": 52.7,
+    "pick_rate": 4.45,
+    "ban_rate": 2.16,
+    "counters": [
+      "jayce",
+      "akali",
+      "naafiri"
+    ]
+  },
+  {
+    "rank": 5,
+    "name": "Naafiri",
+    "slug": "naafiri",
+    "role": "mid",
+    "win_rate": 52.42,
+    "pick_rate": 3.94,
+    "ban_rate": 19.72,
+    "counters": [
+      "swain",
+      "sion",
+      "yasuo"
+    ]
+  },
+  {
+    "rank": 6,
+    "name": "Zed",
+    "slug": "zed",
+    "role": "mid",
+    "win_rate": 51.12,
+    "pick_rate": 6.44,
+    "ban_rate": 23.52,
+    "counters": [
+      "jayce",
+      "neeko",
+      "lux"
+    ]
+  },
+  {
+    "rank": 7,
+    "name": "Kassadin",
+    "slug": "kassadin",
+    "role": "mid",
+    "win_rate": 51.02,
+    "pick_rate": 7.16,
+    "ban_rate": 15.41,
+    "counters": [
+      "kennen",
+      "zilean",
+      "sion"
+    ]
+  },
+  {
+    "rank": 8,
+    "name": "Katarina",
+    "slug": "katarina",
+    "role": "mid",
+    "win_rate": 50.69,
+    "pick_rate": 7.67,
+    "ban_rate": 13.51,
+    "counters": [
+      "kayle",
+      "vladimir",
+      "lux"
+    ]
+  },
+  {
+    "rank": 9,
+    "name": "Akali",
+    "slug": "akali",
+    "role": "mid",
+    "win_rate": 50.57,
+    "pick_rate": 6.2,
+    "ban_rate": 20.73,
+    "counters": [
+      "pantheon",
+      "neeko",
+      "smolder"
+    ]
+  },
+  {
+    "rank": 10,
+    "name": "Malzahar",
+    "slug": "malzahar",
+    "role": "mid",
+    "win_rate": 50.92,
+    "pick_rate": 5.53,
+    "ban_rate": 6.94,
+    "counters": [
+      "sion",
+      "kennen",
+      "chogath"
+    ]
+  },
+  {
+    "rank": 11,
+    "name": "Viktor",
+    "slug": "viktor",
+    "role": "mid",
+    "win_rate": 50.82,
+    "pick_rate": 5.79,
+    "ban_rate": 2.3,
+    "counters": [
+      "chogath",
+      "kayle",
+      "zilean"
+    ]
+  },
+  {
+    "rank": 12,
+    "name": "Veigar",
+    "slug": "veigar",
+    "role": "mid",
+    "win_rate": 51.25,
+    "pick_rate": 4.41,
+    "ban_rate": 1.06,
+    "counters": [
+      "chogath",
+      "smolder",
+      "ziggs"
+    ]
+  },
+  {
+    "rank": 13,
+    "name": "Aurelion Sol",
+    "slug": "aurelionsol",
+    "role": "mid",
+    "win_rate": 51.78,
+    "pick_rate": 3.42,
+    "ban_rate": 0.88,
+    "counters": [
+      "ziggs",
+      "fizz",
+      "lux"
+    ]
+  },
+  {
+    "rank": 14,
+    "name": "Fizz",
+    "slug": "fizz",
+    "role": "mid",
+    "win_rate": 51.26,
+    "pick_rate": 3.91,
+    "ban_rate": 5.16,
+    "counters": [
+      "brand",
+      "lissandra",
+      "sion"
+    ]
+  },
+  {
+    "rank": 15,
+    "name": "Swain",
+    "slug": "swain",
+    "role": "mid",
+    "win_rate": 53.01,
+    "pick_rate": 1.84,
+    "ban_rate": 3.73,
+    "counters": [
+      "velkoz",
+      "leblanc",
+      "zoe"
+    ]
+  },
+  {
+    "rank": 16,
+    "name": "Akshan",
+    "slug": "akshan",
+    "role": "mid",
+    "win_rate": 50.91,
+    "pick_rate": 4.36,
+    "ban_rate": 6.77,
+    "counters": [
+      "yasuo",
+      "cassiopeia",
+      "lissandra"
+    ]
+  },
+  {
+    "rank": 17,
+    "name": "Diana",
+    "slug": "diana",
+    "role": "mid",
+    "win_rate": 51.09,
+    "pick_rate": 3.08,
+    "ban_rate": 26.55,
+    "counters": [
+      "lux",
+      "kassadin",
+      "zoe"
+    ]
+  },
+  {
+    "rank": 18,
+    "name": "Vel'Koz",
+    "slug": "velkoz",
+    "role": "mid",
+    "win_rate": 52.5,
+    "pick_rate": 2.32,
+    "ban_rate": 1.23,
+    "counters": [
+      "talon",
+      "naafiri",
+      "akshan"
+    ]
+  },
+  {
+    "rank": 19,
+    "name": "Twisted Fate",
+    "slug": "twistedfate",
+    "role": "mid",
+    "win_rate": 51.28,
+    "pick_rate": 3.81,
+    "ban_rate": 0.25,
+    "counters": [
+      "cassiopeia",
+      "swain",
+      "veigar"
+    ]
+  },
+  {
+    "rank": 20,
+    "name": "Qiyana",
+    "slug": "qiyana",
+    "role": "mid",
+    "win_rate": 51.59,
+    "pick_rate": 2.93,
+    "ban_rate": 6.03,
+    "counters": [
+      "galio",
+      "akali",
+      "hwei"
+    ]
+  },
+  {
+    "rank": 21,
+    "name": "Kayle",
+    "slug": "kayle",
+    "role": "mid",
+    "win_rate": 53.06,
+    "pick_rate": 1.51,
+    "ban_rate": 9.81,
+    "counters": [
+      "vladimir",
+      "velkoz",
+      "ahri"
+    ]
+  },
+  {
+    "rank": 22,
+    "name": "Anivia",
+    "slug": "anivia",
+    "role": "mid",
+    "win_rate": 51.08,
+    "pick_rate": 3.72,
+    "ban_rate": 2.98,
+    "counters": [
+      "ziggs",
+      "velkoz",
+      "swain"
+    ]
+  },
+  {
+    "rank": 23,
+    "name": "Zoe",
+    "slug": "zoe",
+    "role": "mid",
+    "win_rate": 51.34,
+    "pick_rate": 3.34,
+    "ban_rate": 3.73,
+    "counters": [
+      "kennen",
+      "lux",
+      "akshan"
+    ]
+  },
+  {
+    "rank": 24,
+    "name": "Lux",
+    "slug": "lux",
+    "role": "mid",
+    "win_rate": 51.45,
+    "pick_rate": 3.11,
+    "ban_rate": 0.91,
+    "counters": [
+      "velkoz",
+      "xerath",
+      "qiyana"
+    ]
+  },
+  {
+    "rank": 25,
+    "name": "Ekko",
+    "slug": "ekko",
+    "role": "mid",
+    "win_rate": 50.19,
+    "pick_rate": 4.0,
+    "ban_rate": 13.28,
+    "counters": [
+      "brand",
+      "kennen",
+      "irelia"
+    ]
+  },
+  {
+    "rank": 26,
+    "name": "Vex",
+    "slug": "vex",
+    "role": "mid",
+    "win_rate": 51.34,
+    "pick_rate": 2.85,
+    "ban_rate": 3.02,
+    "counters": [
+      "kennen",
+      "twistedfate",
+      "vladimir"
+    ]
+  },
+  {
+    "rank": 27,
+    "name": "Sylas",
+    "slug": "sylas",
+    "role": "mid",
+    "win_rate": 49.62,
+    "pick_rate": 4.77,
+    "ban_rate": 7.87,
+    "counters": [
+      "sion",
+      "cassiopeia",
+      "kayle"
+    ]
+  },
+  {
+    "rank": 28,
+    "name": "Galio",
+    "slug": "galio",
+    "role": "mid",
+    "win_rate": 50.73,
+    "pick_rate": 3.19,
+    "ban_rate": 1.16,
+    "counters": [
+      "zoe",
+      "kayle",
+      "kennen"
+    ]
+  },
+  {
+    "rank": 29,
+    "name": "Yone",
+    "slug": "yone",
+    "role": "mid",
+    "win_rate": 49.29,
+    "pick_rate": 4.95,
+    "ban_rate": 2.97,
+    "counters": [
+      "ziggs",
+      "brand",
+      "annie"
+    ]
+  },
+  {
+    "rank": 30,
+    "name": "Irelia",
+    "slug": "irelia",
+    "role": "mid",
+    "win_rate": 51.28,
+    "pick_rate": 2.04,
+    "ban_rate": 11.28,
+    "counters": [
+      "anivia",
+      "akali",
+      "malphite"
+    ]
+  },
+  {
+    "rank": 31,
+    "name": "Zilean",
+    "slug": "zilean",
+    "role": "mid",
+    "win_rate": 54.81,
+    "pick_rate": 0.51,
+    "ban_rate": 2.3,
+    "counters": [
+      "ahri",
+      "syndra"
+    ]
+  },
+  {
+    "rank": 32,
+    "name": "LeBlanc",
+    "slug": "leblanc",
+    "role": "mid",
+    "win_rate": 50.08,
+    "pick_rate": 3.42,
+    "ban_rate": 10.26,
+    "counters": [
+      "malzahar",
+      "naafiri",
+      "vex"
+    ]
+  },
+  {
+    "rank": 33,
+    "name": "Lissandra",
+    "slug": "lissandra",
+    "role": "mid",
+    "win_rate": 50.32,
+    "pick_rate": 2.85,
+    "ban_rate": 1.26,
+    "counters": [
+      "xerath",
+      "lux",
+      "hwei"
+    ]
+  },
+  {
+    "rank": 34,
+    "name": "Hwei",
+    "slug": "hwei",
+    "role": "mid",
+    "win_rate": 50.11,
+    "pick_rate": 2.99,
+    "ban_rate": 1.37,
+    "counters": [
+      "ziggs",
+      "ekko",
+      "annie"
+    ]
+  },
+  {
+    "rank": 35,
+    "name": "Vladimir",
+    "slug": "vladimir",
+    "role": "mid",
+    "win_rate": 50.09,
+    "pick_rate": 2.68,
+    "ban_rate": 5.31,
+    "counters": [
+      "brand",
+      "swain",
+      "anivia"
+    ]
+  },
+  {
+    "rank": 36,
+    "name": "Aurora",
+    "slug": "aurora",
+    "role": "mid",
+    "win_rate": 50.16,
+    "pick_rate": 2.7,
+    "ban_rate": 1.83,
+    "counters": [
+      "aurelionsol",
+      "velkoz",
+      "naafiri"
+    ]
+  },
+  {
+    "rank": 37,
+    "name": "Sion",
+    "slug": "sion",
+    "role": "mid",
+    "win_rate": 53.2,
+    "pick_rate": 0.76,
+    "ban_rate": 1.14,
+    "counters": [
+      "katarina",
+      "yone",
+      "akshan"
+    ]
+  },
+  {
+    "rank": 38,
+    "name": "Taliyah",
+    "slug": "taliyah",
+    "role": "mid",
+    "win_rate": 49.75,
+    "pick_rate": 2.86,
+    "ban_rate": 0.86,
+    "counters": [
+      "kayle",
+      "zoe",
+      "veigar"
+    ]
+  },
+  {
+    "rank": 39,
+    "name": "Malphite",
+    "slug": "malphite",
+    "role": "mid",
+    "win_rate": 51.62,
+    "pick_rate": 0.86,
+    "ban_rate": 28.45,
+    "counters": [
+      "viktor",
+      "yone",
+      "ahri"
+    ]
+  },
+  {
+    "rank": 40,
+    "name": "Orianna",
+    "slug": "orianna",
+    "role": "mid",
+    "win_rate": 47.7,
+    "pick_rate": 5.6,
+    "ban_rate": 1.32,
+    "counters": [
+      "velkoz",
+      "zilean",
+      "ziggs"
+    ]
+  },
+  {
+    "rank": 41,
+    "name": "Neeko",
+    "slug": "neeko",
+    "role": "mid",
+    "win_rate": 53.5,
+    "pick_rate": 0.53,
+    "ban_rate": 0.98,
+    "counters": [
+      "yone",
+      "kassadin",
+      "malzahar"
+    ]
+  },
+  {
+    "rank": 42,
+    "name": "Brand",
+    "slug": "brand",
+    "role": "mid",
+    "win_rate": 52.09,
+    "pick_rate": 0.91,
+    "ban_rate": 1.44,
+    "counters": [
+      "zed",
+      "viktor",
+      "ahri"
+    ]
+  },
+  {
+    "rank": 43,
+    "name": "Kennen",
+    "slug": "kennen",
+    "role": "mid",
+    "win_rate": 51.73,
+    "pick_rate": 0.97,
+    "ban_rate": 2.24,
+    "counters": [
+      "aurelionsol",
+      "lux",
+      "vladimir"
+    ]
+  },
+  {
+    "rank": 44,
+    "name": "Ryze",
+    "slug": "ryze",
+    "role": "mid",
+    "win_rate": 46.42,
+    "pick_rate": 6.13,
+    "ban_rate": 4.05,
+    "counters": [
+      "brand",
+      "aurelionsol",
+      "taliyah"
+    ]
+  },
+  {
+    "rank": 45,
+    "name": "Cassiopeia",
+    "slug": "cassiopeia",
+    "role": "mid",
+    "win_rate": 49.66,
+    "pick_rate": 1.53,
+    "ban_rate": 2.14,
+    "counters": [
+      "hwei",
+      "viktor",
+      "syndra"
+    ]
+  },
+  {
+    "rank": 46,
+    "name": "Pantheon",
+    "slug": "pantheon",
+    "role": "mid",
+    "win_rate": 51.96,
+    "pick_rate": 0.55,
+    "ban_rate": 0.92,
+    "counters": [
+      "yone",
+      "syndra",
+      "zed"
+    ]
+  },
+  {
+    "rank": 47,
+    "name": "Talon",
+    "slug": "talon",
+    "role": "mid",
+    "win_rate": 49.34,
+    "pick_rate": 1.27,
+    "ban_rate": 11.32,
+    "counters": [
+      "vladimir",
+      "yone",
+      "lissandra"
+    ]
+  },
+  {
+    "rank": 48,
+    "name": "Ziggs",
+    "slug": "ziggs",
+    "role": "mid",
+    "win_rate": 50.53,
+    "pick_rate": 0.78,
+    "ban_rate": 0.49,
+    "counters": [
+      "katarina",
+      "kassadin",
+      "xerath"
+    ]
+  },
+  {
+    "rank": 49,
+    "name": "Annie",
+    "slug": "annie",
+    "role": "mid",
+    "win_rate": 50.07,
+    "pick_rate": 0.91,
+    "ban_rate": 0.25,
+    "counters": [
+      "anivia",
+      "naafiri",
+      "zoe"
+    ]
+  },
+  {
+    "rank": 50,
+    "name": "Mel",
+    "slug": "mel",
+    "role": "mid",
+    "win_rate": 46.4,
+    "pick_rate": 2.84,
+    "ban_rate": 15.75,
+    "counters": [
+      "aurelionsol",
+      "xerath",
+      "syndra"
+    ]
+  },
+  {
+    "rank": 51,
+    "name": "Jayce",
+    "slug": "jayce",
+    "role": "mid",
+    "win_rate": 50.02,
+    "pick_rate": 0.69,
+    "ban_rate": 3.32,
+    "counters": [
+      "akshan",
+      "orianna",
+      "syndra"
+    ]
+  },
+  {
+    "rank": 52,
+    "name": "Cho'Gath",
+    "slug": "chogath",
+    "role": "mid",
+    "win_rate": 50.6,
+    "pick_rate": 0.56,
+    "ban_rate": 0.78,
+    "counters": [
+      "akali",
+      "syndra",
+      "ekko"
+    ]
+  },
+  {
+    "rank": 53,
+    "name": "Smolder",
+    "slug": "smolder",
+    "role": "mid",
+    "win_rate": 47.1,
+    "pick_rate": 0.97,
+    "ban_rate": 5.57,
+    "counters": [
+      "xerath",
+      "katarina",
+      "naafiri"
+    ]
+  },
+  {
+    "rank": 54,
+    "name": "Azir",
+    "slug": "azir",
+    "role": "mid",
+    "win_rate": 44.89,
+    "pick_rate": 2.61,
+    "ban_rate": 0.32,
+    "counters": [
+      "taliyah",
+      "xerath",
+      "qiyana"
+    ]
+  },
+  {
+    "rank": 55,
+    "name": "Tristana",
+    "slug": "tristana",
+    "role": "mid",
+    "win_rate": 46.41,
+    "pick_rate": 0.52,
+    "ban_rate": 1.47,
+    "counters": [
+      "xerath",
+      "orianna",
+      "syndra"
+    ]
+  }
+]

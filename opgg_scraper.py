@@ -153,14 +153,32 @@ def fetch_ddragon_champions() -> dict:
 
 
 # ---------------------------------------------------------------------------
-# Stats des champions (op.gg/statistics/champions)
+# Mapping role : interne -> op.gg URL
 # ---------------------------------------------------------------------------
 
-def fetch_champion_stats(region: str = "euw", tier: str = "emerald_plus", role: str = "all") -> list[dict]:
-    """Récupère les stats des champions depuis op.gg/statistics/champions.
-    Retourne une liste de dicts triée par rang.
+ROLE_TO_POSITION = {
+    "top": "top",
+    "jungle": "jungle",
+    "middle": "mid",
+    "mid": "mid",
+    "bottom": "adc",
+    "adc": "adc",
+    "support": "support",
+}
+
+
+# ---------------------------------------------------------------------------
+# Stats des champions (op.gg/lol/champions - tier list par role)
+# ---------------------------------------------------------------------------
+
+def fetch_champion_stats(region: str = "euw", tier: str = "emerald_plus", role: str = "mid") -> list[dict]:
+    """Récupère la tier list des champions depuis op.gg/lol/champions.
+    Filtre par role (mid, top, jungle, adc, support).
+    La page contient une <table> avec des <tr> par champion.
+    Chaque <tr> a : rang | (delta) | nom | WR% | PR% | BR% | counters
     """
-    cache_key = f"champion_stats_{region}_{tier}_{role}"
+    position = ROLE_TO_POSITION.get(role, role)
+    cache_key = f"tierlist_{region}_{tier}_{position}"
     cache_file = DATA_DIR / f"{cache_key}.json"
     if cache_file.exists():
         age_h = (time.time() - cache_file.stat().st_mtime) / 3600
@@ -168,16 +186,13 @@ def fetch_champion_stats(region: str = "euw", tier: str = "emerald_plus", role: 
             return json.loads(cache_file.read_text(encoding="utf-8"))
 
     driver = get_driver()
-    base = "https://op.gg/statistics/champions"
-    params = {"region": region, "tier": tier}
-    if role != "all":
-        params["position"] = role
-    url = f"{base}?{urlencode(params)}"
+    params = {"position": position, "tier": tier, "region": region}
+    url = f"https://op.gg/lol/champions?{urlencode(params)}"
     driver.get(url)
 
     try:
         WebDriverWait(driver, 15).until(
-            EC.presence_of_element_located((By.CSS_SELECTOR, "table tbody tr"))
+            EC.presence_of_element_located((By.CSS_SELECTOR, "table tr a[href*='/build/']"))
         )
     except Exception:
         pass
@@ -186,34 +201,73 @@ def fetch_champion_stats(region: str = "euw", tier: str = "emerald_plus", role: 
     soup = BeautifulSoup(driver.page_source, "html.parser")
     champions = []
 
-    for tr in soup.select("table tbody tr"):
-        cells = tr.select("td")
-        if len(cells) < 4:
-            continue
-        texts = [c.get_text(strip=True) for c in cells]
-        if not any(t for t in texts):
+    # La tier list est dans une <table>, chaque champion est un <tr>
+    for tr in soup.select("table tr"):
+        # Chercher le lien build dans cette row
+        build_link = tr.select_one("a[href*='/champions/'][href*='/build/']")
+        if not build_link:
             continue
 
-        link = tr.select_one("a[href*='champions'], a[href*='champion']")
-        name = ""
-        if link:
-            name = link.get_text(strip=True) or (link.get("href", "").split("/")[-1] or "")
-        if not name and len(texts) >= 2:
-            name = texts[1]
-        if not name:
+        href = build_link.get("href", "")
+        name = build_link.get_text(strip=True)
+        if not name or len(name) > 30:
             continue
+
+        # Extraire le slug depuis le href
+        parts = href.split("/")
+        slug = ""
+        for j, p in enumerate(parts):
+            if p == "champions" and j + 1 < len(parts):
+                slug = parts[j + 1]
+                break
+
+        # Texte de la row : "1 | 3 | Ahri | 52.6% | 12.51% | 3.59%"
+        row_text = tr.get_text(separator=" | ", strip=True)
+        rates = re.findall(r"([\d.]+)%", row_text)
+
+        win_rate = float(rates[0]) if len(rates) > 0 else None
+        pick_rate = float(rates[1]) if len(rates) > 1 else None
+        ban_rate = float(rates[2]) if len(rates) > 2 else None
+
+        # Extraire le rang (premier nombre dans le texte)
+        rank_m = re.match(r"(\d+)", row_text.strip())
+        rank = int(rank_m.group(1)) if rank_m else len(champions) + 1
+
+        # Counters : liens vers /counters/ avec target_champion=xxx
+        counter_links = tr.select("a[href*='/counters/']")
+        counters = []
+        for cl in counter_links:
+            counter_href = cl.get("href", "")
+            target_m = re.search(r"target_champion=(\w+)", counter_href)
+            if target_m:
+                counters.append(target_m.group(1))
+        # Si pas de target_champion dans l'URL, chercher le alt des images counter
+        if not counters:
+            counter_imgs = tr.select("a[href*='/counters/'] img[alt]")
+            for ci in counter_imgs:
+                alt = ci.get("alt", "").strip()
+                if alt and len(alt) < 25:
+                    counters.append(alt)
 
         champions.append({
-            "rank": int(texts[0]) if texts[0].isdigit() else texts[0],
+            "rank": rank,
             "name": name,
-            "games_played": _clean_num(texts[2]) if len(texts) > 2 else None,
-            "kda": texts[3] if len(texts) > 3 else None,
-            "win_rate": _clean_rate(texts[4]) if len(texts) > 4 else None,
-            "pick_rate": _clean_rate(texts[5]) if len(texts) > 5 else None,
-            "ban_rate": _clean_rate(texts[6]) if len(texts) > 6 else None,
-            "cs": texts[7] if len(texts) > 7 else None,
-            "gold": _clean_num(texts[8]) if len(texts) > 8 else None,
+            "slug": slug,
+            "role": position,
+            "win_rate": win_rate,
+            "pick_rate": pick_rate,
+            "ban_rate": ban_rate,
+            "counters": counters[:3],
         })
+
+    # Dédupliquer
+    seen = set()
+    unique = []
+    for c in champions:
+        if c["name"].lower() not in seen:
+            seen.add(c["name"].lower())
+            unique.append(c)
+    champions = unique
 
     if champions:
         cache_file.write_text(json.dumps(champions, ensure_ascii=False, indent=2), encoding="utf-8")
