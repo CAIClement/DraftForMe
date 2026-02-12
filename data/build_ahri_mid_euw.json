@@ -1,0 +1,55 @@
+{
+  "champion": "ahri",
+  "role": "mid",
+  "core_items": [
+    {
+      "id": "1056",
+      "name": "Doran's Ring",
+      "image": "https://opgg-static.akamaized.net/meta/images/lol/16.3.1/item/1056.png"
+    },
+    {
+      "id": "2003",
+      "name": "Health Potion",
+      "image": "https://opgg-static.akamaized.net/meta/images/lol/16.3.1/item/2003.png"
+    },
+    {
+      "id": "3020",
+      "name": "Sorcerer's Shoes",
+      "image": "https://opgg-static.akamaized.net/meta/images/lol/16.3.1/item/3020.png"
+    },
+    {
+      "id": "3158",
+      "name": "Ionian Boots of Lucidity",
+      "image": "https://opgg-static.akamaized.net/meta/images/lol/16.3.1/item/3158.png"
+    },
+    {
+      "id": "3118",
+      "name": "Malignance",
+      "image": "https://opgg-static.akamaized.net/meta/images/lol/16.3.1/item/3118.png"
+    },
+    {
+      "id": "4645",
+      "name": "Shadowflame",
+      "image": "https://opgg-static.akamaized.net/meta/images/lol/16.3.1/item/4645.png"
+    }
+  ],
+  "starter_items": [
+    {
+      "id": "3089",
+      "name": "Rabadon's Deathcap",
+      "image": "https://opgg-static.akamaized.net/meta/images/lol/16.3.1/item/3089.png"
+    },
+    {
+      "id": "3157",
+      "name": "Zhonya's Hourglass",
+      "image": "https://opgg-static.akamaized.net/meta/images/lol/16.3.1/item/3157.png"
+    },
+    {
+      "id": "1082",
+      "name": "Dark Seal",
+      "image": "https://opgg-static.akamaized.net/meta/images/lol/16.3.1/item/1082.png"
+    }
+  ],
+  "boots": null,
+  "skill_order": null
+}

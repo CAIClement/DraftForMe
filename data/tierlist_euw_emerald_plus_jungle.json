@@ -1,0 +1,772 @@
+[
+  {
+    "rank": 1,
+    "name": "Kha'Zix",
+    "slug": "khazix",
+    "role": "jungle",
+    "win_rate": 51.83,
+    "pick_rate": 12.09,
+    "ban_rate": 12.94,
+    "counters": [
+      "chogath",
+      "zed",
+      "nidalee"
+    ]
+  },
+  {
+    "rank": 2,
+    "name": "Shaco",
+    "slug": "shaco",
+    "role": "jungle",
+    "win_rate": 52.4,
+    "pick_rate": 5.47,
+    "ban_rate": 15.12,
+    "counters": [
+      "fiddlesticks",
+      "nidalee",
+      "ivern"
+    ]
+  },
+  {
+    "rank": 3,
+    "name": "Fiddlesticks",
+    "slug": "fiddlesticks",
+    "role": "jungle",
+    "win_rate": 52.79,
+    "pick_rate": 3.95,
+    "ban_rate": 2.99,
+    "counters": [
+      "nasus",
+      "belveth",
+      "chogath"
+    ]
+  },
+  {
+    "rank": 4,
+    "name": "Nunu & Willump",
+    "slug": "nunu",
+    "role": "jungle",
+    "win_rate": 53.09,
+    "pick_rate": 3.2,
+    "ban_rate": 1.62,
+    "counters": [
+      "aatrox",
+      "nidalee",
+      "vi"
+    ]
+  },
+  {
+    "rank": 5,
+    "name": "Briar",
+    "slug": "briar",
+    "role": "jungle",
+    "win_rate": 52.02,
+    "pick_rate": 5.27,
+    "ban_rate": 9.03,
+    "counters": [
+      "nasus",
+      "nidalee",
+      "ekko"
+    ]
+  },
+  {
+    "rank": 6,
+    "name": "Zac",
+    "slug": "zac",
+    "role": "jungle",
+    "win_rate": 52.44,
+    "pick_rate": 3.92,
+    "ban_rate": 3.05,
+    "counters": [
+      "chogath",
+      "pantheon",
+      "sejuani"
+    ]
+  },
+  {
+    "rank": 7,
+    "name": "Gwen",
+    "slug": "gwen",
+    "role": "jungle",
+    "win_rate": 52.13,
+    "pick_rate": 3.41,
+    "ban_rate": 17.64,
+    "counters": [
+      "zed",
+      "nunu",
+      "belveth"
+    ]
+  },
+  {
+    "rank": 8,
+    "name": "Diana",
+    "slug": "diana",
+    "role": "jungle",
+    "win_rate": 50.59,
+    "pick_rate": 7.01,
+    "ban_rate": 25.54,
+    "counters": [
+      "nasus",
+      "ivern",
+      "skarner"
+    ]
+  },
+  {
+    "rank": 9,
+    "name": "Viego",
+    "slug": "viego",
+    "role": "jungle",
+    "win_rate": 49.21,
+    "pick_rate": 14.32,
+    "ban_rate": 23.1,
+    "counters": [
+      "shaco",
+      "warwick",
+      "elise"
+    ]
+  },
+  {
+    "rank": 10,
+    "name": "Dr. Mundo",
+    "slug": "drmundo",
+    "role": "jungle",
+    "win_rate": 51.19,
+    "pick_rate": 5.22,
+    "ban_rate": 13.13,
+    "counters": [
+      "zac",
+      "elise",
+      "nunu"
+    ]
+  },
+  {
+    "rank": 11,
+    "name": "Elise",
+    "slug": "elise",
+    "role": "jungle",
+    "win_rate": 52.13,
+    "pick_rate": 3.44,
+    "ban_rate": 2.2,
+    "counters": [
+      "shyvana",
+      "rammus",
+      "qiyana"
+    ]
+  },
+  {
+    "rank": 12,
+    "name": "Nasus",
+    "slug": "nasus",
+    "role": "jungle",
+    "win_rate": 53.3,
+    "pick_rate": 1.69,
+    "ban_rate": 3.48,
+    "counters": [
+      "masteryi",
+      "ivern",
+      "nunu"
+    ]
+  },
+  {
+    "rank": 13,
+    "name": "Evelynn",
+    "slug": "evelynn",
+    "role": "jungle",
+    "win_rate": 52.07,
+    "pick_rate": 3.27,
+    "ban_rate": 4.5,
+    "counters": [
+      "sejuani",
+      "chogath",
+      "udyr"
+    ]
+  },
+  {
+    "rank": 14,
+    "name": "Zaahen",
+    "slug": "zaahen",
+    "role": "jungle",
+    "win_rate": 50.84,
+    "pick_rate": 5.18,
+    "ban_rate": 11.0,
+    "counters": [
+      "taliyah",
+      "chogath",
+      "teemo"
+    ]
+  },
+  {
+    "rank": 15,
+    "name": "Xin Zhao",
+    "slug": "xinzhao",
+    "role": "jungle",
+    "win_rate": 51.09,
+    "pick_rate": 5.11,
+    "ban_rate": 1.12,
+    "counters": [
+      "teemo",
+      "gwen",
+      "nasus"
+    ]
+  },
+  {
+    "rank": 16,
+    "name": "Hecarim",
+    "slug": "hecarim",
+    "role": "jungle",
+    "win_rate": 50.98,
+    "pick_rate": 5.16,
+    "ban_rate": 5.82,
+    "counters": [
+      "amumu",
+      "zed",
+      "lillia"
+    ]
+  },
+  {
+    "rank": 17,
+    "name": "Bel'Veth",
+    "slug": "belveth",
+    "role": "jungle",
+    "win_rate": 52.25,
+    "pick_rate": 2.55,
+    "ban_rate": 6.57,
+    "counters": [
+      "pantheon",
+      "briar",
+      "evelynn"
+    ]
+  },
+  {
+    "rank": 18,
+    "name": "Master Yi",
+    "slug": "masteryi",
+    "role": "jungle",
+    "win_rate": 51.1,
+    "pick_rate": 4.43,
+    "ban_rate": 10.18,
+    "counters": [
+      "nidalee",
+      "shaco",
+      "reksai"
+    ]
+  },
+  {
+    "rank": 19,
+    "name": "Jarvan IV",
+    "slug": "jarvaniv",
+    "role": "jungle",
+    "win_rate": 50.33,
+    "pick_rate": 6.86,
+    "ban_rate": 2.47,
+    "counters": [
+      "gwen",
+      "belveth",
+      "aatrox"
+    ]
+  },
+  {
+    "rank": 20,
+    "name": "Ekko",
+    "slug": "ekko",
+    "role": "jungle",
+    "win_rate": 50.41,
+    "pick_rate": 5.57,
+    "ban_rate": 12.75,
+    "counters": [
+      "karthus",
+      "elise",
+      "sejuani"
+    ]
+  },
+  {
+    "rank": 21,
+    "name": "Nocturne",
+    "slug": "nocturne",
+    "role": "jungle",
+    "win_rate": 51.18,
+    "pick_rate": 3.85,
+    "ban_rate": 3.2,
+    "counters": [
+      "gwen",
+      "zaahen",
+      "udyr"
+    ]
+  },
+  {
+    "rank": 22,
+    "name": "Volibear",
+    "slug": "volibear",
+    "role": "jungle",
+    "win_rate": 50.72,
+    "pick_rate": 4.24,
+    "ban_rate": 9.76,
+    "counters": [
+      "skarner",
+      "jax",
+      "jarvaniv"
+    ]
+  },
+  {
+    "rank": 23,
+    "name": "Amumu",
+    "slug": "amumu",
+    "role": "jungle",
+    "win_rate": 51.95,
+    "pick_rate": 2.44,
+    "ban_rate": 1.28,
+    "counters": [
+      "aatrox",
+      "nasus",
+      "shyvana"
+    ]
+  },
+  {
+    "rank": 24,
+    "name": "Kayn",
+    "slug": "kayn",
+    "role": "jungle",
+    "win_rate": 50.22,
+    "pick_rate": 5.77,
+    "ban_rate": 3.0,
+    "counters": [
+      "trundle",
+      "ivern",
+      "teemo"
+    ]
+  },
+  {
+    "rank": 25,
+    "name": "Vi",
+    "slug": "vi",
+    "role": "jungle",
+    "win_rate": 50.73,
+    "pick_rate": 4.2,
+    "ban_rate": 0.58,
+    "counters": [
+      "nasus",
+      "warwick",
+      "ivern"
+    ]
+  },
+  {
+    "rank": 26,
+    "name": "Rek'Sai",
+    "slug": "reksai",
+    "role": "jungle",
+    "win_rate": 51.55,
+    "pick_rate": 2.52,
+    "ban_rate": 1.41,
+    "counters": [
+      "sejuani",
+      "amumu",
+      "udyr"
+    ]
+  },
+  {
+    "rank": 27,
+    "name": "Ivern",
+    "slug": "ivern",
+    "role": "jungle",
+    "win_rate": 52.22,
+    "pick_rate": 1.78,
+    "ban_rate": 0.84,
+    "counters": [
+      "fiddlesticks",
+      "masteryi",
+      "volibear"
+    ]
+  },
+  {
+    "rank": 28,
+    "name": "Rengar",
+    "slug": "rengar",
+    "role": "jungle",
+    "win_rate": 49.58,
+    "pick_rate": 5.42,
+    "ban_rate": 18.39,
+    "counters": [
+      "shyvana",
+      "rammus",
+      "pantheon"
+    ]
+  },
+  {
+    "rank": 29,
+    "name": "Talon",
+    "slug": "talon",
+    "role": "jungle",
+    "win_rate": 49.98,
+    "pick_rate": 4.38,
+    "ban_rate": 11.34,
+    "counters": [
+      "nasus",
+      "amumu",
+      "shyvana"
+    ]
+  },
+  {
+    "rank": 30,
+    "name": "Naafiri",
+    "slug": "naafiri",
+    "role": "jungle",
+    "win_rate": 49.81,
+    "pick_rate": 4.11,
+    "ban_rate": 19.96,
+    "counters": [
+      "belveth",
+      "hecarim",
+      "kayn"
+    ]
+  },
+  {
+    "rank": 31,
+    "name": "Warwick",
+    "slug": "warwick",
+    "role": "jungle",
+    "win_rate": 51.81,
+    "pick_rate": 1.76,
+    "ban_rate": 0.9,
+    "counters": [
+      "evelynn",
+      "monkeyking",
+      "nidalee"
+    ]
+  },
+  {
+    "rank": 32,
+    "name": "Udyr",
+    "slug": "udyr",
+    "role": "jungle",
+    "win_rate": 51.42,
+    "pick_rate": 1.98,
+    "ban_rate": 0.96,
+    "counters": [
+      "nasus",
+      "nidalee",
+      "elise"
+    ]
+  },
+  {
+    "rank": 33,
+    "name": "Rammus",
+    "slug": "rammus",
+    "role": "jungle",
+    "win_rate": 51.74,
+    "pick_rate": 1.65,
+    "ban_rate": 2.36,
+    "counters": [
+      "graves",
+      "reksai",
+      "zac"
+    ]
+  },
+  {
+    "rank": 34,
+    "name": "Kindred",
+    "slug": "kindred",
+    "role": "jungle",
+    "win_rate": 51.12,
+    "pick_rate": 2.11,
+    "ban_rate": 1.11,
+    "counters": [
+      "sejuani",
+      "nasus",
+      "vi"
+    ]
+  },
+  {
+    "rank": 35,
+    "name": "Jax",
+    "slug": "jax",
+    "role": "jungle",
+    "win_rate": 50.31,
+    "pick_rate": 2.63,
+    "ban_rate": 15.21,
+    "counters": [
+      "malphite",
+      "nunu",
+      "leesin"
+    ]
+  },
+  {
+    "rank": 36,
+    "name": "Sejuani",
+    "slug": "sejuani",
+    "role": "jungle",
+    "win_rate": 51.01,
+    "pick_rate": 1.81,
+    "ban_rate": 0.16,
+    "counters": [
+      "zyra",
+      "udyr",
+      "shaco"
+    ]
+  },
+  {
+    "rank": 37,
+    "name": "Lillia",
+    "slug": "lillia",
+    "role": "jungle",
+    "win_rate": 50.35,
+    "pick_rate": 2.35,
+    "ban_rate": 1.64,
+    "counters": [
+      "rengar",
+      "sejuani",
+      "naafiri"
+    ]
+  },
+  {
+    "rank": 38,
+    "name": "Wukong",
+    "slug": "monkeyking",
+    "role": "jungle",
+    "win_rate": 50.21,
+    "pick_rate": 2.47,
+    "ban_rate": 0.75,
+    "counters": [
+      "aatrox",
+      "udyr",
+      "shaco"
+    ]
+  },
+  {
+    "rank": 39,
+    "name": "Sylas",
+    "slug": "sylas",
+    "role": "jungle",
+    "win_rate": 49.61,
+    "pick_rate": 3.03,
+    "ban_rate": 7.81,
+    "counters": [
+      "rammus",
+      "kindred",
+      "masteryi"
+    ]
+  },
+  {
+    "rank": 40,
+    "name": "Lee Sin",
+    "slug": "leesin",
+    "role": "jungle",
+    "win_rate": 48.62,
+    "pick_rate": 4.92,
+    "ban_rate": 1.46,
+    "counters": [
+      "rammus",
+      "ivern",
+      "naafiri"
+    ]
+  },
+  {
+    "rank": 41,
+    "name": "Zyra",
+    "slug": "zyra",
+    "role": "jungle",
+    "win_rate": 51.19,
+    "pick_rate": 1.3,
+    "ban_rate": 2.37,
+    "counters": [
+      "nocturne",
+      "nasus",
+      "kindred"
+    ]
+  },
+  {
+    "rank": 42,
+    "name": "Cho'Gath",
+    "slug": "chogath",
+    "role": "jungle",
+    "win_rate": 52.12,
+    "pick_rate": 0.61,
+    "ban_rate": 0.78,
+    "counters": [
+      "volibear",
+      "rengar",
+      "kayn"
+    ]
+  },
+  {
+    "rank": 43,
+    "name": "Aatrox",
+    "slug": "aatrox",
+    "role": "jungle",
+    "win_rate": 50.54,
+    "pick_rate": 1.25,
+    "ban_rate": 6.46,
+    "counters": [
+      "shaco",
+      "kindred",
+      "masteryi"
+    ]
+  },
+  {
+    "rank": 44,
+    "name": "Ambessa",
+    "slug": "ambessa",
+    "role": "jungle",
+    "win_rate": 47.63,
+    "pick_rate": 3.58,
+    "ban_rate": 11.01,
+    "counters": [
+      "fiddlesticks",
+      "masteryi",
+      "kindred"
+    ]
+  },
+  {
+    "rank": 45,
+    "name": "Shyvana",
+    "slug": "shyvana",
+    "role": "jungle",
+    "win_rate": 50.18,
+    "pick_rate": 1.09,
+    "ban_rate": 0.13,
+    "counters": [
+      "volibear",
+      "reksai",
+      "sylas"
+    ]
+  },
+  {
+    "rank": 46,
+    "name": "Trundle",
+    "slug": "trundle",
+    "role": "jungle",
+    "win_rate": 50.2,
+    "pick_rate": 1.0,
+    "ban_rate": 0.45,
+    "counters": [
+      "jax",
+      "udyr",
+      "khazix"
+    ]
+  },
+  {
+    "rank": 47,
+    "name": "Nidalee",
+    "slug": "nidalee",
+    "role": "jungle",
+    "win_rate": 49.23,
+    "pick_rate": 1.57,
+    "ban_rate": 0.3,
+    "counters": [
+      "jax",
+      "lillia",
+      "amumu"
+    ]
+  },
+  {
+    "rank": 48,
+    "name": "Taliyah",
+    "slug": "taliyah",
+    "role": "jungle",
+    "win_rate": 49.52,
+    "pick_rate": 1.25,
+    "ban_rate": 0.84,
+    "counters": [
+      "nunu",
+      "reksai",
+      "evelynn"
+    ]
+  },
+  {
+    "rank": 49,
+    "name": "Graves",
+    "slug": "graves",
+    "role": "jungle",
+    "win_rate": 48.78,
+    "pick_rate": 1.79,
+    "ban_rate": 0.34,
+    "counters": [
+      "elise",
+      "diana",
+      "nunu"
+    ]
+  },
+  {
+    "rank": 50,
+    "name": "Zed",
+    "slug": "zed",
+    "role": "jungle",
+    "win_rate": 48.32,
+    "pick_rate": 1.52,
+    "ban_rate": 23.42,
+    "counters": [
+      "qiyana",
+      "nasus",
+      "ekko"
+    ]
+  },
+  {
+    "rank": 51,
+    "name": "Skarner",
+    "slug": "skarner",
+    "role": "jungle",
+    "win_rate": 50.74,
+    "pick_rate": 0.54,
+    "ban_rate": 0.1,
+    "counters": [
+      "fiddlesticks",
+      "ekko",
+      "evelynn"
+    ]
+  },
+  {
+    "rank": 52,
+    "name": "Qiyana",
+    "slug": "qiyana",
+    "role": "jungle",
+    "win_rate": 47.76,
+    "pick_rate": 2.17,
+    "ban_rate": 6.02,
+    "counters": [
+      "udyr",
+      "rengar",
+      "drmundo"
+    ]
+  },
+  {
+    "rank": 53,
+    "name": "Karthus",
+    "slug": "karthus",
+    "role": "jungle",
+    "win_rate": 48.6,
+    "pick_rate": 1.37,
+    "ban_rate": 0.59,
+    "counters": [
+      "hecarim",
+      "ivern",
+      "monkeyking"
+    ]
+  },
+  {
+    "rank": 54,
+    "name": "Malphite",
+    "slug": "malphite",
+    "role": "jungle",
+    "win_rate": 47.23,
+    "pick_rate": 1.68,
+    "ban_rate": 28.25,
+    "counters": [
+      "elise",
+      "amumu",
+      "drmundo"
+    ]
+  },
+  {
+    "rank": 55,
+    "name": "Jayce",
+    "slug": "jayce",
+    "role": "jungle",
+    "win_rate": 46.61,
+    "pick_rate": 2.17,
+    "ban_rate": 3.18,
+    "counters": [
+      "sejuani",
+      "rammus",
+      "zyra"
+    ]
+  }
+]

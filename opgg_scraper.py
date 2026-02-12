@@ -278,6 +278,83 @@ def fetch_champion_stats(region: str = "euw", tier: str = "emerald_plus", role: 
 # Matchups / Counterpicks (op.gg/lol/champions/{name}/counters)
 # ---------------------------------------------------------------------------
 
+# ---------------------------------------------------------------------------
+# Build / Items recommandés (op.gg/lol/champions/{name}/build/{role})
+# ---------------------------------------------------------------------------
+
+def fetch_champion_build(champion_slug: str, role: str = "mid", region: str = "euw") -> dict:
+    """Récupère les items recommandés pour un champion depuis la page build op.gg.
+    Retourne {"items": [...], "boots": ..., "starter": [...], "skills": ...}
+    """
+    slug = champion_slug.lower().replace(" ", "").replace("'", "").replace(".", "")
+    position = ROLE_TO_POSITION.get(role, role)
+    cache_key = f"build_{slug}_{position}_{region}"
+    cache_file = DATA_DIR / f"{cache_key}.json"
+    if cache_file.exists():
+        age_h = (time.time() - cache_file.stat().st_mtime) / 3600
+        if age_h < 12:
+            return json.loads(cache_file.read_text(encoding="utf-8"))
+
+    driver = get_driver()
+    url = f"https://op.gg/lol/champions/{slug}/build/{position}?region={region}"
+    driver.get(url)
+
+    try:
+        WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, "img[src*='item']"))
+        )
+    except Exception:
+        pass
+    time.sleep(2)
+
+    soup = BeautifulSoup(driver.page_source, "html.parser")
+    build = {"champion": champion_slug, "role": position, "core_items": [], "starter_items": [], "boots": None, "skill_order": None}
+
+    # Items sont des images avec src contenant "item/" et un ID
+    # ex: https://opgg-static.akamaized.net/meta/images/lol/.../item/3089.png
+    all_item_imgs = soup.select("img[src*='/item/']")
+
+    # Extraire les IDs d'items uniques
+    item_ids_seen = []
+    item_names_seen = []
+    for img in all_item_imgs:
+        src = img.get("src", "")
+        alt = img.get("alt", "").strip()
+        # Extraire l'ID : .../item/3089.png
+        id_m = re.search(r"/item/(\d+)\.", src)
+        if id_m:
+            item_id = id_m.group(1)
+            if item_id not in item_ids_seen:
+                item_ids_seen.append(item_id)
+                item_names_seen.append({"id": item_id, "name": alt or item_id, "image": src.split("?")[0]})
+
+    # Les premiers items sont generalement starter, puis core
+    # On prend les 6 premiers items comme core build
+    if item_names_seen:
+        build["core_items"] = item_names_seen[:6]
+        if len(item_names_seen) > 6:
+            build["starter_items"] = item_names_seen[6:9]
+
+    # Skill order : chercher des patterns Q/W/E/R
+    skill_text = ""
+    for el in soup.select("[class*='skill'], [class*='Skill']"):
+        text = el.get_text(strip=True)
+        if any(c in text for c in ["Q", "W", "E", "R"]) and len(text) < 20:
+            skill_text = text
+            break
+    if not skill_text:
+        # Chercher dans le texte general
+        page_text = soup.get_text()
+        skill_m = re.search(r"([QWER])\s*>\s*([QWER])\s*>\s*([QWER])", page_text)
+        if skill_m:
+            skill_text = f"{skill_m.group(1)} > {skill_m.group(2)} > {skill_m.group(3)}"
+    build["skill_order"] = skill_text or None
+
+    if build["core_items"]:
+        cache_file.write_text(json.dumps(build, ensure_ascii=False, indent=2), encoding="utf-8")
+    return build
+
+
 def fetch_champion_matchups(champion_name: str, role: str = "", region: str = "euw") -> dict:
     """Récupère les matchups pour un champion donné.
     Retourne {"strong_against": [...], "weak_against": [...], "all_matchups": [...]}

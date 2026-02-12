@@ -1,0 +1,55 @@
+{
+  "champion": "kled",
+  "role": "top",
+  "core_items": [
+    {
+      "id": "1055",
+      "name": "Doran's Blade",
+      "image": "https://opgg-static.akamaized.net/meta/images/lol/16.3.1/item/1055.png"
+    },
+    {
+      "id": "2003",
+      "name": "Health Potion",
+      "image": "https://opgg-static.akamaized.net/meta/images/lol/16.3.1/item/2003.png"
+    },
+    {
+      "id": "1054",
+      "name": "Doran's Shield",
+      "image": "https://opgg-static.akamaized.net/meta/images/lol/16.3.1/item/1054.png"
+    },
+    {
+      "id": "3047",
+      "name": "Plated Steelcaps",
+      "image": "https://opgg-static.akamaized.net/meta/images/lol/16.3.1/item/3047.png"
+    },
+    {
+      "id": "3111",
+      "name": "Mercury's Treads",
+      "image": "https://opgg-static.akamaized.net/meta/images/lol/16.3.1/item/3111.png"
+    },
+    {
+      "id": "3748",
+      "name": "Titanic Hydra",
+      "image": "https://opgg-static.akamaized.net/meta/images/lol/16.3.1/item/3748.png"
+    }
+  ],
+  "starter_items": [
+    {
+      "id": "3181",
+      "name": "Hullbreaker",
+      "image": "https://opgg-static.akamaized.net/meta/images/lol/16.3.1/item/3181.png"
+    },
+    {
+      "id": "2501",
+      "name": "Overlord's Bloodmail",
+      "image": "https://opgg-static.akamaized.net/meta/images/lol/16.3.1/item/2501.png"
+    },
+    {
+      "id": "3071",
+      "name": "Black Cleaver",
+      "image": "https://opgg-static.akamaized.net/meta/images/lol/16.3.1/item/3071.png"
+    }
+  ],
+  "boots": null,
+  "skill_order": null
+}

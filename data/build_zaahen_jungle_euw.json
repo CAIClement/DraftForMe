@@ -1,0 +1,55 @@
+{
+  "champion": "zaahen",
+  "role": "jungle",
+  "core_items": [
+    {
+      "id": "1102",
+      "name": "Gustwalker Hatchling",
+      "image": "https://opgg-static.akamaized.net/meta/images/lol/16.3.1/item/1102.png"
+    },
+    {
+      "id": "2003",
+      "name": "Health Potion",
+      "image": "https://opgg-static.akamaized.net/meta/images/lol/16.3.1/item/2003.png"
+    },
+    {
+      "id": "3047",
+      "name": "Plated Steelcaps",
+      "image": "https://opgg-static.akamaized.net/meta/images/lol/16.3.1/item/3047.png"
+    },
+    {
+      "id": "3111",
+      "name": "Mercury's Treads",
+      "image": "https://opgg-static.akamaized.net/meta/images/lol/16.3.1/item/3111.png"
+    },
+    {
+      "id": "3078",
+      "name": "Trinity Force",
+      "image": "https://opgg-static.akamaized.net/meta/images/lol/16.3.1/item/3078.png"
+    },
+    {
+      "id": "6610",
+      "name": "Sundered Sky",
+      "image": "https://opgg-static.akamaized.net/meta/images/lol/16.3.1/item/6610.png"
+    }
+  ],
+  "starter_items": [
+    {
+      "id": "6333",
+      "name": "Death's Dance",
+      "image": "https://opgg-static.akamaized.net/meta/images/lol/16.3.1/item/6333.png"
+    },
+    {
+      "id": "2517",
+      "name": "Endless Hunger",
+      "image": "https://opgg-static.akamaized.net/meta/images/lol/16.3.1/item/2517.png"
+    },
+    {
+      "id": "6631",
+      "name": "Stridebreaker",
+      "image": "https://opgg-static.akamaized.net/meta/images/lol/16.3.1/item/6631.png"
+    }
+  ],
+  "boots": null,
+  "skill_order": null
+}

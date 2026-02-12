@@ -1,0 +1,55 @@
+{
+  "champion": "nami",
+  "role": "support",
+  "core_items": [
+    {
+      "id": "2003",
+      "name": "Health Potion",
+      "image": "https://opgg-static.akamaized.net/meta/images/lol/16.3.1/item/2003.png"
+    },
+    {
+      "id": "3158",
+      "name": "Ionian Boots of Lucidity",
+      "image": "https://opgg-static.akamaized.net/meta/images/lol/16.3.1/item/3158.png"
+    },
+    {
+      "id": "3009",
+      "name": "Boots of Swiftness",
+      "image": "https://opgg-static.akamaized.net/meta/images/lol/16.3.1/item/3009.png"
+    },
+    {
+      "id": "3870",
+      "name": "3870",
+      "image": "https://opgg-static.akamaized.net/meta/images/lol/16.3.1/item/3870.png"
+    },
+    {
+      "id": "3876",
+      "name": "3876",
+      "image": "https://opgg-static.akamaized.net/meta/images/lol/16.3.1/item/3876.png"
+    },
+    {
+      "id": "4005",
+      "name": "Imperial Mandate",
+      "image": "https://opgg-static.akamaized.net/meta/images/lol/16.3.1/item/4005.png"
+    }
+  ],
+  "starter_items": [
+    {
+      "id": "6617",
+      "name": "Moonstone Renewer",
+      "image": "https://opgg-static.akamaized.net/meta/images/lol/16.3.1/item/6617.png"
+    },
+    {
+      "id": "3107",
+      "name": "Redemption",
+      "image": "https://opgg-static.akamaized.net/meta/images/lol/16.3.1/item/3107.png"
+    },
+    {
+      "id": "3504",
+      "name": "Ardent Censer",
+      "image": "https://opgg-static.akamaized.net/meta/images/lol/16.3.1/item/3504.png"
+    }
+  ],
+  "boots": null,
+  "skill_order": null
+}

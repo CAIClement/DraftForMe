@@ -1,0 +1,576 @@
+[
+  {
+    "rank": 1,
+    "name": "Nami",
+    "slug": "nami",
+    "role": "support",
+    "win_rate": 51.93,
+    "pick_rate": 19.8,
+    "ban_rate": 4.88,
+    "counters": [
+      "blitzcrank",
+      "fiddlesticks",
+      "maokai"
+    ]
+  },
+  {
+    "rank": 2,
+    "name": "Braum",
+    "slug": "braum",
+    "role": "support",
+    "win_rate": 51.79,
+    "pick_rate": 10.39,
+    "ban_rate": 22.8,
+    "counters": [
+      "janna",
+      "taric",
+      "sona"
+    ]
+  },
+  {
+    "rank": 3,
+    "name": "Thresh",
+    "slug": "thresh",
+    "role": "support",
+    "win_rate": 51.41,
+    "pick_rate": 12.22,
+    "ban_rate": 4.72,
+    "counters": [
+      "fiddlesticks",
+      "ashe",
+      "brand"
+    ]
+  },
+  {
+    "rank": 4,
+    "name": "Janna",
+    "slug": "janna",
+    "role": "support",
+    "win_rate": 52.22,
+    "pick_rate": 6.74,
+    "ban_rate": 2.38,
+    "counters": [
+      "pantheon",
+      "taric",
+      "blitzcrank"
+    ]
+  },
+  {
+    "rank": 5,
+    "name": "Lulu",
+    "slug": "lulu",
+    "role": "support",
+    "win_rate": 50.84,
+    "pick_rate": 9.9,
+    "ban_rate": 8.86,
+    "counters": [
+      "braum",
+      "thresh",
+      "velkoz"
+    ]
+  },
+  {
+    "rank": 6,
+    "name": "Leona",
+    "slug": "leona",
+    "role": "support",
+    "win_rate": 51.25,
+    "pick_rate": 6.98,
+    "ban_rate": 4.17,
+    "counters": [
+      "shaco",
+      "renata",
+      "soraka"
+    ]
+  },
+  {
+    "rank": 7,
+    "name": "Zilean",
+    "slug": "zilean",
+    "role": "support",
+    "win_rate": 52.08,
+    "pick_rate": 4.0,
+    "ban_rate": 2.37,
+    "counters": [
+      "tahmkench",
+      "pyke",
+      "fiddlesticks"
+    ]
+  },
+  {
+    "rank": 8,
+    "name": "Blitzcrank",
+    "slug": "blitzcrank",
+    "role": "support",
+    "win_rate": 51.85,
+    "pick_rate": 4.48,
+    "ban_rate": 7.66,
+    "counters": [
+      "leona",
+      "pyke",
+      "renata"
+    ]
+  },
+  {
+    "rank": 9,
+    "name": "Sona",
+    "slug": "sona",
+    "role": "support",
+    "win_rate": 51.34,
+    "pick_rate": 6.18,
+    "ban_rate": 1.51,
+    "counters": [
+      "taric",
+      "maokai",
+      "blitzcrank"
+    ]
+  },
+  {
+    "rank": 10,
+    "name": "Maokai",
+    "slug": "maokai",
+    "role": "support",
+    "win_rate": 53.01,
+    "pick_rate": 2.19,
+    "ban_rate": 0.15,
+    "counters": [
+      "renata",
+      "taric",
+      "zyra"
+    ]
+  },
+  {
+    "rank": 11,
+    "name": "Milio",
+    "slug": "milio",
+    "role": "support",
+    "win_rate": 50.67,
+    "pick_rate": 8.5,
+    "ban_rate": 7.97,
+    "counters": [
+      "elise",
+      "brand",
+      "zilean"
+    ]
+  },
+  {
+    "rank": 12,
+    "name": "Karma",
+    "slug": "karma",
+    "role": "support",
+    "win_rate": 50.1,
+    "pick_rate": 9.8,
+    "ban_rate": 4.66,
+    "counters": [
+      "renata",
+      "elise",
+      "poppy"
+    ]
+  },
+  {
+    "rank": 13,
+    "name": "Nautilus",
+    "slug": "nautilus",
+    "role": "support",
+    "win_rate": 49.96,
+    "pick_rate": 9.8,
+    "ban_rate": 10.45,
+    "counters": [
+      "brand",
+      "taric",
+      "swain"
+    ]
+  },
+  {
+    "rank": 14,
+    "name": "Pyke",
+    "slug": "pyke",
+    "role": "support",
+    "win_rate": 50.69,
+    "pick_rate": 5.59,
+    "ban_rate": 25.24,
+    "counters": [
+      "elise",
+      "maokai",
+      "renata"
+    ]
+  },
+  {
+    "rank": 15,
+    "name": "Soraka",
+    "slug": "soraka",
+    "role": "support",
+    "win_rate": 51.1,
+    "pick_rate": 4.93,
+    "ban_rate": 1.99,
+    "counters": [
+      "rell",
+      "xerath",
+      "nami"
+    ]
+  },
+  {
+    "rank": 16,
+    "name": "Bard",
+    "slug": "bard",
+    "role": "support",
+    "win_rate": 50.1,
+    "pick_rate": 8.61,
+    "ban_rate": 5.68,
+    "counters": [
+      "zyra",
+      "maokai",
+      "yuumi"
+    ]
+  },
+  {
+    "rank": 17,
+    "name": "Senna",
+    "slug": "senna",
+    "role": "support",
+    "win_rate": 50.99,
+    "pick_rate": 5.09,
+    "ban_rate": 0.69,
+    "counters": [
+      "zoe",
+      "elise",
+      "taric"
+    ]
+  },
+  {
+    "rank": 18,
+    "name": "Vel'Koz",
+    "slug": "velkoz",
+    "role": "support",
+    "win_rate": 51.64,
+    "pick_rate": 2.92,
+    "ban_rate": 1.26,
+    "counters": [
+      "maokai",
+      "alistar",
+      "zilean"
+    ]
+  },
+  {
+    "rank": 19,
+    "name": "Seraphine",
+    "slug": "seraphine",
+    "role": "support",
+    "win_rate": 51.12,
+    "pick_rate": 3.61,
+    "ban_rate": 0.42,
+    "counters": [
+      "taric",
+      "yuumi",
+      "leona"
+    ]
+  },
+  {
+    "rank": 20,
+    "name": "Rakan",
+    "slug": "rakan",
+    "role": "support",
+    "win_rate": 50.26,
+    "pick_rate": 4.77,
+    "ban_rate": 0.39,
+    "counters": [
+      "taric",
+      "zilean",
+      "sona"
+    ]
+  },
+  {
+    "rank": 21,
+    "name": "Brand",
+    "slug": "brand",
+    "role": "support",
+    "win_rate": 51.21,
+    "pick_rate": 2.39,
+    "ban_rate": 1.52,
+    "counters": [
+      "taric",
+      "poppy",
+      "maokai"
+    ]
+  },
+  {
+    "rank": 22,
+    "name": "Zyra",
+    "slug": "zyra",
+    "role": "support",
+    "win_rate": 50.6,
+    "pick_rate": 2.69,
+    "ban_rate": 2.37,
+    "counters": [
+      "tahmkench",
+      "shaco",
+      "alistar"
+    ]
+  },
+  {
+    "rank": 23,
+    "name": "Taric",
+    "slug": "taric",
+    "role": "support",
+    "win_rate": 51.5,
+    "pick_rate": 1.56,
+    "ban_rate": 0.22,
+    "counters": [
+      "velkoz",
+      "rell",
+      "yuumi"
+    ]
+  },
+  {
+    "rank": 24,
+    "name": "Morgana",
+    "slug": "morgana",
+    "role": "support",
+    "win_rate": 49.96,
+    "pick_rate": 3.73,
+    "ban_rate": 8.97,
+    "counters": [
+      "blitzcrank",
+      "karma",
+      "zoe"
+    ]
+  },
+  {
+    "rank": 25,
+    "name": "Alistar",
+    "slug": "alistar",
+    "role": "support",
+    "win_rate": 49.12,
+    "pick_rate": 5.17,
+    "ban_rate": 1.61,
+    "counters": [
+      "renata",
+      "morgana",
+      "zilean"
+    ]
+  },
+  {
+    "rank": 26,
+    "name": "Neeko",
+    "slug": "neeko",
+    "role": "support",
+    "win_rate": 49.76,
+    "pick_rate": 2.96,
+    "ban_rate": 1.0,
+    "counters": [
+      "zoe",
+      "tahmkench",
+      "zilean"
+    ]
+  },
+  {
+    "rank": 27,
+    "name": "Rell",
+    "slug": "rell",
+    "role": "support",
+    "win_rate": 49.48,
+    "pick_rate": 3.1,
+    "ban_rate": 0.84,
+    "counters": [
+      "neeko",
+      "zilean",
+      "renata"
+    ]
+  },
+  {
+    "rank": 28,
+    "name": "Renata Glasc",
+    "slug": "renata",
+    "role": "support",
+    "win_rate": 50.63,
+    "pick_rate": 1.52,
+    "ban_rate": 0.11,
+    "counters": [
+      "lux",
+      "bard",
+      "soraka"
+    ]
+  },
+  {
+    "rank": 29,
+    "name": "Poppy",
+    "slug": "poppy",
+    "role": "support",
+    "win_rate": 50.09,
+    "pick_rate": 1.84,
+    "ban_rate": 3.24,
+    "counters": [
+      "lux",
+      "taric",
+      "milio"
+    ]
+  },
+  {
+    "rank": 30,
+    "name": "Tahm Kench",
+    "slug": "tahmkench",
+    "role": "support",
+    "win_rate": 50.03,
+    "pick_rate": 1.88,
+    "ban_rate": 1.47,
+    "counters": [
+      "velkoz",
+      "taric",
+      "leona"
+    ]
+  },
+  {
+    "rank": 31,
+    "name": "Elise",
+    "slug": "elise",
+    "role": "support",
+    "win_rate": 50.28,
+    "pick_rate": 1.43,
+    "ban_rate": 2.2,
+    "counters": [
+      "maokai",
+      "poppy",
+      "swain"
+    ]
+  },
+  {
+    "rank": 32,
+    "name": "Lux",
+    "slug": "lux",
+    "role": "support",
+    "win_rate": 48.96,
+    "pick_rate": 3.2,
+    "ban_rate": 0.92,
+    "counters": [
+      "maokai",
+      "blitzcrank",
+      "morgana"
+    ]
+  },
+  {
+    "rank": 33,
+    "name": "Shaco",
+    "slug": "shaco",
+    "role": "support",
+    "win_rate": 49.42,
+    "pick_rate": 1.05,
+    "ban_rate": 15.12,
+    "counters": [
+      "alistar",
+      "seraphine",
+      "neeko"
+    ]
+  },
+  {
+    "rank": 34,
+    "name": "Yuumi",
+    "slug": "yuumi",
+    "role": "support",
+    "win_rate": 47.77,
+    "pick_rate": 3.33,
+    "ban_rate": 2.53,
+    "counters": [
+      "poppy",
+      "nautilus",
+      "velkoz"
+    ]
+  },
+  {
+    "rank": 35,
+    "name": "Xerath",
+    "slug": "xerath",
+    "role": "support",
+    "win_rate": 48.74,
+    "pick_rate": 1.56,
+    "ban_rate": 2.18,
+    "counters": [
+      "neeko",
+      "rell",
+      "rakan"
+    ]
+  },
+  {
+    "rank": 36,
+    "name": "Swain",
+    "slug": "swain",
+    "role": "support",
+    "win_rate": 48.03,
+    "pick_rate": 2.29,
+    "ban_rate": 3.77,
+    "counters": [
+      "morgana",
+      "seraphine",
+      "nami"
+    ]
+  },
+  {
+    "rank": 37,
+    "name": "Pantheon",
+    "slug": "pantheon",
+    "role": "support",
+    "win_rate": 47.94,
+    "pick_rate": 2.06,
+    "ban_rate": 0.93,
+    "counters": [
+      "xerath",
+      "taric",
+      "shaco"
+    ]
+  },
+  {
+    "rank": 38,
+    "name": "Zoe",
+    "slug": "zoe",
+    "role": "support",
+    "win_rate": 49.34,
+    "pick_rate": 0.68,
+    "ban_rate": 3.71,
+    "counters": [
+      "leona",
+      "soraka",
+      "rakan"
+    ]
+  },
+  {
+    "rank": 39,
+    "name": "Fiddlesticks",
+    "slug": "fiddlesticks",
+    "role": "support",
+    "win_rate": 49.21,
+    "pick_rate": 0.64,
+    "ban_rate": 2.99,
+    "counters": [
+      "rakan",
+      "sona",
+      "alistar"
+    ]
+  },
+  {
+    "rank": 40,
+    "name": "Ashe",
+    "slug": "ashe",
+    "role": "support",
+    "win_rate": 45.1,
+    "pick_rate": 0.72,
+    "ban_rate": 1.08,
+    "counters": [
+      "neeko",
+      "braum",
+      "nautilus"
+    ]
+  },
+  {
+    "rank": 41,
+    "name": "Mel",
+    "slug": "mel",
+    "role": "support",
+    "win_rate": 42.85,
+    "pick_rate": 0.86,
+    "ban_rate": 15.46,
+    "counters": [
+      "zyra",
+      "janna",
+      "leona"
+    ]
+  }
+]

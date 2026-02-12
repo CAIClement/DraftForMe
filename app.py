@@ -13,6 +13,7 @@ from flask_cors import CORS
 
 from opgg_scraper import (
     close_driver,
+    fetch_champion_build,
     fetch_champion_matchups,
     fetch_champion_stats,
     fetch_ddragon_champions,
@@ -85,6 +86,15 @@ def api_matchups(champion_name: str):
     data = fetch_champion_matchups(champion_name, role, region)
     with _lock:
         _cache["matchup_data"][champion_name] = data
+    return jsonify(data)
+
+
+@app.route("/api/build/<champion_slug>")
+def api_build(champion_slug: str):
+    """Items recommandés pour un champion."""
+    region = request.args.get("region", "euw")
+    role = request.args.get("role", "mid")
+    data = fetch_champion_build(champion_slug, role, region)
     return jsonify(data)
 
 

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DraftForMe - Pick Assistant</title>
+    <title>DraftForMe</title>
     <link rel="stylesheet" href="/static/css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 </head>
@@ -11,17 +11,15 @@
 
 <!-- HEADER -->
 <header id="app-header">
-    <div class="header-left"><h1>DraftForMe</h1></div>
-    <div class="header-right">
-        <select id="sel-region">
-            <option value="euw">EUW</option><option value="na">NA</option><option value="kr">KR</option>
-            <option value="eune">EUNE</option><option value="oce">OCE</option><option value="jp">JP</option>
-            <option value="br">BR</option><option value="tr">TR</option>
-        </select>
-    </div>
+    <h1>DraftForMe</h1>
+    <select id="sel-region">
+        <option value="euw">EUW</option><option value="na">NA</option><option value="kr">KR</option>
+        <option value="eune">EUNE</option><option value="oce">OCE</option><option value="jp">JP</option>
+        <option value="br">BR</option><option value="tr">TR</option>
+    </select>
 </header>
 
-<!-- SETUP -->
+<!-- SETUP (une seule barre) -->
 <section id="setup-panel">
     <div class="setup-row">
         <div class="setup-group">
@@ -55,56 +53,49 @@
         </div>
         <span id="stats-status" class="status-text"></span>
     </div>
-    <div id="player-pool-bar" class="hidden">
-        <span class="pool-label">Mon Pool :</span>
-        <div id="player-pool-icons"></div>
-        <button class="btn-small" onclick="openPoolEditor()">Modifier</button>
+    <!-- Enemy picks + bans + pool : barre inline -->
+    <div class="inline-bar">
+        <div class="ib-section">
+            <span class="ib-label">Picks Ennemis :</span>
+            <div id="enemy-picks-list" class="chip-list"></div>
+            <button class="btn-tiny btn-danger" onclick="clearEnemyPicks()">x</button>
+        </div>
+        <div class="ib-section">
+            <span class="ib-label">Bans :</span>
+            <div id="bans-list" class="chip-list"></div>
+            <button class="btn-tiny btn-danger" onclick="clearBans()">x</button>
+        </div>
+        <div class="ib-section">
+            <div class="mode-buttons">
+                <button id="btn-mode-pick" class="mode-btn active" onclick="setClickMode('enemy')">+ Ennemi</button>
+                <button id="btn-mode-ban" class="mode-btn" onclick="setClickMode('ban')">+ Ban</button>
+            </div>
+        </div>
+        <div id="player-pool-bar" class="ib-section hidden">
+            <span class="ib-label pool-label">Pool :</span>
+            <div id="player-pool-icons" class="chip-list"></div>
+            <button class="btn-tiny" onclick="openPoolEditor()">edit</button>
+        </div>
     </div>
 </section>
 
-<!-- MAIN LAYOUT : 3 colonnes, pas de scroll -->
+<!-- MAIN : 2 colonnes (grille + suggestions) -->
 <main id="main-layout">
-    <!-- LEFT -->
-    <section id="enemy-panel">
-        <div class="panel-section">
-            <h3>Picks Adverses</h3>
-            <p class="hint">Clique un champion pour l'ajouter.</p>
-            <div id="enemy-picks-list" class="pick-list"></div>
-            <button class="btn-small btn-danger" onclick="clearEnemyPicks()">Effacer</button>
-        </div>
-        <div class="panel-section">
-            <h3>Bans</h3>
-            <div id="bans-list" class="pick-list"></div>
-            <button class="btn-small btn-danger" onclick="clearBans()">Effacer</button>
-        </div>
-        <div class="panel-section">
-            <h3>Mode Clic</h3>
-            <div class="mode-buttons">
-                <button id="btn-mode-pick" class="mode-btn active" onclick="setClickMode('enemy')">Pick Ennemi</button>
-                <button id="btn-mode-ban" class="mode-btn" onclick="setClickMode('ban')">Ban</button>
-            </div>
-        </div>
-    </section>
-
-    <!-- CENTER : grille champions -->
     <section id="champion-grid-section">
         <div class="grid-toolbar">
-            <input type="text" id="champ-search" placeholder="Rechercher..." oninput="filterChampions()">
+            <input type="text" id="champ-search" placeholder="Rechercher un champion..." oninput="filterChampions()">
         </div>
         <div id="champion-grid" class="champion-grid"></div>
     </section>
 
-    <!-- RIGHT : suggestions uniquement -->
     <aside id="sidebar-right">
-        <div id="recommendations-panel">
-            <h3>Suggestions</h3>
-            <div id="rec-context" class="rec-context"></div>
-            <div id="rec-list"></div>
-        </div>
+        <h3>Suggestions <small id="rec-role-label"></small></h3>
+        <div id="rec-context" class="rec-context"></div>
+        <div id="rec-list"></div>
     </aside>
 </main>
 
-<!-- MODAL : Detail champion -->
+<!-- MODAL : Detail champion + items -->
 <div id="detail-overlay" class="modal-overlay hidden" onclick="closeDetail()">
     <div class="detail-panel" onclick="event.stopPropagation()">
         <button class="detail-close" onclick="closeDetail()">&times;</button>
@@ -122,10 +113,12 @@
             <div class="detail-weights" id="detail-weights"></div>
         </div>
         <div class="detail-section">
+            <h4>Build recommande</h4>
+            <div id="detail-items" class="detail-items"><span class="hint">Cliquez pour charger le build...</span></div>
+        </div>
+        <div class="detail-section">
             <h4>Profil</h4>
-            <div class="chart-container detail-chart">
-                <canvas id="chart-detail-radar"></canvas>
-            </div>
+            <div class="chart-container detail-chart"><canvas id="chart-detail-radar"></canvas></div>
         </div>
     </div>
 </div>
@@ -134,7 +127,6 @@
 <div id="modal-overlay" class="modal-overlay hidden" onclick="closeModal()">
     <div class="modal-content" onclick="event.stopPropagation()">
         <h2>Modifier mon Champion Pool</h2>
-        <p class="modal-hint">Cliquez sur un champion pour l'ajouter/retirer.</p>
         <input type="text" id="pool-search" placeholder="Rechercher..." oninput="filterPoolGrid()">
         <div id="pool-editor-grid" class="champion-grid small-grid"></div>
         <div class="modal-actions"><button class="btn-primary" onclick="closeModal()">Valider</button></div>
