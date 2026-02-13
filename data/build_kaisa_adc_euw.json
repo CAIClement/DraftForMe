@@ -1,0 +1,55 @@
+{
+  "champion": "kaisa",
+  "role": "adc",
+  "core_items": [
+    {
+      "id": "1055",
+      "name": "Doran's Blade",
+      "image": "https://opgg-static.akamaized.net/meta/images/lol/16.3.1/item/1055.png"
+    },
+    {
+      "id": "2003",
+      "name": "Health Potion",
+      "image": "https://opgg-static.akamaized.net/meta/images/lol/16.3.1/item/2003.png"
+    },
+    {
+      "id": "1083",
+      "name": "Cull",
+      "image": "https://opgg-static.akamaized.net/meta/images/lol/16.3.1/item/1083.png"
+    },
+    {
+      "id": "3006",
+      "name": "Berserker's Greaves",
+      "image": "https://opgg-static.akamaized.net/meta/images/lol/16.3.1/item/3006.png"
+    },
+    {
+      "id": "3020",
+      "name": "Sorcerer's Shoes",
+      "image": "https://opgg-static.akamaized.net/meta/images/lol/16.3.1/item/3020.png"
+    },
+    {
+      "id": "6672",
+      "name": "Kraken Slayer",
+      "image": "https://opgg-static.akamaized.net/meta/images/lol/16.3.1/item/6672.png"
+    }
+  ],
+  "starter_items": [
+    {
+      "id": "3124",
+      "name": "Guinsoo's Rageblade",
+      "image": "https://opgg-static.akamaized.net/meta/images/lol/16.3.1/item/3124.png"
+    },
+    {
+      "id": "2510",
+      "name": "Dusk and Dawn",
+      "image": "https://opgg-static.akamaized.net/meta/images/lol/16.3.1/item/2510.png"
+    },
+    {
+      "id": "3115",
+      "name": "Nashor's Tooth",
+      "image": "https://opgg-static.akamaized.net/meta/images/lol/16.3.1/item/3115.png"
+    }
+  ],
+  "boots": null,
+  "skill_order": null
+}

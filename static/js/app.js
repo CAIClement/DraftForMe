@@ -1,26 +1,43 @@
-/* DraftForMe v6 - No left bar, bigger icons, items build */
+/* DraftForMe v7 - Improved UX for new players */
 const state = {
     region:'euw', role:'mid', priority:50, clickMode:'enemy',
     ddragon:{}, championStats:[], playerPool:[], enemyPicks:[], bannedChamps:[],
-    recommendations:[], statsLoaded:false, currentStatsRole:null,
+    recommendations:[], statsLoaded:false, currentStatsRole:null, helpVisible:false,
 };
 const MIN_GAMES = 10;
 
+/* ===================== UTILITIES ===================== */
 function toast(m){const e=document.getElementById('toast');e.textContent=m;e.classList.remove('hidden');clearTimeout(e._t);e._t=setTimeout(()=>e.classList.add('hidden'),3000)}
 function showLoading(m){document.getElementById('loading-text').textContent=m;document.getElementById('loading-overlay').classList.remove('hidden')}
 function hideLoading(){document.getElementById('loading-overlay').classList.add('hidden')}
 function getImg(n){const d=state.ddragon[n];return d?d.image:`https://ddragon.leagueoflegends.com/cdn/15.3.1/img/champion/${n.replace(/[\s'.]/g,'')}.png`}
 function isInPool(n){const p=state.playerPool.find(p=>p.champion.toLowerCase()===n.toLowerCase());return p&&(p.games||0)>=MIN_GAMES}
 
+/* ===================== ONBOARDING ===================== */
+function showOnboarding(){
+    document.getElementById('onboarding-screen').classList.remove('hidden');
+    document.getElementById('main-layout').classList.add('hidden');
+}
+function hideOnboarding(){
+    document.getElementById('onboarding-screen').classList.add('hidden');
+    document.getElementById('main-layout').classList.remove('hidden');
+}
+function toggleHelp(){
+    state.helpVisible = !state.helpVisible;
+    document.getElementById('help-banner').classList.toggle('hidden', !state.helpVisible);
+    document.getElementById('btn-help-toggle').classList.toggle('active', state.helpVisible);
+}
+
+/* ===================== INIT ===================== */
 document.addEventListener('DOMContentLoaded',async()=>{
     state.region=document.getElementById('sel-region').value;
     document.getElementById('sel-region').addEventListener('change',e=>{state.region=e.target.value});
     try{state.ddragon=await(await fetch('/api/ddragon')).json()}catch(e){}
-    renderAll();
+    showOnboarding();
 });
 function renderAll(){renderChampionGrid();renderEnemyPicks();renderBans();renderPlayerPool();renderRecommendations()}
 
-// Role
+/* ===================== ROLE ===================== */
 async function selectRole(r){
     state.role=r;
     document.querySelectorAll('.role-btn').forEach(b=>b.classList.toggle('active',b.dataset.role===r));
@@ -28,15 +45,16 @@ async function selectRole(r){
 }
 async function loadStatsForRole(r){
     if(state.currentStatsRole===r&&state.championStats.length>0)return;
-    showLoading(`Tier list ${r}...`);
-    try{state.championStats=await(await fetch(`/api/champion-stats?region=${state.region}&tier=emerald_plus&role=${r}`)).json();
+    showLoading(`Chargement de la tier list ${r.toUpperCase()}...`);
+    try{
+        state.championStats=await(await fetch(`/api/champion-stats?region=${state.region}&tier=emerald_plus&role=${r}`)).json();
         state.currentStatsRole=r;state.statsLoaded=true;
-        document.getElementById('stats-status').textContent=`${state.championStats.length} champs`;
-    }catch(e){toast('Erreur')}
+        document.getElementById('stats-status').textContent=`${state.championStats.length} champions charges`;
+    }catch(e){toast('Erreur lors du chargement des stats')}
     hideLoading();
 }
 
-// Priority
+/* ===================== PRIORITY ===================== */
 function setPriority(v){
     state.priority=v;document.getElementById('priority-slider').value=v;
     document.getElementById('priority-value').textContent=v;
@@ -55,48 +73,62 @@ function setClickMode(m){
     document.getElementById('btn-mode-ban').classList.toggle('active',m==='ban');
 }
 
-// Load All
+/* ===================== LOAD ALL ===================== */
 async function loadAll(){
     const s=document.getElementById('input-summoner').value.trim();
     const btn=document.getElementById('btn-load-profile');btn.disabled=true;
     try{
         await loadStatsForRole(state.role);
-        if(s){showLoading(`Profil ${s}...`);
+        if(s){
+            showLoading(`Chargement du profil ${s}...`);
             const p=await(await fetch(`/api/player?summoner=${encodeURIComponent(s)}&region=${state.region}`)).json();
-            if(!p.error){state.playerPool=(p.most_played||[]).map(c=>({champion:c.champion,win_rate:c.win_rate,games:c.games,wins:c.wins,losses:c.losses,kda:c.kda}));
-                toast(`${p.tier||'?'} ${p.lp||''}LP - ${state.playerPool.length} champs`)}
-            else toast(p.error);hideLoading()}
+            if(!p.error){
+                state.playerPool=(p.most_played||[]).map(c=>({champion:c.champion,win_rate:c.win_rate,games:c.games,wins:c.wins,losses:c.losses,kda:c.kda}));
+                toast(`Profil charge ! ${p.tier||'?'} ${p.lp||''}LP - ${state.playerPool.length} champions`);
+            } else toast(p.error);
+            hideLoading();
+        }
+        hideOnboarding();
         renderAll();updateRecommendations();
-    }catch(e){hideLoading();toast('Erreur')}finally{btn.disabled=false}
+    }catch(e){hideLoading();toast('Erreur de connexion')}finally{btn.disabled=false}
 }
 
-// Champion click
+/* ===================== CHAMPION CLICK ===================== */
 function onChampionClick(n){
-    if(!state.statsLoaded){toast('Clique Charger');return}
-    if(state.clickMode==='ban'){if(!state.bannedChamps.includes(n)){state.bannedChamps.push(n);renderBans()}}
-    else{if(!state.enemyPicks.includes(n)&&state.enemyPicks.length<5){state.enemyPicks.push(n);renderEnemyPicks()}}
+    if(!state.statsLoaded){toast('Clique d\'abord sur "Charger" pour commencer !');return}
+    if(state.clickMode==='ban'){
+        if(!state.bannedChamps.includes(n)){state.bannedChamps.push(n);renderBans();toast(`${n} banni`)}
+    } else {
+        if(!state.enemyPicks.includes(n)&&state.enemyPicks.length<5){state.enemyPicks.push(n);renderEnemyPicks();toast(`${n} ajoute aux picks ennemis`)}
+    }
     renderChampionGrid();updateRecommendations();
 }
 
-// Enemy / Bans (chips inline)
+/* ===================== ENEMY PICKS & BANS ===================== */
 function renderEnemyPicks(){
     const c=document.getElementById('enemy-picks-list');c.innerHTML='';
-    if(!state.enemyPicks.length){c.innerHTML='<span class="hint">-</span>';return}
-    state.enemyPicks.forEach((n,i)=>{const ch=document.createElement('div');ch.className='pick-chip';
+    if(!state.enemyPicks.length){c.innerHTML='<span class="hint">Clique un champion</span>';return}
+    state.enemyPicks.forEach((n,i)=>{
+        const ch=document.createElement('div');ch.className='pick-chip';
         ch.innerHTML=`<img src="${getImg(n)}"><span class="chip-name">${n}</span><span class="chip-remove">x</span>`;
-        ch.onclick=()=>{state.enemyPicks.splice(i,1);renderEnemyPicks();renderChampionGrid();updateRecommendations()};c.appendChild(ch)});
+        ch.onclick=()=>{state.enemyPicks.splice(i,1);renderEnemyPicks();renderChampionGrid();updateRecommendations();toast(`${n} retire`)};
+        c.appendChild(ch);
+    });
 }
 function clearEnemyPicks(){state.enemyPicks=[];renderEnemyPicks();renderChampionGrid();updateRecommendations()}
 function renderBans(){
     const c=document.getElementById('bans-list');c.innerHTML='';
     if(!state.bannedChamps.length){c.innerHTML='<span class="hint">-</span>';return}
-    state.bannedChamps.forEach((n,i)=>{const ch=document.createElement('div');ch.className='pick-chip banned';
+    state.bannedChamps.forEach((n,i)=>{
+        const ch=document.createElement('div');ch.className='pick-chip banned';
         ch.innerHTML=`<img src="${getImg(n)}"><span class="chip-name">${n}</span><span class="chip-remove">x</span>`;
-        ch.onclick=()=>{state.bannedChamps.splice(i,1);renderBans();renderChampionGrid();updateRecommendations()};c.appendChild(ch)});
+        ch.onclick=()=>{state.bannedChamps.splice(i,1);renderBans();renderChampionGrid();updateRecommendations();toast(`${n} deban`)};
+        c.appendChild(ch);
+    });
 }
 function clearBans(){state.bannedChamps=[];renderBans();renderChampionGrid();updateRecommendations()}
 
-// Champion Grid
+/* ===================== CHAMPION GRID ===================== */
 function renderChampionGrid(){
     const g=document.getElementById('champion-grid');g.innerHTML='';
     const eS=new Set(state.enemyPicks.map(n=>n.toLowerCase()));
@@ -113,7 +145,7 @@ function renderChampionGrid(){
         const lc=c.name.toLowerCase();
         if(state.statsLoaded&&!srch&&!roleS.has(lc))continue;
         if(srch&&!lc.includes(srch))continue;
-        const el=document.createElement('div');el.className='champ-cell';el.style.position='relative';
+        const el=document.createElement('div');el.className='champ-cell';
         if(bS.has(lc))el.classList.add('banned');
         if(eS.has(lc))el.classList.add('picked-enemy');
         const ip=isInPool(c.name),im=c.stats&&c.stats.rank&&c.stats.rank<=15;
@@ -126,14 +158,16 @@ function renderChampionGrid(){
 }
 function filterChampions(){renderChampionGrid()}
 
-// Pool
+/* ===================== POOL ===================== */
 function renderPlayerPool(){
     const bar=document.getElementById('player-pool-bar'),icons=document.getElementById('player-pool-icons');
     const pool=[...state.playerPool].filter(p=>(p.games||0)>=MIN_GAMES).sort((a,b)=>(b.games||0)-(a.games||0)||(b.win_rate||0)-(a.win_rate||0)).slice(0,5);
     if(!pool.length){bar.classList.add('hidden');return}
     bar.classList.remove('hidden');icons.innerHTML='';
-    pool.forEach(p=>{const i=document.createElement('img');i.className='pool-champ';i.src=getImg(p.champion);
-        i.title=`${p.champion} ${p.win_rate??'?'}% WR, ${p.games??'?'}G`;icons.appendChild(i)});
+    pool.forEach(p=>{
+        const i=document.createElement('img');i.className='pool-champ';i.src=getImg(p.champion);
+        i.title=`${p.champion} - ${p.win_rate??'?'}% WR, ${p.games??'?'} parties`;icons.appendChild(i);
+    });
 }
 function openPoolEditor(){document.getElementById('modal-overlay').classList.remove('hidden');renderPoolEditorGrid()}
 function closeModal(){document.getElementById('modal-overlay').classList.add('hidden');renderPlayerPool();updateRecommendations()}
@@ -142,47 +176,74 @@ function renderPoolEditorGrid(){
     const ps=new Set(state.playerPool.map(p=>p.champion.toLowerCase()));
     const s=(document.getElementById('pool-search')?.value||'').toLowerCase();
     let ns=Object.keys(state.ddragon);if(!ns.length)ns=state.championStats.map(s=>s.name);ns.sort();
-    for(const n of ns){if(s&&!n.toLowerCase().includes(s))continue;
+    for(const n of ns){
+        if(s&&!n.toLowerCase().includes(s))continue;
         const c=document.createElement('div');c.className='champ-cell';
         if(ps.has(n.toLowerCase()))c.classList.add('in-pool');
         c.innerHTML=`<img src="${getImg(n)}" loading="lazy"><span class="champ-name">${n}</span>`;
-        c.onclick=()=>{const i=state.playerPool.findIndex(p=>p.champion.toLowerCase()===n.toLowerCase());
-            if(i>=0){state.playerPool.splice(i,1);c.classList.remove('in-pool')}
-            else{state.playerPool.push({champion:n});c.classList.add('in-pool')}};g.appendChild(c)}
+        c.onclick=()=>{
+            const i=state.playerPool.findIndex(p=>p.champion.toLowerCase()===n.toLowerCase());
+            if(i>=0){state.playerPool.splice(i,1);c.classList.remove('in-pool');toast(`${n} retire du pool`)}
+            else{state.playerPool.push({champion:n});c.classList.add('in-pool');toast(`${n} ajoute au pool`)}
+        };g.appendChild(c);
+    }
 }
 function filterPoolGrid(){renderPoolEditorGrid()}
 
-// Recommendations
+/* ===================== RECOMMENDATIONS ===================== */
 async function updateRecommendations(){
     if(!state.statsLoaded)return;
-    try{state.recommendations=await(await fetch('/api/recommend',{method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({player_pool:state.playerPool,enemy_picks:state.enemyPicks,banned:state.bannedChamps,
-            already_picked:state.enemyPicks,role:state.role,region:state.region,priority:state.priority,top_n:10})})).json();
+    try{
+        state.recommendations=await(await fetch('/api/recommend',{method:'POST',headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({player_pool:state.playerPool,enemy_picks:state.enemyPicks,banned:state.bannedChamps,
+                already_picked:state.enemyPicks,role:state.role,region:state.region,priority:state.priority,top_n:10})})).json();
     }catch(e){state.recommendations=[]}
     renderRecommendations();renderChampionGrid();
 }
 
 function renderRecommendations(){
     const list=document.getElementById('rec-list'),ctx=document.getElementById('rec-context');
-    document.getElementById('rec-role-label').textContent=state.role;
+    document.getElementById('rec-role-label').textContent=state.role.toUpperCase();
     list.innerHTML='';
-    if(!state.statsLoaded){ctx.className='rec-context';ctx.textContent='Clique "Charger"';return}
+    if(!state.statsLoaded){
+        ctx.className='rec-context';
+        ctx.innerHTML='Clique <b>"Charger"</b> pour voir les suggestions';
+        return;
+    }
     const hE=state.enemyPicks.length>0,p=state.priority;
-    let mode=hE?`<b>Counter</b> vs ${state.enemyPicks.join(', ')}`:p<=15?'<b>Pool</b>':p>=85?'<b>Meta</b>':'<b>Mix</b>';
+
+    // Build descriptive context message
+    let mode='';
+    if(hE){
+        mode=`Mode <b>Counter</b> : suggestions qui sont fortes contre <b>${state.enemyPicks.join(', ')}</b>`;
+    } else if(p<=15){
+        mode='Mode <b>Pool</b> : suggestions basees sur tes champions les plus joues';
+    } else if(p>=85){
+        mode='Mode <b>Meta</b> : suggestions basees sur les champions les plus forts du moment';
+    } else {
+        mode='Mode <b>Mix</b> : equilibre entre tes champions et la meta';
+    }
     ctx.className=hE?'rec-context has-enemy':'rec-context';ctx.innerHTML=mode;
-    if(!state.recommendations.length){list.innerHTML='<p class="hint">Aucune suggestion.</p>';return}
+
+    if(!state.recommendations.length){
+        list.innerHTML='<div class="rec-empty"><p class="hint">Aucune suggestion pour l\'instant.</p><p class="hint">Essaie de charger ton profil ou d\'ajouter des picks ennemis.</p></div>';
+        return;
+    }
 
     state.recommendations.forEach((rec,i)=>{
         const it=document.createElement('div');it.className='rec-item';
         const ms=rec.meta_score||0,ps=rec.player_score||0,cs=rec.counter_score||0,tot=ms+ps+cs||1;
         const ip=rec.is_in_pool,im=ms>60;
         let tags='';
-        if(ip&&im)tags+='<span class="rec-tag hot">Meta+Pool</span>';
-        else{if(ip)tags+='<span class="rec-tag pool">Pool</span>';if(im)tags+='<span class="rec-tag meta">Meta</span>'}
-        if(hE&&cs>55)tags+='<span class="rec-tag counter">Counter</span>';
+        if(ip&&im)tags+='<span class="rec-tag hot" title="Ce champion est dans ton pool ET fort dans la meta !">Meta+Pool</span>';
+        else{
+            if(ip)tags+='<span class="rec-tag pool" title="Tu joues ce champion regulierement">Pool</span>';
+            if(im)tags+='<span class="rec-tag meta" title="Ce champion est tres fort dans la meta actuelle">Meta</span>';
+        }
+        if(hE&&cs>55)tags+='<span class="rec-tag counter" title="Ce champion est efficace contre les picks ennemis">Counter</span>';
 
         const st=state.championStats.find(s=>s.name.toLowerCase()===rec.champion.toLowerCase());
-        const ctr=st?.counters?.length?` | <small style="color:var(--red)">Weak: ${st.counters.join(', ')}</small>`:'';
+        const ctr=st?.counters?.length?` | Faible vs ${st.counters.join(', ')}`:'';
 
         it.innerHTML=`<span class="rec-rank">${i+1}</span><img src="${getImg(rec.champion)}">
             <div class="rec-info"><div class="rec-name">${rec.champion} ${tags}</div>
@@ -195,18 +256,20 @@ function renderRecommendations(){
     });
 }
 
-// Detail Panel + Items
+/* ===================== DETAIL PANEL ===================== */
 let chartR=null;
 async function openDetail(rec){
     document.getElementById('detail-overlay').classList.remove('hidden');
     document.getElementById('detail-img').src=getImg(rec.champion);
     document.getElementById('detail-name').textContent=rec.champion;
-    document.getElementById('detail-score-big').textContent=`Score : ${rec.total_score}`;
+    document.getElementById('detail-score-big').textContent=`Score global : ${rec.total_score}`;
 
     const tE=document.getElementById('detail-tags');tE.innerHTML='';
     if(rec.is_in_pool&&rec.meta_score>60)tE.innerHTML+='<span class="rec-tag hot">Meta+Pool</span>';
-    else{if(rec.is_in_pool)tE.innerHTML+='<span class="rec-tag pool">Pool</span>';
-        if(rec.meta_score>60)tE.innerHTML+='<span class="rec-tag meta">Meta</span>'}
+    else{
+        if(rec.is_in_pool)tE.innerHTML+='<span class="rec-tag pool">Pool</span>';
+        if(rec.meta_score>60)tE.innerHTML+='<span class="rec-tag meta">Meta</span>';
+    }
     if(rec.counter_score>55)tE.innerHTML+='<span class="rec-tag counter">Counter</span>';
 
     const sg=document.getElementById('detail-stats-grid'),s=rec.stats||{};
@@ -215,16 +278,16 @@ async function openDetail(rec){
         <div class="stat-card"><div class="stat-value" style="color:${(s.win_rate||50)>=52?'var(--green)':(s.win_rate||50)<=48?'var(--red)':'var(--gold)'}">${s.win_rate??'?'}%</div><div class="stat-label">Win Rate</div></div>
         <div class="stat-card"><div class="stat-value">${s.pick_rate??'?'}%</div><div class="stat-label">Pick Rate</div></div>
         <div class="stat-card"><div class="stat-value">${s.ban_rate??'?'}%</div><div class="stat-label">Ban Rate</div></div>
-        <div class="stat-card"><div class="stat-value">#${st?.rank??'?'}</div><div class="stat-label">Rang</div></div>`;
+        <div class="stat-card"><div class="stat-value">#${st?.rank??'?'}</div><div class="stat-label">Rang Tier List</div></div>`;
     if(st?.counters?.length)sg.innerHTML+=`<div class="stat-card" style="grid-column:span 2"><div class="stat-value" style="font-size:.85rem;color:var(--red)">${st.counters.join(', ')}</div><div class="stat-label">Faible contre</div></div>`;
     const pd=state.playerPool.find(p=>p.champion.toLowerCase()===rec.champion.toLowerCase());
-    if(pd&&(pd.games||0)>=MIN_GAMES)sg.innerHTML+=`<div class="stat-card" style="border:1px solid var(--gold)"><div class="stat-value" style="color:var(--gold)">${pd.win_rate??'?'}%</div><div class="stat-label">Ton WR</div></div><div class="stat-card" style="border:1px solid var(--gold)"><div class="stat-value" style="color:var(--gold)">${pd.games??'?'}</div><div class="stat-label">Tes Games</div></div>`;
+    if(pd&&(pd.games||0)>=MIN_GAMES)sg.innerHTML+=`<div class="stat-card" style="border:1px solid var(--gold)"><div class="stat-value" style="color:var(--gold)">${pd.win_rate??'?'}%</div><div class="stat-label">Ton Win Rate</div></div><div class="stat-card" style="border:1px solid var(--gold)"><div class="stat-value" style="color:var(--gold)">${pd.games??'?'}</div><div class="stat-label">Tes Parties</div></div>`;
 
     const w=rec.weights||{};
     document.getElementById('detail-weights').innerHTML=`
-        <div class="weight-bar"><div class="wb-label">Meta</div><div class="wb-track"><div class="wb-fill meta" style="width:${rec.meta_score}%"></div></div><div class="wb-score">${rec.meta_score}</div></div>
-        <div class="weight-bar"><div class="wb-label">Joueur</div><div class="wb-track"><div class="wb-fill player" style="width:${rec.player_score}%"></div></div><div class="wb-score">${rec.player_score}</div></div>
-        <div class="weight-bar"><div class="wb-label">Counter</div><div class="wb-track"><div class="wb-fill counter" style="width:${rec.counter_score}%"></div></div><div class="wb-score">${rec.counter_score}</div></div>`;
+        <div class="weight-bar"><div class="wb-label">Meta (force du champion)</div><div class="wb-track"><div class="wb-fill meta" style="width:${rec.meta_score}%"></div></div><div class="wb-score">${rec.meta_score}</div></div>
+        <div class="weight-bar"><div class="wb-label">Joueur (ta maitrise)</div><div class="wb-track"><div class="wb-fill player" style="width:${rec.player_score}%"></div></div><div class="wb-score">${rec.player_score}</div></div>
+        <div class="weight-bar"><div class="wb-label">Counter (vs ennemis)</div><div class="wb-track"><div class="wb-fill counter" style="width:${rec.counter_score}%"></div></div><div class="wb-score">${rec.counter_score}</div></div>`;
 
     // Load items
     const itemsEl=document.getElementById('detail-items');
@@ -235,24 +298,24 @@ async function openDetail(rec){
         if(build.core_items&&build.core_items.length){
             itemsEl.innerHTML='';
             build.core_items.forEach((item,idx)=>{
-                if(idx>0&&idx%3===0)itemsEl.insertAdjacentHTML('beforeend','<span class="item-separator">→</span>');
+                if(idx>0&&idx%3===0)itemsEl.insertAdjacentHTML('beforeend','<span class="item-separator">&#10132;</span>');
                 const img=document.createElement('img');img.className='item-icon';img.src=item.image;
                 img.alt=item.name;img.title=item.name;itemsEl.appendChild(img);
             });
-            if(build.skill_order)itemsEl.insertAdjacentHTML('beforeend',`<div style="width:100%;margin-top:6px;font-size:.75rem;color:var(--text-dim)">Skills : ${build.skill_order}</div>`);
-        }else itemsEl.innerHTML='<span class="hint">Build non disponible</span>';
-    }catch(e){itemsEl.innerHTML='<span class="hint">Erreur chargement build</span>'}
+            if(build.skill_order)itemsEl.insertAdjacentHTML('beforeend',`<div style="width:100%;margin-top:8px;font-size:.78rem;color:var(--text-dim)">Ordre des skills : <b style="color:var(--text-bright)">${build.skill_order}</b></div>`);
+        }else itemsEl.innerHTML='<span class="hint">Build non disponible pour ce champion/role</span>';
+    }catch(e){itemsEl.innerHTML='<span class="hint">Erreur lors du chargement du build</span>'}
 
     // Radar
     const ctx=document.getElementById('chart-detail-radar').getContext('2d');
     if(chartR)chartR.destroy();
     const mPR=Math.max(...state.championStats.map(x=>x.pick_rate??0),1);
     const mBR=Math.max(...state.championStats.map(x=>x.ban_rate??0),1);
-    chartR=new Chart(ctx,{type:'radar',data:{labels:['WR','Pick','Ban','Meta','Joueur','Counter'],
+    chartR=new Chart(ctx,{type:'radar',data:{labels:['Win Rate','Popularite','Ban Rate','Meta','Maitrise','Counter'],
         datasets:[{label:rec.champion,data:[Math.min(100,((s.win_rate||50)-45)*10),Math.min(100,(s.pick_rate||0)/mPR*100),
             Math.min(100,(s.ban_rate||0)/mBR*100),rec.meta_score||0,rec.player_score||0,rec.counter_score||0],
             backgroundColor:'rgba(10,200,185,.2)',borderColor:'#0ac8b9',borderWidth:2,pointBackgroundColor:'#0ac8b9'}]},
-        options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#d4d8de'}}},
-            scales:{r:{min:0,max:100,ticks:{display:false},grid:{color:'#1e3048'},pointLabels:{color:'#7b8fa3',font:{size:9}}}}}});
+        options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#d4d8de',font:{size:11}}}},
+            scales:{r:{min:0,max:100,ticks:{display:false},grid:{color:'#1e3048'},pointLabels:{color:'#7b8fa3',font:{size:10}}}}}});
 }
 function closeDetail(){document.getElementById('detail-overlay').classList.add('hidden')}

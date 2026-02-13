@@ -1,0 +1,55 @@
+{
+  "champion": "zaahen",
+  "role": "top",
+  "core_items": [
+    {
+      "id": "1055",
+      "name": "Doran's Blade",
+      "image": "https://opgg-static.akamaized.net/meta/images/lol/16.3.1/item/1055.png"
+    },
+    {
+      "id": "2003",
+      "name": "Health Potion",
+      "image": "https://opgg-static.akamaized.net/meta/images/lol/16.3.1/item/2003.png"
+    },
+    {
+      "id": "1054",
+      "name": "Doran's Shield",
+      "image": "https://opgg-static.akamaized.net/meta/images/lol/16.3.1/item/1054.png"
+    },
+    {
+      "id": "3047",
+      "name": "Plated Steelcaps",
+      "image": "https://opgg-static.akamaized.net/meta/images/lol/16.3.1/item/3047.png"
+    },
+    {
+      "id": "3111",
+      "name": "Mercury's Treads",
+      "image": "https://opgg-static.akamaized.net/meta/images/lol/16.3.1/item/3111.png"
+    },
+    {
+      "id": "3078",
+      "name": "Trinity Force",
+      "image": "https://opgg-static.akamaized.net/meta/images/lol/16.3.1/item/3078.png"
+    }
+  ],
+  "starter_items": [
+    {
+      "id": "6610",
+      "name": "Sundered Sky",
+      "image": "https://opgg-static.akamaized.net/meta/images/lol/16.3.1/item/6610.png"
+    },
+    {
+      "id": "6333",
+      "name": "Death's Dance",
+      "image": "https://opgg-static.akamaized.net/meta/images/lol/16.3.1/item/6333.png"
+    },
+    {
+      "id": "6631",
+      "name": "Stridebreaker",
+      "image": "https://opgg-static.akamaized.net/meta/images/lol/16.3.1/item/6631.png"
+    }
+  ],
+  "boots": null,
+  "skill_order": null
+}

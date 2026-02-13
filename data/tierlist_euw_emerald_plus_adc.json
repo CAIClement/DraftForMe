@@ -1,0 +1,505 @@
+[
+  {
+    "rank": 1,
+    "name": "Jinx",
+    "slug": "jinx",
+    "role": "adc",
+    "win_rate": 52.05,
+    "pick_rate": 15.33,
+    "ban_rate": 4.44,
+    "counters": [
+      "velkoz",
+      "veigar",
+      "lux"
+    ]
+  },
+  {
+    "rank": 2,
+    "name": "Caitlyn",
+    "slug": "caitlyn",
+    "role": "adc",
+    "win_rate": 50.41,
+    "pick_rate": 19.61,
+    "ban_rate": 28.62,
+    "counters": [
+      "yasuo",
+      "brand",
+      "seraphine"
+    ]
+  },
+  {
+    "rank": 3,
+    "name": "Veigar",
+    "slug": "veigar",
+    "role": "adc",
+    "win_rate": 55.0,
+    "pick_rate": 1.8,
+    "ban_rate": 1.1,
+    "counters": [
+      "kogmaw",
+      "ziggs",
+      "brand"
+    ]
+  },
+  {
+    "rank": 4,
+    "name": "Brand",
+    "slug": "brand",
+    "role": "adc",
+    "win_rate": 55.15,
+    "pick_rate": 1.51,
+    "ban_rate": 1.52,
+    "counters": [
+      "kogmaw",
+      "sivir",
+      "samira"
+    ]
+  },
+  {
+    "rank": 5,
+    "name": "Twitch",
+    "slug": "twitch",
+    "role": "adc",
+    "win_rate": 51.59,
+    "pick_rate": 8.14,
+    "ban_rate": 11.57,
+    "counters": [
+      "aurelionsol",
+      "kalista",
+      "nilah"
+    ]
+  },
+  {
+    "rank": 6,
+    "name": "Vayne",
+    "slug": "vayne",
+    "role": "adc",
+    "win_rate": 51.59,
+    "pick_rate": 7.79,
+    "ban_rate": 11.23,
+    "counters": [
+      "kogmaw",
+      "seraphine",
+      "swain"
+    ]
+  },
+  {
+    "rank": 7,
+    "name": "Vel'Koz",
+    "slug": "velkoz",
+    "role": "adc",
+    "win_rate": 56.1,
+    "pick_rate": 0.64,
+    "ban_rate": 1.26,
+    "counters": [
+      "missfortune",
+      "smolder"
+    ]
+  },
+  {
+    "rank": 8,
+    "name": "Jhin",
+    "slug": "jhin",
+    "role": "adc",
+    "win_rate": 50.77,
+    "pick_rate": 12.81,
+    "ban_rate": 0.97,
+    "counters": [
+      "seraphine",
+      "draven",
+      "yasuo"
+    ]
+  },
+  {
+    "rank": 9,
+    "name": "Miss Fortune",
+    "slug": "missfortune",
+    "role": "adc",
+    "win_rate": 51.51,
+    "pick_rate": 7.94,
+    "ban_rate": 2.49,
+    "counters": [
+      "yasuo",
+      "karthus",
+      "brand"
+    ]
+  },
+  {
+    "rank": 10,
+    "name": "Smolder",
+    "slug": "smolder",
+    "role": "adc",
+    "win_rate": 50.77,
+    "pick_rate": 9.26,
+    "ban_rate": 5.55,
+    "counters": [
+      "senna",
+      "brand",
+      "seraphine"
+    ]
+  },
+  {
+    "rank": 11,
+    "name": "Swain",
+    "slug": "swain",
+    "role": "adc",
+    "win_rate": 52.95,
+    "pick_rate": 2.23,
+    "ban_rate": 3.77,
+    "counters": [
+      "zeri",
+      "karthus",
+      "veigar"
+    ]
+  },
+  {
+    "rank": 12,
+    "name": "Ashe",
+    "slug": "ashe",
+    "role": "adc",
+    "win_rate": 51.3,
+    "pick_rate": 5.83,
+    "ban_rate": 1.08,
+    "counters": [
+      "karthus",
+      "velkoz",
+      "yasuo"
+    ]
+  },
+  {
+    "rank": 13,
+    "name": "Kai'Sa",
+    "slug": "kaisa",
+    "role": "adc",
+    "win_rate": 49.22,
+    "pick_rate": 15.27,
+    "ban_rate": 2.18,
+    "counters": [
+      "kogmaw",
+      "swain",
+      "velkoz"
+    ]
+  },
+  {
+    "rank": 14,
+    "name": "Draven",
+    "slug": "draven",
+    "role": "adc",
+    "win_rate": 50.93,
+    "pick_rate": 5.02,
+    "ban_rate": 26.62,
+    "counters": [
+      "velkoz",
+      "karthus",
+      "ziggs"
+    ]
+  },
+  {
+    "rank": 15,
+    "name": "Kog'Maw",
+    "slug": "kogmaw",
+    "role": "adc",
+    "win_rate": 53.02,
+    "pick_rate": 1.77,
+    "ban_rate": 0.44,
+    "counters": [
+      "nilah",
+      "draven",
+      "ziggs"
+    ]
+  },
+  {
+    "rank": 16,
+    "name": "Samira",
+    "slug": "samira",
+    "role": "adc",
+    "win_rate": 51.26,
+    "pick_rate": 4.55,
+    "ban_rate": 4.15,
+    "counters": [
+      "veigar",
+      "swain",
+      "aurelionsol"
+    ]
+  },
+  {
+    "rank": 17,
+    "name": "Sivir",
+    "slug": "sivir",
+    "role": "adc",
+    "win_rate": 50.69,
+    "pick_rate": 6.11,
+    "ban_rate": 3.42,
+    "counters": [
+      "kogmaw",
+      "velkoz",
+      "veigar"
+    ]
+  },
+  {
+    "rank": 18,
+    "name": "Tristana",
+    "slug": "tristana",
+    "role": "adc",
+    "win_rate": 51.36,
+    "pick_rate": 4.17,
+    "ban_rate": 1.45,
+    "counters": [
+      "lux",
+      "karthus",
+      "kogmaw"
+    ]
+  },
+  {
+    "rank": 19,
+    "name": "Aphelios",
+    "slug": "aphelios",
+    "role": "adc",
+    "win_rate": 49.78,
+    "pick_rate": 9.18,
+    "ban_rate": 10.82,
+    "counters": [
+      "brand",
+      "velkoz",
+      "mel"
+    ]
+  },
+  {
+    "rank": 20,
+    "name": "Ziggs",
+    "slug": "ziggs",
+    "role": "adc",
+    "win_rate": 52.71,
+    "pick_rate": 1.78,
+    "ban_rate": 0.49,
+    "counters": [
+      "brand",
+      "vayne",
+      "jhin"
+    ]
+  },
+  {
+    "rank": 21,
+    "name": "Yasuo",
+    "slug": "yasuo",
+    "role": "adc",
+    "win_rate": 52.69,
+    "pick_rate": 1.41,
+    "ban_rate": 15.45,
+    "counters": [
+      "nilah",
+      "zeri",
+      "veigar"
+    ]
+  },
+  {
+    "rank": 22,
+    "name": "Nilah",
+    "slug": "nilah",
+    "role": "adc",
+    "win_rate": 52.19,
+    "pick_rate": 2.11,
+    "ban_rate": 4.54,
+    "counters": [
+      "veigar",
+      "mel",
+      "brand"
+    ]
+  },
+  {
+    "rank": 23,
+    "name": "Xayah",
+    "slug": "xayah",
+    "role": "adc",
+    "win_rate": 51.23,
+    "pick_rate": 2.85,
+    "ban_rate": 0.42,
+    "counters": [
+      "karthus",
+      "brand",
+      "ziggs"
+    ]
+  },
+  {
+    "rank": 24,
+    "name": "Ezreal",
+    "slug": "ezreal",
+    "role": "adc",
+    "win_rate": 48.28,
+    "pick_rate": 12.53,
+    "ban_rate": 2.64,
+    "counters": [
+      "yasuo",
+      "senna",
+      "brand"
+    ]
+  },
+  {
+    "rank": 25,
+    "name": "Lucian",
+    "slug": "lucian",
+    "role": "adc",
+    "win_rate": 49.45,
+    "pick_rate": 6.06,
+    "ban_rate": 2.06,
+    "counters": [
+      "kogmaw",
+      "velkoz",
+      "veigar"
+    ]
+  },
+  {
+    "rank": 26,
+    "name": "Yunara",
+    "slug": "yunara",
+    "role": "adc",
+    "win_rate": 48.17,
+    "pick_rate": 10.72,
+    "ban_rate": 4.48,
+    "counters": [
+      "brand",
+      "aurelionsol",
+      "senna"
+    ]
+  },
+  {
+    "rank": 27,
+    "name": "Varus",
+    "slug": "varus",
+    "role": "adc",
+    "win_rate": 49.02,
+    "pick_rate": 5.59,
+    "ban_rate": 26.7,
+    "counters": [
+      "samira",
+      "kogmaw",
+      "vayne"
+    ]
+  },
+  {
+    "rank": 28,
+    "name": "Corki",
+    "slug": "corki",
+    "role": "adc",
+    "win_rate": 49.18,
+    "pick_rate": 5.6,
+    "ban_rate": 1.42,
+    "counters": [
+      "yasuo",
+      "veigar",
+      "swain"
+    ]
+  },
+  {
+    "rank": 29,
+    "name": "Aurelion Sol",
+    "slug": "aurelionsol",
+    "role": "adc",
+    "win_rate": 52.47,
+    "pick_rate": 0.74,
+    "ban_rate": 0.88,
+    "counters": [
+      "draven",
+      "zeri",
+      "xayah"
+    ]
+  },
+  {
+    "rank": 30,
+    "name": "Karthus",
+    "slug": "karthus",
+    "role": "adc",
+    "win_rate": 52.53,
+    "pick_rate": 0.7,
+    "ban_rate": 0.59,
+    "counters": [
+      "jinx",
+      "smolder",
+      "zeri"
+    ]
+  },
+  {
+    "rank": 31,
+    "name": "Lux",
+    "slug": "lux",
+    "role": "adc",
+    "win_rate": 52.63,
+    "pick_rate": 0.62,
+    "ban_rate": 0.92,
+    "counters": [
+      "ashe",
+      "missfortune",
+      "vayne"
+    ]
+  },
+  {
+    "rank": 32,
+    "name": "Zeri",
+    "slug": "zeri",
+    "role": "adc",
+    "win_rate": 50.14,
+    "pick_rate": 2.54,
+    "ban_rate": 0.17,
+    "counters": [
+      "xayah",
+      "tristana",
+      "kalista"
+    ]
+  },
+  {
+    "rank": 33,
+    "name": "Senna",
+    "slug": "senna",
+    "role": "adc",
+    "win_rate": 51.74,
+    "pick_rate": 0.97,
+    "ban_rate": 0.69,
+    "counters": [
+      "kogmaw",
+      "nilah",
+      "xayah"
+    ]
+  },
+  {
+    "rank": 34,
+    "name": "Seraphine",
+    "slug": "seraphine",
+    "role": "adc",
+    "win_rate": 51.55,
+    "pick_rate": 0.81,
+    "ban_rate": 0.42,
+    "counters": [
+      "varus",
+      "kaisa",
+      "lucian"
+    ]
+  },
+  {
+    "rank": 35,
+    "name": "Mel",
+    "slug": "mel",
+    "role": "adc",
+    "win_rate": 50.94,
+    "pick_rate": 0.84,
+    "ban_rate": 15.46,
+    "counters": [
+      "vayne",
+      "sivir",
+      "ziggs"
+    ]
+  },
+  {
+    "rank": 36,
+    "name": "Kalista",
+    "slug": "kalista",
+    "role": "adc",
+    "win_rate": 49.57,
+    "pick_rate": 0.85,
+    "ban_rate": 0.1,
+    "counters": [
+      "sivir",
+      "vayne",
+      "missfortune"
+    ]
+  }
+]

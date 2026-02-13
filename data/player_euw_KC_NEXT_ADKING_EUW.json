@@ -2,15 +2,15 @@
   "summoner_name": "KC NEXT ADKING#EUW",
   "region": "euw",
   "tier": null,
-  "lp": 839,
+  "lp": 82,
   "most_played": [
     {
       "champion": "Kai'Sa",
-      "win_rate": 76.0,
-      "games": 21,
+      "win_rate": 73.0,
+      "games": 22,
       "wins": 16,
-      "losses": 5,
-      "kda": "10/3.2/6.7"
+      "losses": 6,
+      "kda": "9.8/3.3/6.5"
     },
     {
       "champion": "Aphelios",
@@ -22,11 +22,11 @@
     },
     {
       "champion": "Ezreal",
-      "win_rate": 53.0,
-      "games": 19,
-      "wins": 10,
+      "win_rate": 55.0,
+      "games": 20,
+      "wins": 11,
       "losses": 9,
-      "kda": "7.6/4.5/7"
+      "kda": "7.7/4.4/7.1"
     },
     {
       "champion": "Yunara",
@@ -54,11 +54,11 @@
     },
     {
       "champion": "Corki",
-      "win_rate": 89.0,
-      "games": 9,
-      "wins": 8,
+      "win_rate": 90.0,
+      "games": 10,
+      "wins": 9,
       "losses": 1,
-      "kda": "6.7/3.7/5.2"
+      "kda": "6/3.4/5.2"
     },
     {
       "champion": "Varus",

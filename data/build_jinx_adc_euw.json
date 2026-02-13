@@ -1,0 +1,55 @@
+{
+  "champion": "jinx",
+  "role": "adc",
+  "core_items": [
+    {
+      "id": "1055",
+      "name": "Doran's Blade",
+      "image": "https://opgg-static.akamaized.net/meta/images/lol/16.3.1/item/1055.png"
+    },
+    {
+      "id": "2003",
+      "name": "Health Potion",
+      "image": "https://opgg-static.akamaized.net/meta/images/lol/16.3.1/item/2003.png"
+    },
+    {
+      "id": "1083",
+      "name": "Cull",
+      "image": "https://opgg-static.akamaized.net/meta/images/lol/16.3.1/item/1083.png"
+    },
+    {
+      "id": "3006",
+      "name": "Berserker's Greaves",
+      "image": "https://opgg-static.akamaized.net/meta/images/lol/16.3.1/item/3006.png"
+    },
+    {
+      "id": "3047",
+      "name": "Plated Steelcaps",
+      "image": "https://opgg-static.akamaized.net/meta/images/lol/16.3.1/item/3047.png"
+    },
+    {
+      "id": "3032",
+      "name": "Yun Tal Wildarrows",
+      "image": "https://opgg-static.akamaized.net/meta/images/lol/16.3.1/item/3032.png"
+    }
+  ],
+  "starter_items": [
+    {
+      "id": "3031",
+      "name": "Infinity Edge",
+      "image": "https://opgg-static.akamaized.net/meta/images/lol/16.3.1/item/3031.png"
+    },
+    {
+      "id": "3085",
+      "name": "Runaan's Hurricane",
+      "image": "https://opgg-static.akamaized.net/meta/images/lol/16.3.1/item/3085.png"
+    },
+    {
+      "id": "3036",
+      "name": "Lord Dominik's Regards",
+      "image": "https://opgg-static.akamaized.net/meta/images/lol/16.3.1/item/3036.png"
+    }
+  ],
+  "boots": null,
+  "skill_order": null
+}
