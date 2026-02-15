@@ -6,11 +6,11 @@
   "most_played": [
     {
       "champion": "Braum",
-      "win_rate": 50.0,
-      "games": 2,
-      "wins": 1,
+      "win_rate": 67.0,
+      "games": 3,
+      "wins": 2,
       "losses": 1,
-      "kda": "1.5/6.5/15.5"
+      "kda": "1/6.3/18"
     },
     {
       "champion": "Thresh",

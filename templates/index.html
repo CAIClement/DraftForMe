@@ -25,7 +25,7 @@
     </div>
 </header>
 
-<!-- HELP BANNER (hidden by default, togglable) -->
+<!-- HELP BANNER -->
 <div id="help-banner" class="help-banner hidden">
     <div class="help-content">
         <div class="help-step">
@@ -62,7 +62,6 @@
 
 <!-- SETUP -->
 <section id="setup-panel">
-    <!-- Row 1: Summoner + Role + Priority -->
     <div class="setup-row">
         <div class="setup-group">
             <label>
@@ -80,21 +79,11 @@
                 <span class="help-tip" data-tooltip="Choisis le role que tu veux jouer dans cette partie">?</span>
             </label>
             <div class="role-selector">
-                <button class="role-btn" data-role="top" onclick="selectRole('top')">
-                    <span class="role-icon">&#9876;</span> Top
-                </button>
-                <button class="role-btn" data-role="jungle" onclick="selectRole('jungle')">
-                    <span class="role-icon">&#127795;</span> Jungle
-                </button>
-                <button class="role-btn active" data-role="mid" onclick="selectRole('mid')">
-                    <span class="role-icon">&#9733;</span> Mid
-                </button>
-                <button class="role-btn" data-role="adc" onclick="selectRole('adc')">
-                    <span class="role-icon">&#127919;</span> ADC
-                </button>
-                <button class="role-btn" data-role="support" onclick="selectRole('support')">
-                    <span class="role-icon">&#128737;</span> Support
-                </button>
+                <button class="role-btn" data-role="top" onclick="selectRole('top')">Top</button>
+                <button class="role-btn" data-role="jungle" onclick="selectRole('jungle')">Jungle</button>
+                <button class="role-btn active" data-role="mid" onclick="selectRole('mid')">Mid</button>
+                <button class="role-btn" data-role="adc" onclick="selectRole('adc')">ADC</button>
+                <button class="role-btn" data-role="support" onclick="selectRole('support')">Support</button>
             </div>
         </div>
         <div class="setup-group">
@@ -104,15 +93,9 @@
             </label>
             <div class="prio-row">
                 <div class="prio-buttons">
-                    <button class="prio-btn" data-prio="0" onclick="setPriority(0)" title="Favorise TES champions les plus joues">
-                        <span class="prio-icon">&#128170;</span> Pool
-                    </button>
-                    <button class="prio-btn active" data-prio="50" onclick="setPriority(50)" title="Equilibre entre ton pool et la meta">
-                        <span class="prio-icon">&#9878;</span> Mix
-                    </button>
-                    <button class="prio-btn" data-prio="100" onclick="setPriority(100)" title="Favorise les champions les plus FORTS du moment">
-                        <span class="prio-icon">&#128640;</span> Meta
-                    </button>
+                    <button class="prio-btn" data-prio="0" onclick="setPriority(0)" title="Favorise TES champions les plus joues">Pool</button>
+                    <button class="prio-btn active" data-prio="50" onclick="setPriority(50)" title="Equilibre entre ton pool et la meta">Mix</button>
+                    <button class="prio-btn" data-prio="100" onclick="setPriority(100)" title="Favorise les champions les plus FORTS du moment">Meta</button>
                 </div>
                 <input type="range" id="priority-slider" min="0" max="100" value="50" oninput="onSliderChange()">
                 <span id="priority-value" class="slider-value">50</span>
@@ -121,42 +104,36 @@
         <span id="stats-status" class="status-text"></span>
     </div>
 
-    <!-- Row 2: Enemy picks + Bans + Mode + Pool -->
     <div class="inline-bar">
         <div class="ib-section">
             <div class="mode-toggle">
-                <button id="btn-mode-pick" class="mode-btn active" onclick="setClickMode('enemy')">
-                    <span class="mode-icon">&#9876;</span> Ajouter ennemi
-                </button>
-                <button id="btn-mode-ban" class="mode-btn" onclick="setClickMode('ban')">
-                    <span class="mode-icon">&#128683;</span> Ajouter ban
-                </button>
+                <button id="btn-mode-pick" class="mode-btn active" onclick="setClickMode('enemy')">Ajouter ennemi</button>
+                <button id="btn-mode-ban" class="mode-btn" onclick="setClickMode('ban')">Ajouter ban</button>
             </div>
             <span class="help-tip small" data-tooltip="Choisis un mode puis clique sur un champion dans la grille pour l'ajouter comme pick ennemi ou ban">?</span>
         </div>
         <div class="ib-section">
             <span class="ib-label ib-label-enemy">Ennemis :</span>
             <div id="enemy-picks-list" class="chip-list"><span class="hint">Clique un champion</span></div>
-            <button class="btn-tiny btn-danger" onclick="clearEnemyPicks()" title="Retirer tous les picks ennemis">&#10005;</button>
+            <button class="btn-tiny btn-danger" onclick="clearEnemyPicks()" title="Retirer tous les picks ennemis">x</button>
         </div>
         <div class="ib-section">
             <span class="ib-label ib-label-ban">Bans :</span>
             <div id="bans-list" class="chip-list"><span class="hint">-</span></div>
-            <button class="btn-tiny btn-danger" onclick="clearBans()" title="Retirer tous les bans">&#10005;</button>
+            <button class="btn-tiny btn-danger" onclick="clearBans()" title="Retirer tous les bans">x</button>
         </div>
         <div id="player-pool-bar" class="ib-section hidden">
             <span class="ib-label pool-label">Ton Pool :</span>
             <div id="player-pool-icons" class="chip-list"></div>
-            <button class="btn-tiny" onclick="openPoolEditor()" title="Modifier manuellement ton champion pool">&#9998; edit</button>
+            <button class="btn-tiny" onclick="openPoolEditor()" title="Modifier manuellement ton champion pool">edit</button>
         </div>
     </div>
 </section>
 
-<!-- ONBOARDING (shown when no data loaded) -->
+<!-- ONBOARDING -->
 <div id="onboarding-screen" class="onboarding-screen">
     <div class="onboarding-content">
-        <div class="onboarding-icon">&#127918;</div>
-        <h2>Bienvenue sur DraftForMe !</h2>
+        <h2>Bienvenue sur DraftForMe</h2>
         <p class="onboarding-desc">Ton assistant pour choisir le meilleur champion en ranked.</p>
         <div class="onboarding-steps">
             <div class="ob-step">
@@ -176,11 +153,11 @@
     </div>
 </div>
 
-<!-- MAIN : 2 colonnes (grille + suggestions) -->
+<!-- MAIN -->
 <main id="main-layout" class="hidden">
     <section id="champion-grid-section">
         <div class="grid-toolbar">
-            <input type="text" id="champ-search" placeholder="&#128269; Rechercher un champion..." oninput="filterChampions()">
+            <input type="text" id="champ-search" placeholder="Rechercher un champion..." oninput="filterChampions()">
             <div class="grid-legend">
                 <span class="legend-item"><span class="legend-dot legend-pool"></span> Ton pool</span>
                 <span class="legend-item"><span class="legend-dot legend-hot"></span> Pool + Meta</span>
@@ -192,7 +169,7 @@
 
     <aside id="sidebar-right">
         <div class="sidebar-header">
-            <h3>&#127942; Suggestions <small id="rec-role-label"></small></h3>
+            <h3>Suggestions <small id="rec-role-label"></small></h3>
             <span class="help-tip" data-tooltip="Champions recommandes en fonction de la meta, ton pool de champions et les counters des picks ennemis">?</span>
         </div>
         <div id="rec-context" class="rec-context"></div>
@@ -211,7 +188,7 @@
     </aside>
 </main>
 
-<!-- MODAL : Detail champion + items -->
+<!-- MODAL : Detail champion -->
 <div id="detail-overlay" class="modal-overlay hidden" onclick="closeDetail()">
     <div class="detail-panel" onclick="event.stopPropagation()">
         <button class="detail-close" onclick="closeDetail()">&times;</button>
@@ -225,16 +202,16 @@
         </div>
         <div class="detail-stats-grid" id="detail-stats-grid"></div>
         <div class="detail-section">
-            <h4>&#128161; Pourquoi ce champion ?</h4>
+            <h4>Pourquoi ce champion ?</h4>
             <p class="section-desc">Le score est calcule a partir de 3 criteres :</p>
             <div class="detail-weights" id="detail-weights"></div>
         </div>
         <div class="detail-section">
-            <h4>&#128736; Build recommande</h4>
+            <h4>Build recommande</h4>
             <div id="detail-items" class="detail-items"><span class="hint">Chargement du build...</span></div>
         </div>
         <div class="detail-section">
-            <h4>&#128202; Profil</h4>
+            <h4>Profil</h4>
             <div class="chart-container detail-chart"><canvas id="chart-detail-radar"></canvas></div>
         </div>
     </div>
@@ -243,9 +220,9 @@
 <!-- MODAL : Pool Editor -->
 <div id="modal-overlay" class="modal-overlay hidden" onclick="closeModal()">
     <div class="modal-content" onclick="event.stopPropagation()">
-        <h2>&#128221; Modifier mon Champion Pool</h2>
+        <h2>Modifier mon Champion Pool</h2>
         <p class="modal-desc">Clique sur un champion pour l'ajouter ou le retirer de ton pool. Les champions avec une bordure doree sont dans ton pool.</p>
-        <input type="text" id="pool-search" placeholder="&#128269; Rechercher..." oninput="filterPoolGrid()">
+        <input type="text" id="pool-search" placeholder="Rechercher..." oninput="filterPoolGrid()">
         <div id="pool-editor-grid" class="champion-grid small-grid"></div>
         <div class="modal-actions"><button class="btn-primary" onclick="closeModal()">Valider</button></div>
     </div>
