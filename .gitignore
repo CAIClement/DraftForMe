@@ -1,0 +1,9 @@
+.superpowers/
+.next/
+node_modules/
+.env.local
+coverage/
+supabase/.branches/
+tsconfig.tsbuildinfo
+.next-dev-*.log
+.next-dev-*.err
