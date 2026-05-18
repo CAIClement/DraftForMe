@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>DraftForMe — Landing page</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=Rajdhani:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+
+  <style>
+    html, body { margin: 0; padding: 0; background: #efece6; }
+    body { font-family: 'Inter', system-ui, sans-serif; }
+    * { box-sizing: border-box; }
+
+    /* DraftForMe design tokens — applied per-artboard via .dfm class */
+    .dfm {
+      /* navy bases */
+      --dfm-bg-0: #070d1b;
+      --dfm-bg-1: #0b1426;
+      --dfm-bg-2: #0f1b30;
+      --dfm-bg-3: #142540;
+      --dfm-surface: #0e1a31;
+      --dfm-surface-alt: #122340;
+
+      /* borders */
+      --dfm-line: rgba(120, 180, 220, 0.10);
+      --dfm-line-soft: rgba(120, 180, 220, 0.06);
+      --dfm-line-strong: rgba(120, 180, 220, 0.18);
+
+      /* text */
+      --dfm-fg: #e8eef9;
+      --dfm-fg-muted: #98a6c2;
+      --dfm-fg-faint: #5d6e8c;
+
+      /* accents — "profond" palette by default */
+      --dfm-jade: #3fd9a4;
+      --dfm-jade-soft: rgba(63, 217, 164, 0.14);
+      --dfm-cyan: #5dd1ee;
+      --dfm-gold: #d8b264;
+      --dfm-danger: #e87171;
+
+      /* glow */
+      --dfm-glow: 0 0 0 1px rgba(63, 217, 164, 0.18), 0 0 40px -10px rgba(63, 217, 164, 0.35);
+      --dfm-glow-strong: 0 0 0 1px rgba(63, 217, 164, 0.28), 0 0 60px -8px rgba(63, 217, 164, 0.55);
+
+      /* font face slots */
+      --dfm-font-body: 'Inter', system-ui, sans-serif;
+      --dfm-font-display: 'Space Grotesk', 'Inter', system-ui, sans-serif;
+      --dfm-font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+      /* density */
+      --dfm-pad-section: 96px;
+      --dfm-pad-card: 28px;
+
+      color: var(--dfm-fg);
+      background: var(--dfm-bg-1);
+      font-family: var(--dfm-font-body);
+      letter-spacing: -0.005em;
+    }
+
+    /* Palette: sobre — slate-navy, jade is the sole accent */
+    .dfm[data-palette="sobre"] {
+      --dfm-bg-1: #0c1322;
+      --dfm-bg-2: #101a2d;
+      --dfm-bg-3: #14223a;
+      --dfm-surface: #101a2d;
+      --dfm-surface-alt: #14223a;
+      --dfm-jade: #4ec99a;
+      --dfm-jade-soft: rgba(78, 201, 154, 0.10);
+      --dfm-cyan: #6fc1d8;
+      --dfm-line: rgba(120, 170, 210, 0.10);
+      --dfm-line-strong: rgba(120, 170, 210, 0.16);
+      --dfm-glow: 0 0 0 1px rgba(78, 201, 154, 0.12);
+      --dfm-glow-strong: 0 0 0 1px rgba(78, 201, 154, 0.22), 0 0 30px -14px rgba(78, 201, 154, 0.35);
+    }
+
+    /* Palette: profond — default deep navy + jade */
+    .dfm[data-palette="profond"] { /* defaults */ }
+
+    /* Palette: lumineux — brighter cyan/jade, more contrast */
+    .dfm[data-palette="lumineux"] {
+      --dfm-bg-1: #07101f;
+      --dfm-bg-2: #0a1830;
+      --dfm-bg-3: #112447;
+      --dfm-surface: #0a1830;
+      --dfm-surface-alt: #112447;
+      --dfm-jade: #4cf2b4;
+      --dfm-jade-soft: rgba(76, 242, 180, 0.16);
+      --dfm-cyan: #6ce6ff;
+      --dfm-glow: 0 0 0 1px rgba(76, 242, 180, 0.28), 0 0 50px -8px rgba(76, 242, 180, 0.5);
+      --dfm-glow-strong: 0 0 0 1px rgba(76, 242, 180, 0.4), 0 0 80px -6px rgba(76, 242, 180, 0.7);
+    }
+
+    /* Light mode (rarely used but tweakable) */
+    .dfm[data-theme="light"] {
+      --dfm-bg-1: #f2f4f8;
+      --dfm-bg-2: #e8ecf2;
+      --dfm-bg-3: #dde3ec;
+      --dfm-surface: #ffffff;
+      --dfm-surface-alt: #f6f8fb;
+      --dfm-fg: #0d1726;
+      --dfm-fg-muted: #4a5a78;
+      --dfm-fg-faint: #8a99b6;
+      --dfm-line: rgba(13, 23, 38, 0.08);
+      --dfm-line-soft: rgba(13, 23, 38, 0.04);
+      --dfm-line-strong: rgba(13, 23, 38, 0.14);
+      background: var(--dfm-bg-1);
+    }
+
+    /* Density */
+    .dfm[data-density="compact"] { --dfm-pad-section: 64px; --dfm-pad-card: 20px; }
+    .dfm[data-density="aere"]    { --dfm-pad-section: 128px; --dfm-pad-card: 36px; }
+
+    /* Fonts */
+    .dfm[data-font="inter"]   { --dfm-font-body: 'Inter', system-ui, sans-serif; --dfm-font-display: 'Inter', system-ui, sans-serif; }
+    .dfm[data-font="grotesk"] { --dfm-font-body: 'Inter', system-ui, sans-serif; --dfm-font-display: 'Space Grotesk', 'Inter', system-ui, sans-serif; }
+    .dfm[data-font="rajdhani"]{ --dfm-font-body: 'Inter', system-ui, sans-serif; --dfm-font-display: 'Rajdhani', 'Inter', system-ui, sans-serif; }
+
+    /* Glow intensity */
+    .dfm[data-glow="off"]    { --dfm-glow: none; --dfm-glow-strong: 0 0 0 1px var(--dfm-jade); }
+    .dfm[data-glow="subtle"] { /* defaults */ }
+    .dfm[data-glow="strong"] {
+      --dfm-glow: 0 0 0 1px rgba(63, 217, 164, 0.35), 0 0 60px -6px rgba(63, 217, 164, 0.6);
+      --dfm-glow-strong: 0 0 0 1px rgba(63, 217, 164, 0.5), 0 0 90px -4px rgba(63, 217, 164, 0.8);
+    }
+
+    /* Card style */
+    .dfm[data-cards="line"]   .dfm-card { background: transparent; border: 1px solid var(--dfm-line); }
+    .dfm[data-cards="solid"]  .dfm-card { background: var(--dfm-surface); border: 1px solid var(--dfm-line); }
+    .dfm[data-cards="frame"]  .dfm-card { background: var(--dfm-surface); border: 1px solid var(--dfm-line-strong); box-shadow: inset 0 1px 0 rgba(255,255,255,.03); }
+
+    /* Generic helpers shared across variants */
+    .dfm h1, .dfm h2, .dfm h3, .dfm h4 { font-family: var(--dfm-font-display); font-weight: 600; letter-spacing: -0.02em; margin: 0; }
+    .dfm p { margin: 0; }
+    .dfm a { color: inherit; text-decoration: none; }
+
+    /* utility: hex grid background */
+    .dfm-hexbg {
+      background-color: var(--dfm-bg-1);
+      background-image:
+        radial-gradient(circle at 50% 0%, rgba(63,217,164,0.05), transparent 60%),
+        url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='56' height='64' viewBox='0 0 56 64'><g fill='none' stroke='rgba(120,170,210,0.07)' stroke-width='1'><path d='M14 0 L42 0 L56 16 L56 48 L42 64 L14 64 L0 48 L0 16 Z'/></g></svg>");
+    }
+
+    /* eyebrow utility */
+    .dfm-eyebrow {
+      font-family: var(--dfm-font-display);
+      font-size: 11px; font-weight: 600;
+      letter-spacing: 0.18em; text-transform: uppercase;
+      color: var(--dfm-jade);
+    }
+
+    /* button */
+    .dfm-btn {
+      display: inline-flex; align-items: center; gap: 10px;
+      padding: 14px 22px;
+      border-radius: 10px;
+      font: 600 14px/1 var(--dfm-font-display);
+      letter-spacing: 0.01em;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: transform .15s, box-shadow .2s, background .15s;
+    }
+    .dfm-btn-primary {
+      background: var(--dfm-jade);
+      color: #062013;
+      box-shadow: var(--dfm-glow);
+    }
+    .dfm-btn-primary:hover { box-shadow: var(--dfm-glow-strong); transform: translateY(-1px); }
+    .dfm-btn-secondary {
+      background: transparent;
+      color: var(--dfm-fg);
+      border-color: var(--dfm-line-strong);
+    }
+    .dfm-btn-secondary:hover { border-color: var(--dfm-jade); color: var(--dfm-jade); }
+
+    /* Make sure the design canvas grid doesn't bleed into landings */
+    [data-dc-slot] .dfm { border-radius: 4px; overflow: hidden; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+  <script type="text/babel" src="design-canvas.jsx"></script>
+  <script type="text/babel" src="tweaks-panel.jsx"></script>
+  <script type="text/babel" src="shared.jsx"></script>
+  <script type="text/babel" src="landing-sobre.jsx"></script>
+  <script type="text/babel" src="landing-hybride.jsx"></script>
+  <script type="text/babel" src="landing-ambitieux.jsx"></script>
+  <script type="text/babel" src="decision-space.jsx"></script>
+  <script type="text/babel" src="app.jsx"></script>
+</body>
+</html>
