@@ -7,3 +7,9 @@ supabase/.branches/
 tsconfig.tsbuildinfo
 .next-dev-*.log
 .next-dev-*.err
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+.venv-ml/
+ml/artifacts/training_dataset.csv

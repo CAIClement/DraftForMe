@@ -1,0 +1,32 @@
+{
+  "best_model": "hist_gradient_boosting",
+  "mae": 5.769903246794483,
+  "rows": 61560,
+  "feature_columns": [
+    "priority",
+    "total_champions",
+    "candidate_rank",
+    "candidate_win_rate",
+    "candidate_pick_rate",
+    "candidate_ban_rate",
+    "candidate_games_played",
+    "player_has_champion",
+    "player_games",
+    "player_win_rate",
+    "player_missing_pool",
+    "enemy_pick_count",
+    "ban_count",
+    "already_picked_count",
+    "is_banned",
+    "is_already_picked",
+    "role_top",
+    "role_jungle",
+    "role_mid",
+    "role_adc",
+    "role_support"
+  ],
+  "metrics": {
+    "hist_gradient_boosting_mae": 5.769903246794483,
+    "random_forest_mae": 6.627036544694409
+  }
+}
