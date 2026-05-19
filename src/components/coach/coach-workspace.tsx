@@ -35,6 +35,7 @@ const fallbackChampions: Champion[] = [
 ];
 
 export function CoachWorkspace({ champions = fallbackChampions }: { champions?: Champion[] }) {
+  const [riotId, setRiotId] = useState("");
   const [role, setRole] = useState("mid");
   const [enemyPicks, setEnemyPicks] = useState<string[]>([]);
   const [bans, setBans] = useState<string[]>([]);
@@ -112,20 +113,24 @@ export function CoachWorkspace({ champions = fallbackChampions }: { champions?: 
               <p style={{ fontSize: 13, color: C.fgMuted, margin: "0 0 14px", lineHeight: 1.5 }}>
                 Ton coach personnel pour comprendre le meilleur pick.
               </p>
-              <div style={{ display: "flex", gap: 8 }}>
-                {["Discord", "Google"].map((provider) => (
-                  <a key={provider}
-                    href={`/auth/login?provider=${provider.toLowerCase()}`}
-                    style={{
-                      padding: "7px 14px", borderRadius: 8, fontSize: 13, fontWeight: 500,
-                      color: C.fg, border: `1px solid ${C.lineStrong}`,
-                      textDecoration: "none", display: "inline-flex", alignItems: "center",
-                      transition: "border-color .15s, color .15s",
-                    }}
-                  >
-                    {provider}
-                  </a>
-                ))}
+              <div>
+                <label htmlFor="riot-id" style={label}>Riot ID</label>
+                <input
+                  id="riot-id"
+                  type="text"
+                  value={riotId}
+                  onChange={(event) => setRiotId(event.target.value)}
+                  placeholder="Nom#TAG"
+                  autoComplete="username"
+                  style={{
+                    width: "100%", borderRadius: 8, padding: "9px 12px",
+                    background: C.bg2, border: `1px solid ${C.lineStrong}`,
+                    color: C.fg, fontSize: 14, fontFamily: "var(--font-body)",
+                  }}
+                />
+                <p style={{ fontSize: 12, color: C.fgMuted, margin: "8px 0 0", lineHeight: 1.4 }}>
+                  Ajoute ton identifiant Riot pour preparer ton profil DraftForMe.
+                </p>
               </div>
             </div>
 
