@@ -33,7 +33,7 @@ export function RecommendationCard({ recommendation }: { recommendation: Recomme
 
       {recommendation.explanation.alternatives.length > 0 ? (
         <p className="mt-3 text-sm text-slate-400">
-          Alternatives proches : {recommendation.explanation.alternatives.join(", ")}
+          Alternatives proches : {recommendation.explanation.alternatives.map((alternative) => alternative.championName).join(", ")}
         </p>
       ) : null}
     </article>

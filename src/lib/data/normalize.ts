@@ -9,6 +9,7 @@ type StatsRow = {
   champions: {
     id: string;
     name: string;
+    image_url: string | null;
   } | null;
 };
 
@@ -20,6 +21,7 @@ type PoolRow = {
   champions: {
     id: string;
     name: string;
+    image_url?: string | null;
   } | null;
 };
 
@@ -29,6 +31,7 @@ export function mapStatsRowsToChampionStats(rows: StatsRow[]): ChampionStats[] {
     .map((row, index) => ({
       championId: row.champion_id,
       name: row.champions?.name ?? row.champion_id,
+      imageUrl: row.champions?.image_url ?? undefined,
       role: row.role,
       rank: index + 1,
       winRate: row.win_rate,

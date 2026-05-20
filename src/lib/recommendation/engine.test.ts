@@ -3,9 +3,36 @@ import { recommendChampions } from "./engine";
 import type { ChampionStats, PlayerPoolEntry } from "./types";
 
 const stats: ChampionStats[] = [
-  { championId: "ahri", name: "Ahri", role: "mid", rank: 1, winRate: 52, pickRate: 12, banRate: 4 },
-  { championId: "zed", name: "Zed", role: "mid", rank: 2, winRate: 51, pickRate: 10, banRate: 18 },
-  { championId: "orianna", name: "Orianna", role: "mid", rank: 8, winRate: 49, pickRate: 7, banRate: 2 }
+  {
+    championId: "ahri",
+    name: "Ahri",
+    imageUrl: "https://ddragon.leagueoflegends.com/cdn/16.3.1/img/champion/Ahri.png",
+    role: "mid",
+    rank: 1,
+    winRate: 52,
+    pickRate: 12,
+    banRate: 4
+  },
+  {
+    championId: "zed",
+    name: "Zed",
+    imageUrl: "https://ddragon.leagueoflegends.com/cdn/16.3.1/img/champion/Zed.png",
+    role: "mid",
+    rank: 2,
+    winRate: 51,
+    pickRate: 10,
+    banRate: 18
+  },
+  {
+    championId: "orianna",
+    name: "Orianna",
+    imageUrl: "https://ddragon.leagueoflegends.com/cdn/16.3.1/img/champion/Orianna.png",
+    role: "mid",
+    rank: 8,
+    winRate: 49,
+    pickRate: 7,
+    banRate: 2
+  }
 ];
 
 const pool: PlayerPoolEntry[] = [
@@ -54,6 +81,25 @@ describe("recommendChampions", () => {
     });
 
     expect(result[0].championId).toBe("ahri");
+  });
+
+  it("preserves champion images on recommendations and alternatives", () => {
+    const result = recommendChampions({
+      stats,
+      playerPool: pool,
+      enemyPicks: [],
+      bannedChampionIds: [],
+      alreadyPickedChampionIds: [],
+      priority: 100,
+      topN: 3
+    });
+
+    expect(result[0].championImageUrl).toBe("https://ddragon.leagueoflegends.com/cdn/16.3.1/img/champion/Ahri.png");
+    expect(result[0].explanation.alternatives[0]).toEqual({
+      championId: "zed",
+      championName: "Zed",
+      championImageUrl: "https://ddragon.leagueoflegends.com/cdn/16.3.1/img/champion/Zed.png"
+    });
   });
 
   it("uses matchup data when enemy picks are present", () => {

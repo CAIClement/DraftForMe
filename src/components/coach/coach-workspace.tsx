@@ -24,14 +24,15 @@ const C = {
 type Champion = {
   id: string;
   name: string;
+  imageUrl?: string;
 };
 
 const fallbackChampions: Champion[] = [
-  { id: "ahri", name: "Ahri" },
-  { id: "orianna", name: "Orianna" },
-  { id: "zed", name: "Zed" },
-  { id: "jinx", name: "Jinx" },
-  { id: "kaisa", name: "Kai'Sa" }
+  { id: "ahri", name: "Ahri", imageUrl: "https://ddragon.leagueoflegends.com/cdn/16.3.1/img/champion/Ahri.png" },
+  { id: "orianna", name: "Orianna", imageUrl: "https://ddragon.leagueoflegends.com/cdn/16.3.1/img/champion/Orianna.png" },
+  { id: "zed", name: "Zed", imageUrl: "https://ddragon.leagueoflegends.com/cdn/16.3.1/img/champion/Zed.png" },
+  { id: "jinx", name: "Jinx", imageUrl: "https://ddragon.leagueoflegends.com/cdn/16.3.1/img/champion/Jinx.png" },
+  { id: "kaisa", name: "Kai'Sa", imageUrl: "https://ddragon.leagueoflegends.com/cdn/16.3.1/img/champion/Kaisa.png" }
 ];
 
 export function CoachWorkspace({ champions = fallbackChampions }: { champions?: Champion[] }) {
@@ -175,11 +176,21 @@ export function CoachWorkspace({ champions = fallbackChampions }: { champions?: 
             <div className="grid gap-4 sm:grid-cols-2">
               <div style={card}>
                 <span style={label}>Picks ennemis</span>
-                <ChampionPicker champions={champions} selectedIds={enemyPicks} onToggle={toggleEnemy} />
+                <ChampionPicker
+                  champions={champions}
+                  selectedIds={enemyPicks}
+                  onToggle={toggleEnemy}
+                  searchLabel="Rechercher un pick ennemi"
+                />
               </div>
               <div style={card}>
                 <span style={label}>Bans</span>
-                <ChampionPicker champions={champions} selectedIds={bans} onToggle={toggleBan} />
+                <ChampionPicker
+                  champions={champions}
+                  selectedIds={bans}
+                  onToggle={toggleBan}
+                  searchLabel="Rechercher un ban"
+                />
               </div>
             </div>
 

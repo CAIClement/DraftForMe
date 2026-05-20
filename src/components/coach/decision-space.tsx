@@ -44,18 +44,42 @@ function derivePosture(rec: Recommendation, rank: number): PostureType {
 
 // ─── Primitives ───────────────────────────────────────────────────────────────
 
-function ChampIcon({ size = 36, accent = C.jade }: { size?: number; accent?: string }) {
-  const w = size, h = size;
+function ChampionAvatar({
+  name,
+  imageUrl,
+  size = 36,
+  accent = C.jade
+}: {
+  name: string;
+  imageUrl?: string;
+  size?: number;
+  accent?: string;
+}) {
+  const [hasImageError, setHasImageError] = useState(false);
+  const showImage = imageUrl && !hasImageError;
+
   return (
-    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} style={{ color: "rgba(180,210,240,0.5)" }}>
-      <rect x="2" y="2" width={w - 4} height={h - 4} rx="5"
-            stroke="currentColor" strokeOpacity="0.35" strokeWidth="1" fill="rgba(15,27,48,0.65)" />
-      <circle cx={w / 2} cy={h * 0.36} r={w * 0.14} fill="currentColor" opacity="0.85" />
-      <path d={`M${w*0.25} ${h*0.58} L${w*0.5} ${h*0.46} L${w*0.75} ${h*0.58} L${w*0.72} ${h*0.88} L${w*0.28} ${h*0.88} Z`}
-            fill="currentColor" opacity="0.85" />
-      <circle cx={w * 0.78} cy={h * 0.34} r="2.5" fill={accent} />
-      <circle cx={w * 0.78} cy={h * 0.34} r="5" stroke={accent} strokeWidth="0.8" fill="none" opacity="0.5" />
-    </svg>
+    <span style={{
+      width: size, height: size, borderRadius: Math.max(6, size * 0.18),
+      display: "flex", alignItems: "center", justifyContent: "center",
+      overflow: "hidden", background: C.bg3, color: accent,
+      border: `1px solid ${accent}55`,
+      fontFamily: "var(--font-display)", fontWeight: 700,
+      fontSize: Math.max(10, size * 0.28), lineHeight: 1,
+      flexShrink: 0,
+    }}>
+      {showImage ? (
+        <img
+          src={imageUrl}
+          alt={`Portrait de ${name}`}
+          loading="lazy"
+          onError={() => setHasImageError(true)}
+          style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+        />
+      ) : (
+        name.slice(0, 2).toUpperCase()
+      )}
+    </span>
   );
 }
 
@@ -177,7 +201,7 @@ function PickCard({ rec, rank, selected, onClick }: {
               display: "flex", alignItems: "center", justifyContent: "center",
               color: p.fg, flexShrink: 0,
             }}>
-              <ChampIcon size={28} accent={p.fg} />
+              <ChampionAvatar name={rec.championName} imageUrl={rec.championImageUrl} size={40} accent={p.fg} />
             </div>
             <div style={{ minWidth: 0, flex: 1 }}>
               <div style={{
@@ -275,7 +299,7 @@ function DetailPanel({ rec, rank, advancedOpen, onToggleAdvanced }: {
             border: `1px solid ${p.ring}`,
             display: "flex", alignItems: "center", justifyContent: "center", color: p.fg,
           }}>
-            <ChampIcon size={36} accent={p.fg} />
+            <ChampionAvatar name={rec.championName} imageUrl={rec.championImageUrl} size={52} accent={p.fg} />
           </div>
           <div style={{ flex: 1 }}>
             <div style={{
@@ -341,7 +365,7 @@ function DetailPanel({ rec, rank, advancedOpen, onToggleAdvanced }: {
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
             {rec.explanation.alternatives.map((alt) => (
-              <div key={alt} style={{
+              <div key={alt.championId} style={{
                 display: "flex", alignItems: "center", gap: 10,
                 padding: "10px 14px", borderRadius: 10,
                 background: C.bg2, border: `1px solid ${C.line}`,
@@ -351,9 +375,14 @@ function DetailPanel({ rec, rank, advancedOpen, onToggleAdvanced }: {
                   border: `1px solid ${C.line}`,
                   display: "flex", alignItems: "center", justifyContent: "center", color: C.fgMuted,
                 }}>
-                  <ChampIcon size={20} accent={C.fgMuted} />
+                  <ChampionAvatar
+                    name={alt.championName}
+                    imageUrl={alt.championImageUrl}
+                    size={30}
+                    accent={C.fgMuted}
+                  />
                 </div>
-                <span style={{ fontWeight: 600, fontSize: 13, color: C.fg }}>{alt}</span>
+                <span style={{ fontWeight: 600, fontSize: 13, color: C.fg }}>{alt.championName}</span>
               </div>
             ))}
           </div>

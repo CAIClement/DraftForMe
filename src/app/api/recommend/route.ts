@@ -25,7 +25,7 @@ export async function POST(request: Request) {
 
   const { data: statsRows, error: statsError } = await supabase
     .from("champion_stats")
-    .select("champion_id, role, win_rate, pick_rate, ban_rate, champions(id, name)")
+    .select("champion_id, role, win_rate, pick_rate, ban_rate, champions(id, name, image_url)")
     .eq("role", parsed.data.role)
     .eq("region", parsed.data.region)
     .eq("tier", parsed.data.tier)

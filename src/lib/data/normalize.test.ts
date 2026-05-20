@@ -10,7 +10,11 @@ describe("mapStatsRowsToChampionStats", () => {
         win_rate: 52,
         pick_rate: 12,
         ban_rate: 3,
-        champions: { id: "ahri", name: "Ahri" }
+        champions: {
+          id: "ahri",
+          name: "Ahri",
+          image_url: "https://ddragon.leagueoflegends.com/cdn/16.3.1/img/champion/Ahri.png"
+        }
       }
     ]);
 
@@ -18,6 +22,7 @@ describe("mapStatsRowsToChampionStats", () => {
       {
         championId: "ahri",
         name: "Ahri",
+        imageUrl: "https://ddragon.leagueoflegends.com/cdn/16.3.1/img/champion/Ahri.png",
         role: "mid",
         rank: 1,
         winRate: 52,

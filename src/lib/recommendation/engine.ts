@@ -117,6 +117,7 @@ export function recommendChampions(input: RecommendInput): Recommendation[] {
       return {
         championId: champion.championId,
         championName: champion.name,
+        championImageUrl: champion.imageUrl,
         totalScore: round(total),
         metaScore: round(meta),
         playerScore: round(player),
@@ -161,7 +162,11 @@ export function recommendChampions(input: RecommendInput): Recommendation[] {
       alternatives: recommendations
         .filter((_, alternativeIndex) => alternativeIndex !== index)
         .slice(0, 2)
-        .map((alternative) => alternative.championName)
+        .map((alternative) => ({
+          championId: alternative.championId,
+          championName: alternative.championName,
+          championImageUrl: alternative.championImageUrl
+        }))
     }
   }));
 }

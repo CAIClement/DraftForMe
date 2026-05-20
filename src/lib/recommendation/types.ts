@@ -1,6 +1,7 @@
 export type ChampionStats = {
   championId: string;
   name: string;
+  imageUrl?: string;
   role: string;
   rank: number;
   winRate: number | null;
@@ -34,12 +35,19 @@ export type RecommendationExplanation = {
   summary: string;
   factors: RecommendationFactor[];
   warnings: string[];
-  alternatives: string[];
+  alternatives: RecommendationAlternative[];
+};
+
+export type RecommendationAlternative = {
+  championId: string;
+  championName: string;
+  championImageUrl?: string;
 };
 
 export type Recommendation = {
   championId: string;
   championName: string;
+  championImageUrl?: string;
   totalScore: number;
   metaScore: number;
   playerScore: number;
