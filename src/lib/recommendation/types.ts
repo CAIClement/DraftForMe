@@ -23,6 +23,19 @@ export type Matchup = {
   winRate: number | null;
 };
 
+export type CounterRelation = {
+  championId: string;
+  counteredByChampionId: string;
+  role: string;
+};
+
+export type CounterVerdict = {
+  score: number;
+  available: boolean;
+  beats: string[];
+  losesTo: string[];
+};
+
 export type RecommendationFactor = {
   key: "meta" | "player" | "counter";
   label: string;
