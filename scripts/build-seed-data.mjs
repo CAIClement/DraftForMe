@@ -7,7 +7,9 @@ function sql(value) {
 }
 
 function numberOrNull(value) {
-  return Number.isFinite(Number(value)) ? String(Number(value)) : "null";
+  if (value === null || value === undefined || value === "") return "null";
+  const num = Number(value);
+  return Number.isFinite(num) ? String(num) : "null";
 }
 
 export function championIdFromName(value) {
@@ -55,7 +57,7 @@ export function buildSeedLines({ champions, tierlists, stats }) {
 
       // `counters` lists the champions that BEAT this one, hence countered_by_champion_id.
       for (const counter of row.counters ?? []) {
-        const counterId = String(counter).toLowerCase();
+        const counterId = championIdFromName(counter);
         if (counterId === championId) continue;
         lines.push(
           `insert into public.counter_relations (champion_id, countered_by_champion_id, role, source) values (` +
