@@ -662,6 +662,27 @@ describe("counter relations in recommendations", () => {
 
     expect(orianna?.counterScore).toBeGreaterThan(50);
   });
+
+  // The seeded data has no mutual pair inside a single role, but three exist
+  // across roles (kennen/sylas, chogath/masteryi, teemo/zac). A relation from
+  // another role must never influence a mid recommendation.
+  it("ignores relations belonging to another role", () => {
+    const result = recommendChampions({
+      stats,
+      playerPool: [],
+      enemyPicks: ["zed"],
+      bannedChampionIds: [],
+      alreadyPickedChampionIds: [],
+      priority: 50,
+      topN: 10,
+      counterRelations: [{ championId: "zed", counteredByChampionId: "orianna", role: "top" }]
+    });
+    const orianna = result.find((entry) => entry.championId === "orianna");
+    const counter = orianna?.explanation.factors.find((factor) => factor.key === "counter");
+
+    expect(counter?.available).toBe(false);
+    expect(orianna?.counterScore).toBe(50);
+  });
 });
 ```
 
@@ -699,7 +720,11 @@ export function recommendChampions(input: RecommendInput): Recommendation[] {
     .map((champion) => {
       const meta = metaScore(champion, input.stats.length);
       const player = playerScore(champion.championId, input.playerPool);
-      const counter = scoreCounter(champion.championId, input.enemyPicks, relations);
+      const counter = scoreCounter(
+        champion.championId,
+        input.enemyPicks,
+        relations.filter((relation) => relation.role === champion.role)
+      );
       const total = meta * weights.meta + player * weights.player + counter.score * weights.counter;
       const warnings: string[] = [];
 
