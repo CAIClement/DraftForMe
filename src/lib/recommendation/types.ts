@@ -7,6 +7,7 @@ export type ChampionStats = {
   winRate: number | null;
   pickRate: number | null;
   banRate: number | null;
+  games: number | null;
 };
 
 export type PlayerPoolEntry = {
@@ -15,12 +16,6 @@ export type PlayerPoolEntry = {
   games: number | null;
   winRate: number | null;
   confidence: number;
-};
-
-export type Matchup = {
-  championId: string;
-  enemyChampionId: string;
-  winRate: number | null;
 };
 
 export type CounterRelation = {
@@ -42,6 +37,7 @@ export type RecommendationFactor = {
   score: number;
   weight: number;
   detail: string;
+  available: boolean;
 };
 
 export type RecommendationExplanation = {
@@ -65,6 +61,12 @@ export type Recommendation = {
   metaScore: number;
   playerScore: number;
   counterScore: number;
+  rank: number;
+  winRate: number | null;
+  pickRate: number | null;
+  banRate: number | null;
+  games: number | null;
+  totalCandidates: number;
   explanation: RecommendationExplanation;
 };
 
@@ -76,5 +78,5 @@ export type RecommendInput = {
   alreadyPickedChampionIds: string[];
   priority: number;
   topN: number;
-  matchups?: Matchup[];
+  counterRelations?: CounterRelation[];
 };

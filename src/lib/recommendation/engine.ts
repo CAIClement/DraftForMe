@@ -1,6 +1,7 @@
+import { scoreCounter } from "./counter";
 import type {
   ChampionStats,
-  Matchup,
+  CounterVerdict,
   PlayerPoolEntry,
   RecommendInput,
   Recommendation
@@ -34,21 +35,6 @@ function playerScore(championId: string, playerPool: PlayerPoolEntry[]): number 
   const gamesBonus = Math.min(games * 0.6, 35);
 
   return clamp(20 + winRateBonus + gamesBonus + confidence * 0.25);
-}
-
-function counterScore(championId: string, enemyPicks: string[], matchups: Matchup[]): number {
-  if (enemyPicks.length === 0) return 50;
-
-  const scores = enemyPicks.map((enemyChampionId) => {
-    const matchup = matchups.find(
-      (item) => item.championId === championId && item.enemyChampionId === enemyChampionId
-    );
-    if (!matchup || matchup.winRate === null) return 0;
-    return (matchup.winRate - 50) * 4;
-  });
-
-  const average = scores.reduce((sum, score) => sum + score, 0) / scores.length;
-  return clamp(50 + average);
 }
 
 function computeWeights(priority: number, hasEnemy: boolean, hasPool: boolean) {
@@ -87,31 +73,39 @@ function buildSummary(meta: number, player: number, counter: number, hasEnemy: b
   return `Recommended because it has a ${strongest.text}.`;
 }
 
-function hasCompleteMatchupData(championId: string, enemyPicks: string[], matchups: Matchup[]): boolean {
-  return enemyPicks.every((enemyChampionId) =>
-    matchups.some((item) => item.championId === championId && item.enemyChampionId === enemyChampionId)
-  );
+function counterDetail(counter: CounterVerdict): string {
+  const parts: string[] = [];
+  if (counter.beats.length > 0) parts.push(`Prend l'avantage sur ${counter.beats.join(", ")}.`);
+  if (counter.losesTo.length > 0) parts.push(`En difficulté contre ${counter.losesTo.join(", ")}.`);
+  return parts.join(" ");
 }
 
 export function recommendChampions(input: RecommendInput): Recommendation[] {
   const banned = new Set(input.bannedChampionIds);
   const picked = new Set(input.alreadyPickedChampionIds);
-  const matchups = input.matchups ?? [];
+  const relations = input.counterRelations ?? [];
   const hasEnemy = input.enemyPicks.length > 0;
   const hasPool = input.playerPool.some((entry) => (entry.games ?? 0) >= MIN_GAMES_FOR_POOL);
   const weights = computeWeights(input.priority, hasEnemy, hasPool);
 
-  const recommendations = input.stats
-    .filter((champion) => !banned.has(champion.championId) && !picked.has(champion.championId))
+  const candidates = input.stats.filter(
+    (champion) => !banned.has(champion.championId) && !picked.has(champion.championId)
+  );
+
+  const recommendations = candidates
     .map((champion) => {
       const meta = metaScore(champion, input.stats.length);
       const player = playerScore(champion.championId, input.playerPool);
-      const counter = counterScore(champion.championId, input.enemyPicks, matchups);
-      const total = meta * weights.meta + player * weights.player + counter * weights.counter;
+      const counter = scoreCounter(
+        champion.championId,
+        input.enemyPicks,
+        relations.filter((relation) => relation.role === champion.role)
+      );
+      const total = meta * weights.meta + player * weights.player + counter.score * weights.counter;
       const warnings: string[] = [];
 
-      if (hasEnemy && !hasCompleteMatchupData(champion.championId, input.enemyPicks, matchups)) {
-        warnings.push("Matchup data is incomplete for the current enemy picks.");
+      if (hasEnemy && !counter.available) {
+        warnings.push("No counter relation is known for the current enemy picks.");
       }
 
       return {
@@ -121,30 +115,44 @@ export function recommendChampions(input: RecommendInput): Recommendation[] {
         totalScore: round(total),
         metaScore: round(meta),
         playerScore: round(player),
-        counterScore: round(counter),
+        counterScore: round(counter.score),
+        rank: champion.rank,
+        winRate: champion.winRate,
+        pickRate: champion.pickRate,
+        banRate: champion.banRate,
+        games: champion.games,
+        totalCandidates: candidates.length,
         explanation: {
-          summary: buildSummary(meta, player, counter, hasEnemy),
+          summary: buildSummary(meta, player, counter.score, hasEnemy),
           factors: [
             {
               key: "meta" as const,
-              label: "Meta strength",
+              label: "Force dans le patch",
               score: round(meta),
               weight: round(weights.meta * 100),
-              detail: `Rank #${champion.rank} for ${champion.role}.`
+              detail: `Rang #${champion.rank} sur ${input.stats.length} en ${champion.role}.`,
+              available: true
             },
             {
               key: "player" as const,
-              label: "Personal fit",
+              label: "Votre pool",
               score: round(player),
               weight: round(weights.player * 100),
-              detail: player > 5 ? "This champion is represented in your pool." : "This champion is not established in your pool."
+              detail:
+                player > 5
+                  ? "Ce champion fait partie de vos habitudes."
+                  : "Ce champion n'est pas établi dans votre pool.",
+              available: hasPool
             },
             {
               key: "counter" as const,
-              label: "Matchup context",
-              score: round(counter),
+              label: "Matchup",
+              score: round(counter.score),
               weight: round(weights.counter * 100),
-              detail: hasEnemy ? "Enemy picks are part of this score." : "No enemy picks selected yet."
+              detail: counter.available
+                ? counterDetail(counter)
+                : "Aucun counter connu pour les picks adverses actuels.",
+              available: counter.available
             }
           ],
           warnings,

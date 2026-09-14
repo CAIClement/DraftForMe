@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { recommendChampions } from "./engine";
-import type { ChampionStats, PlayerPoolEntry } from "./types";
+import type { ChampionStats, CounterRelation, PlayerPoolEntry } from "./types";
 
 const stats: ChampionStats[] = [
   {
@@ -11,7 +11,8 @@ const stats: ChampionStats[] = [
     rank: 1,
     winRate: 52,
     pickRate: 12,
-    banRate: 4
+    banRate: 4,
+    games: 200000
   },
   {
     championId: "zed",
@@ -21,7 +22,8 @@ const stats: ChampionStats[] = [
     rank: 2,
     winRate: 51,
     pickRate: 10,
-    banRate: 18
+    banRate: 18,
+    games: 150000
   },
   {
     championId: "orianna",
@@ -31,7 +33,8 @@ const stats: ChampionStats[] = [
     rank: 8,
     winRate: 49,
     pickRate: 7,
-    banRate: 2
+    banRate: 2,
+    games: 90000
   }
 ];
 
@@ -101,38 +104,96 @@ describe("recommendChampions", () => {
       championImageUrl: "https://ddragon.leagueoflegends.com/cdn/16.3.1/img/champion/Zed.png"
     });
   });
+});
 
-  it("uses matchup data when enemy picks are present", () => {
-    const result = recommendChampions({
-      stats,
+const relations: CounterRelation[] = [
+  { championId: "zed", counteredByChampionId: "orianna", role: "mid" },
+  { championId: "ahri", counteredByChampionId: "zed", role: "mid" }
+];
+
+// A local fixture with adjacent meta ranks. The shared `stats` fixture puts
+// orianna at rank 8 out of 3 champions, which clamps its meta score to 0 — a
+// 57-point weighted deficit that no counter edge could overcome, making the
+// ranking assertion below untestable against it.
+const counterStats: ChampionStats[] = [
+  { championId: "ahri", name: "Ahri", role: "mid", rank: 1, winRate: 52, pickRate: 12, banRate: 4, games: 200000 },
+  { championId: "orianna", name: "Orianna", role: "mid", rank: 2, winRate: 50, pickRate: 7, banRate: 2, games: 90000 },
+  { championId: "zed", name: "Zed", role: "mid", rank: 3, winRate: 51, pickRate: 10, banRate: 18, games: 150000 }
+];
+
+describe("counter relations in recommendations", () => {
+  function run(enemyPicks: string[]) {
+    return recommendChampions({
+      stats: counterStats,
       playerPool: [],
-      enemyPicks: ["zed"],
+      enemyPicks,
       bannedChampionIds: [],
       alreadyPickedChampionIds: [],
       priority: 50,
-      topN: 1,
-      matchups: [
-        { championId: "ahri", enemyChampionId: "zed", winRate: 54 },
-        { championId: "orianna", enemyChampionId: "zed", winRate: 47 }
-      ]
+      topN: 10,
+      counterRelations: relations
     });
+  }
 
-    expect(result[0].championId).toBe("ahri");
-    expect(result[0].explanation.summary).toContain("matchup");
+  it("carries champion facts through to the recommendation", () => {
+    const [top] = run([]);
+
+    expect(top.rank).toBeGreaterThan(0);
+    expect(top.games).not.toBeUndefined();
+    expect(top.totalCandidates).toBe(3);
   });
 
-  it("reports low confidence when matchup data is missing", () => {
+  it("marks the counter factor unavailable when there are no enemy picks", () => {
+    const [top] = run([]);
+    const counter = top.explanation.factors.find((factor) => factor.key === "counter");
+
+    expect(counter?.available).toBe(false);
+  });
+
+  it("marks the counter factor unavailable when no relation is known", () => {
+    const result = run(["orianna"]);
+    const ahri = result.find((entry) => entry.championId === "ahri");
+    const counter = ahri?.explanation.factors.find((factor) => factor.key === "counter");
+
+    expect(counter?.available).toBe(false);
+  });
+
+  it("ranks a champion that counters the enemy above one the enemy counters", () => {
+    const result = run(["zed"]);
+    const orianna = result.findIndex((entry) => entry.championId === "orianna");
+    const ahri = result.findIndex((entry) => entry.championId === "ahri");
+
+    // orianna counters zed (counter 85); zed counters ahri (counter 15). Ahri
+    // has the better meta rank, so this asserts the matchup can overturn a
+    // one-rank meta deficit: orianna 74.05 against ahri 63.15.
+    expect(orianna).toBeLessThan(ahri);
+  });
+
+  it("gives the countering champion a counter score above neutral", () => {
+    const result = run(["zed"]);
+    const orianna = result.find((entry) => entry.championId === "orianna");
+
+    expect(orianna?.counterScore).toBeGreaterThan(50);
+  });
+
+  // The seeded data has no mutual pair inside a single role, but three exist
+  // across roles (kennen/sylas, chogath/masteryi, teemo/zac). A relation from
+  // another role must never influence a mid recommendation.
+  it("ignores relations belonging to another role", () => {
     const result = recommendChampions({
-      stats,
+      stats: counterStats,
       playerPool: [],
       enemyPicks: ["zed"],
       bannedChampionIds: [],
       alreadyPickedChampionIds: [],
       priority: 50,
-      topN: 1,
-      matchups: []
+      topN: 10,
+      counterRelations: [{ championId: "zed", counteredByChampionId: "orianna", role: "top" }]
     });
+    const orianna = result.find((entry) => entry.championId === "orianna");
+    const counter = orianna?.explanation.factors.find((factor) => factor.key === "counter");
 
-    expect(result[0].explanation.warnings).toContain("Matchup data is incomplete for the current enemy picks.");
+    expect(counter?.available).toBe(false);
+    expect(orianna?.counterScore).toBe(50);
   });
 });
