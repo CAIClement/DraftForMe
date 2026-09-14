@@ -570,6 +570,9 @@ export type RecommendationFactor = {
   score: number;
   weight: number;
   detail: string;
+  /** Whether the factor could be assessed at all. For `player` this is global —
+   *  true when the user has any pooled champion, even one scoring low here —
+   *  while for `counter` it is per-champion. */
   available: boolean;
 };
 ```
@@ -582,8 +585,10 @@ Add the champion facts to `Recommendation`, after `counterScore`:
   pickRate: number | null;
   banRate: number | null;
   games: number | null;
-  totalCandidates: number;
+  totalRanked: number;
 ```
+
+`totalRanked` is `input.stats.length`, **not** the filtered candidate count. `rank` comes from `normalize.ts` as a position in the unfiltered role list, so the denominator has to be that same list or the pair renders nonsense — `#60 / 55` once bans and enemy picks shrink the candidates.
 
 Replace `matchups?: Matchup[]` in `RecommendInput` with:
 
@@ -635,12 +640,25 @@ describe("counter relations in recommendations", () => {
     });
   }
 
-  it("carries champion facts through to the recommendation", () => {
-    const [top] = run([]);
+  it("carries champion facts through, with the denominator of the ranked list", () => {
+    const result = recommendChampions({
+      stats: counterStats,
+      playerPool: [],
+      enemyPicks: [],
+      bannedChampionIds: ["zed"],
+      alreadyPickedChampionIds: [],
+      priority: 50,
+      topN: 10,
+      counterRelations: relations
+    });
+    const ahri = result.find((entry) => entry.championId === "ahri");
 
-    expect(top.rank).toBeGreaterThan(0);
-    expect(top.games).not.toBeUndefined();
-    expect(top.totalCandidates).toBe(3);
+    expect(ahri?.rank).toBe(1);
+    expect(ahri?.games).toBe(200000);
+    // The ban removes zed from the candidates but not from the ranked list, so
+    // the denominator stays 3. Using the candidate count here would let `rank`
+    // exceed it once bans and enemy picks pile up.
+    expect(ahri?.totalRanked).toBe(3);
   });
 
   it("marks the counter factor unavailable when there are no enemy picks", () => {
@@ -674,6 +692,23 @@ describe("counter relations in recommendations", () => {
     const orianna = result.find((entry) => entry.championId === "orianna");
 
     expect(orianna?.counterScore).toBeGreaterThan(50);
+  });
+
+  it("names the countered champion in the factor detail, not its id", () => {
+    const result = run(["zed"]);
+    const orianna = result.find((entry) => entry.championId === "orianna");
+    const counter = orianna?.explanation.factors.find((factor) => factor.key === "counter");
+
+    expect(counter?.detail).toBe("Prend l'avantage sur Zed.");
+  });
+
+  it("warns when no counter relation covers the enemy picks", () => {
+    const result = run(["orianna"]);
+    const ahri = result.find((entry) => entry.championId === "ahri");
+
+    expect(ahri?.explanation.warnings).toContain(
+      "No counter relation is known for the current enemy picks."
+    );
   });
 
   // The seeded data has no mutual pair inside a single role, but three exist
@@ -729,6 +764,18 @@ export function recommendChampions(input: RecommendInput): Recommendation[] {
     (champion) => !banned.has(champion.championId) && !picked.has(champion.championId)
   );
 
+  const names = new Map(input.stats.map((champion) => [champion.championId, champion.name]));
+
+  // Bucket once rather than re-filtering the whole relation list per candidate.
+  // Every candidate shares a role in practice, so the filter inside the loop
+  // read as though role varied when it does not.
+  const relationsByRole = new Map<string, CounterRelation[]>();
+  for (const relation of relations) {
+    const bucket = relationsByRole.get(relation.role);
+    if (bucket) bucket.push(relation);
+    else relationsByRole.set(relation.role, [relation]);
+  }
+
   const recommendations = candidates
     .map((champion) => {
       const meta = metaScore(champion, input.stats.length);
@@ -736,7 +783,7 @@ export function recommendChampions(input: RecommendInput): Recommendation[] {
       const counter = scoreCounter(
         champion.championId,
         input.enemyPicks,
-        relations.filter((relation) => relation.role === champion.role)
+        relationsByRole.get(champion.role) ?? []
       );
       const total = meta * weights.meta + player * weights.player + counter.score * weights.counter;
       const warnings: string[] = [];
@@ -758,7 +805,7 @@ export function recommendChampions(input: RecommendInput): Recommendation[] {
         pickRate: champion.pickRate,
         banRate: champion.banRate,
         games: champion.games,
-        totalCandidates: candidates.length,
+        totalRanked: input.stats.length,
         explanation: {
           summary: buildSummary(meta, player, counter.score, hasEnemy),
           factors: [
@@ -787,7 +834,7 @@ export function recommendChampions(input: RecommendInput): Recommendation[] {
               score: round(counter.score),
               weight: round(weights.counter * 100),
               detail: counter.available
-                ? counterDetail(counter)
+                ? counterDetail(counter, names)
                 : "Aucun counter connu pour les picks adverses actuels.",
               available: counter.available
             }
@@ -802,10 +849,14 @@ export function recommendChampions(input: RecommendInput): Recommendation[] {
 Add this helper above `recommendChampions`:
 
 ```ts
-function counterDetail(counter: CounterVerdict): string {
+// Champion display names, not ids: this string is rendered verbatim in the
+// dossier, and `beats`/`losesTo` never reach `Recommendation`, so the surface
+// layer has no way to recover a name we drop here.
+function counterDetail(counter: CounterVerdict, names: Map<string, string>): string {
+  const label = (championId: string) => names.get(championId) ?? championId;
   const parts: string[] = [];
-  if (counter.beats.length > 0) parts.push(`Prend l'avantage sur ${counter.beats.join(", ")}.`);
-  if (counter.losesTo.length > 0) parts.push(`En difficulté contre ${counter.losesTo.join(", ")}.`);
+  if (counter.beats.length > 0) parts.push(`Prend l'avantage sur ${counter.beats.map(label).join(", ")}.`);
+  if (counter.losesTo.length > 0) parts.push(`En difficulté contre ${counter.losesTo.map(label).join(", ")}.`);
   return parts.join(" ");
 }
 ```
@@ -815,7 +866,7 @@ Import `CounterVerdict` alongside the other types.
 - [ ] **Step 6: Run the tests**
 
 Run: `npm test -- src/lib/recommendation/engine.test.ts`
-Expected: PASS, including the 6 new tests. If anything still mentions `matchups`, Step 2 was skipped.
+Expected: PASS, including the 8 new tests. If anything still mentions `matchups`, Step 2 was skipped.
 
 - [ ] **Step 7: Type-check**
 
@@ -1207,7 +1258,7 @@ function build(overrides: Partial<Recommendation> = {}): Recommendation {
     pickRate: 4.1,
     banRate: 2.8,
     games: 204556,
-    totalCandidates: 64,
+    totalRanked: 64,
     explanation: {
       summary: "Recommandé pour son matchup.",
       factors: [
@@ -1354,7 +1405,7 @@ export function Verdict({ recommendation }: { recommendation: Recommendation }) 
             label="Parties analysées"
             value={recommendation.games === null ? null : number.format(recommendation.games)}
           />
-          <Fact label="Rang méta" value={`#${recommendation.rank} / ${recommendation.totalCandidates}`} />
+          <Fact label="Rang méta" value={`#${recommendation.rank} / ${recommendation.totalRanked}`} />
           <Fact
             label="Pick / ban"
             value={
@@ -1429,7 +1480,7 @@ function build(name: string, games: number | null): Recommendation {
     pickRate: 3,
     banRate: 1,
     games,
-    totalCandidates: 64,
+    totalRanked: 64,
     explanation: { summary: "", factors: [], warnings: [], alternatives: [] }
   };
 }
@@ -1544,7 +1595,7 @@ function rec(name: string, score: number): Recommendation {
     pickRate: 4,
     banRate: 2,
     games: 1000,
-    totalCandidates: 60,
+    totalRanked: 60,
     explanation: {
       summary: "",
       factors: [
