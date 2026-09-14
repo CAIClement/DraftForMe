@@ -37,6 +37,9 @@ export type RecommendationFactor = {
   score: number;
   weight: number;
   detail: string;
+  /** Whether the factor could be assessed at all. For `player` this is global —
+   *  true when the user has any pooled champion, even one scoring low here —
+   *  while for `counter` it is per-champion. */
   available: boolean;
 };
 
@@ -66,7 +69,7 @@ export type Recommendation = {
   pickRate: number | null;
   banRate: number | null;
   games: number | null;
-  totalCandidates: number;
+  totalRanked: number;
   explanation: RecommendationExplanation;
 };
 

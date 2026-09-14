@@ -1,6 +1,7 @@
 import { scoreCounter } from "./counter";
 import type {
   ChampionStats,
+  CounterRelation,
   CounterVerdict,
   PlayerPoolEntry,
   RecommendInput,
@@ -73,10 +74,14 @@ function buildSummary(meta: number, player: number, counter: number, hasEnemy: b
   return `Recommended because it has a ${strongest.text}.`;
 }
 
-function counterDetail(counter: CounterVerdict): string {
+// Champion display names, not ids: this string is rendered verbatim in the
+// dossier, and `beats`/`losesTo` never reach `Recommendation`, so the surface
+// layer has no way to recover a name we drop here.
+function counterDetail(counter: CounterVerdict, names: Map<string, string>): string {
+  const label = (championId: string) => names.get(championId) ?? championId;
   const parts: string[] = [];
-  if (counter.beats.length > 0) parts.push(`Prend l'avantage sur ${counter.beats.join(", ")}.`);
-  if (counter.losesTo.length > 0) parts.push(`En difficulté contre ${counter.losesTo.join(", ")}.`);
+  if (counter.beats.length > 0) parts.push(`Prend l'avantage sur ${counter.beats.map(label).join(", ")}.`);
+  if (counter.losesTo.length > 0) parts.push(`En difficulté contre ${counter.losesTo.map(label).join(", ")}.`);
   return parts.join(" ");
 }
 
@@ -92,6 +97,18 @@ export function recommendChampions(input: RecommendInput): Recommendation[] {
     (champion) => !banned.has(champion.championId) && !picked.has(champion.championId)
   );
 
+  const names = new Map(input.stats.map((champion) => [champion.championId, champion.name]));
+
+  // Bucket once rather than re-filtering the whole relation list per candidate.
+  // Every candidate shares a role in practice, so the filter inside the loop
+  // read as though role varied when it does not.
+  const relationsByRole = new Map<string, CounterRelation[]>();
+  for (const relation of relations) {
+    const bucket = relationsByRole.get(relation.role);
+    if (bucket) bucket.push(relation);
+    else relationsByRole.set(relation.role, [relation]);
+  }
+
   const recommendations = candidates
     .map((champion) => {
       const meta = metaScore(champion, input.stats.length);
@@ -99,7 +116,7 @@ export function recommendChampions(input: RecommendInput): Recommendation[] {
       const counter = scoreCounter(
         champion.championId,
         input.enemyPicks,
-        relations.filter((relation) => relation.role === champion.role)
+        relationsByRole.get(champion.role) ?? []
       );
       const total = meta * weights.meta + player * weights.player + counter.score * weights.counter;
       const warnings: string[] = [];
@@ -121,7 +138,7 @@ export function recommendChampions(input: RecommendInput): Recommendation[] {
         pickRate: champion.pickRate,
         banRate: champion.banRate,
         games: champion.games,
-        totalCandidates: candidates.length,
+        totalRanked: input.stats.length,
         explanation: {
           summary: buildSummary(meta, player, counter.score, hasEnemy),
           factors: [
@@ -150,7 +167,7 @@ export function recommendChampions(input: RecommendInput): Recommendation[] {
               score: round(counter.score),
               weight: round(weights.counter * 100),
               detail: counter.available
-                ? counterDetail(counter)
+                ? counterDetail(counter, names)
                 : "Aucun counter connu pour les picks adverses actuels.",
               available: counter.available
             }

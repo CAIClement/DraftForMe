@@ -135,12 +135,25 @@ describe("counter relations in recommendations", () => {
     });
   }
 
-  it("carries champion facts through to the recommendation", () => {
-    const [top] = run([]);
+  it("carries champion facts through, with the denominator of the ranked list", () => {
+    const result = recommendChampions({
+      stats: counterStats,
+      playerPool: [],
+      enemyPicks: [],
+      bannedChampionIds: ["zed"],
+      alreadyPickedChampionIds: [],
+      priority: 50,
+      topN: 10,
+      counterRelations: relations
+    });
+    const ahri = result.find((entry) => entry.championId === "ahri");
 
-    expect(top.rank).toBeGreaterThan(0);
-    expect(top.games).not.toBeUndefined();
-    expect(top.totalCandidates).toBe(3);
+    expect(ahri?.rank).toBe(1);
+    expect(ahri?.games).toBe(200000);
+    // The ban removes zed from the candidates but not from the ranked list, so
+    // the denominator stays 3. Using the candidate count here would let `rank`
+    // exceed it once bans and enemy picks pile up.
+    expect(ahri?.totalRanked).toBe(3);
   });
 
   it("marks the counter factor unavailable when there are no enemy picks", () => {
@@ -174,6 +187,23 @@ describe("counter relations in recommendations", () => {
     const orianna = result.find((entry) => entry.championId === "orianna");
 
     expect(orianna?.counterScore).toBeGreaterThan(50);
+  });
+
+  it("names the countered champion in the factor detail, not its id", () => {
+    const result = run(["zed"]);
+    const orianna = result.find((entry) => entry.championId === "orianna");
+    const counter = orianna?.explanation.factors.find((factor) => factor.key === "counter");
+
+    expect(counter?.detail).toBe("Prend l'avantage sur Zed.");
+  });
+
+  it("warns when no counter relation covers the enemy picks", () => {
+    const result = run(["orianna"]);
+    const ahri = result.find((entry) => entry.championId === "ahri");
+
+    expect(ahri?.explanation.warnings).toContain(
+      "No counter relation is known for the current enemy picks."
+    );
   });
 
   // The seeded data has no mutual pair inside a single role, but three exist
