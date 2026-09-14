@@ -599,7 +599,9 @@ Delete the now-unused `Matchup` type.
 
 - [ ] **Step 3: Write the failing tests**
 
-In `src/lib/recommendation/engine.test.ts`, add `games` to every entry of the existing `stats` fixture (`games: 200000` for `ahri`, `150000` for `zed`, `90000` for `orianna`), then append:
+In `src/lib/recommendation/engine.test.ts`, add `games` to every entry of the existing `stats` fixture (`games: 200000` for `ahri`, `150000` for `zed`, `90000` for `orianna`) so it still satisfies `ChampionStats`, then append the block below. Note it declares its own fixture rather than reusing `stats`; the comment explains why. Make sure `ChampionStats` is in the file's type imports.
+
+
 
 ```ts
 import type { CounterRelation } from "./types";
@@ -609,10 +611,20 @@ const relations: CounterRelation[] = [
   { championId: "ahri", counteredByChampionId: "zed", role: "mid" }
 ];
 
+// A local fixture with adjacent meta ranks. The shared `stats` fixture puts
+// orianna at rank 8 out of 3 champions, which clamps its meta score to 0 — a
+// 57-point weighted deficit that no counter edge could overcome, making the
+// ranking assertion below untestable against it.
+const counterStats: ChampionStats[] = [
+  { championId: "ahri", name: "Ahri", role: "mid", rank: 1, winRate: 52, pickRate: 12, banRate: 4, games: 200000 },
+  { championId: "orianna", name: "Orianna", role: "mid", rank: 2, winRate: 50, pickRate: 7, banRate: 2, games: 90000 },
+  { championId: "zed", name: "Zed", role: "mid", rank: 3, winRate: 51, pickRate: 10, banRate: 18, games: 150000 }
+];
+
 describe("counter relations in recommendations", () => {
   function run(enemyPicks: string[]) {
     return recommendChampions({
-      stats,
+      stats: counterStats,
       playerPool: [],
       enemyPicks,
       bannedChampionIds: [],
@@ -651,8 +663,9 @@ describe("counter relations in recommendations", () => {
     const orianna = result.findIndex((entry) => entry.championId === "orianna");
     const ahri = result.findIndex((entry) => entry.championId === "ahri");
 
-    // orianna counters zed; zed counters ahri. Despite ahri's better meta rank,
-    // the matchup has to put orianna first.
+    // orianna counters zed (counter 85); zed counters ahri (counter 15). Ahri
+    // has the better meta rank, so this asserts the matchup can overturn a
+    // one-rank meta deficit: orianna 74.05 against ahri 63.15.
     expect(orianna).toBeLessThan(ahri);
   });
 
@@ -668,7 +681,7 @@ describe("counter relations in recommendations", () => {
   // another role must never influence a mid recommendation.
   it("ignores relations belonging to another role", () => {
     const result = recommendChampions({
-      stats,
+      stats: counterStats,
       playerPool: [],
       enemyPicks: ["zed"],
       bannedChampionIds: [],
@@ -802,7 +815,7 @@ Import `CounterVerdict` alongside the other types.
 - [ ] **Step 6: Run the tests**
 
 Run: `npm test -- src/lib/recommendation/engine.test.ts`
-Expected: PASS, including the 5 new tests. If anything still mentions `matchups`, Step 2 was skipped.
+Expected: PASS, including the 6 new tests. If anything still mentions `matchups`, Step 2 was skipped.
 
 - [ ] **Step 7: Type-check**
 
