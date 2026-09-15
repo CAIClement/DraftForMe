@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
-import { mapPoolRowsToPlayerPool, mapStatsRowsToChampionStats } from "@/lib/data/normalize";
+import { mapCounterRelationRows, mapPoolRowsToPlayerPool, mapStatsRowsToChampionStats } from "@/lib/data/normalize";
 import { recommendChampions } from "@/lib/recommendation/engine";
 import { createClient } from "@/lib/supabase/server";
 import { recommendationRequestSchema } from "./schema";
 
 type StatsRow = Parameters<typeof mapStatsRowsToChampionStats>[0][number];
 type PoolRow = Parameters<typeof mapPoolRowsToPlayerPool>[0][number];
+type CounterRelationRowType = Parameters<typeof mapCounterRelationRows>[0][number];
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
@@ -25,7 +26,7 @@ export async function POST(request: Request) {
 
   const { data: statsRows, error: statsError } = await supabase
     .from("champion_stats")
-    .select("champion_id, role, win_rate, pick_rate, ban_rate, champions(id, name, image_url)")
+    .select("champion_id, role, win_rate, pick_rate, ban_rate, games, champions(id, name, image_url)")
     .eq("role", parsed.data.role)
     .eq("region", parsed.data.region)
     .eq("tier", parsed.data.tier)
@@ -42,6 +43,11 @@ export async function POST(request: Request) {
         .eq("user_id", user.id)
     : { data: [] };
 
+  const { data: relationRows } = await supabase
+    .from("counter_relations")
+    .select("champion_id, countered_by_champion_id, role")
+    .eq("role", parsed.data.role);
+
   const stats = mapStatsRowsToChampionStats((statsRows ?? []) as unknown as StatsRow[]);
   const playerPool = mapPoolRowsToPlayerPool((poolRows ?? []) as unknown as PoolRow[]);
 
@@ -52,7 +58,8 @@ export async function POST(request: Request) {
     bannedChampionIds: parsed.data.bans,
     alreadyPickedChampionIds: parsed.data.enemyPicks,
     priority: parsed.data.priority,
-    topN: parsed.data.topN
+    topN: parsed.data.topN,
+    counterRelations: mapCounterRelationRows((relationRows ?? []) as unknown as CounterRelationRowType[])
   });
 
   if (user) {

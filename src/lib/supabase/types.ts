@@ -115,6 +115,32 @@ export type Database = {
           updated_at: string;
         }>
       >;
+      counter_relations: TableDefinition<
+        {
+          id: string;
+          champion_id: string;
+          countered_by_champion_id: string;
+          role: string;
+          source: string;
+          fetched_at: string;
+        },
+        {
+          champion_id: string;
+          countered_by_champion_id: string;
+          role: string;
+          source: string;
+          id?: string;
+          fetched_at?: string;
+        },
+        Partial<{
+          id: string;
+          champion_id: string;
+          countered_by_champion_id: string;
+          role: string;
+          source: string;
+          fetched_at: string;
+        }>
+      >;
       recommendation_sessions: TableDefinition<
         {
           id: string;

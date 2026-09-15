@@ -1,4 +1,4 @@
-import type { ChampionStats, PlayerPoolEntry } from "@/lib/recommendation/types";
+import type { ChampionStats, CounterRelation, PlayerPoolEntry } from "@/lib/recommendation/types";
 
 type StatsRow = {
   champion_id: string;
@@ -6,6 +6,7 @@ type StatsRow = {
   win_rate: number | null;
   pick_rate: number | null;
   ban_rate: number | null;
+  games: number | null;
   champions: {
     id: string;
     name: string;
@@ -36,7 +37,8 @@ export function mapStatsRowsToChampionStats(rows: StatsRow[]): ChampionStats[] {
       rank: index + 1,
       winRate: row.win_rate,
       pickRate: row.pick_rate,
-      banRate: row.ban_rate
+      banRate: row.ban_rate,
+      games: row.games
     }));
 }
 
@@ -50,4 +52,18 @@ export function mapPoolRowsToPlayerPool(rows: PoolRow[]): PlayerPoolEntry[] {
       winRate: row.win_rate,
       confidence: row.confidence
     }));
+}
+
+type CounterRelationRow = {
+  champion_id: string;
+  countered_by_champion_id: string;
+  role: string;
+};
+
+export function mapCounterRelationRows(rows: CounterRelationRow[]): CounterRelation[] {
+  return rows.map((row) => ({
+    championId: row.champion_id,
+    counteredByChampionId: row.countered_by_champion_id,
+    role: row.role
+  }));
 }
