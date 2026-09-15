@@ -47,7 +47,7 @@
 | `src/components/marketing/site-footer.tsx` | Footer |
 | `src/components/marketing/hero.tsx` | Heading and one sentence |
 | `src/components/marketing/explainer.tsx` | Three explanatory columns |
-| `src/components/marketing/trust-bar.tsx` | Indexed games, patch, region, freshness |
+| `src/components/marketing/trust-bar.tsx` | Analysed appearances, champions ranked, patch, region |
 
 **Modified**
 
@@ -2366,23 +2366,40 @@ export function Explainer() {
 ```tsx
 const number = new Intl.NumberFormat("fr-FR");
 
+/**
+ * The numbers here exist to establish that real data sits behind the product,
+ * so each one has to say exactly what it counts.
+ *
+ * `appearances` is the sum of `games` across the role's ranked champions. That
+ * is NOT a number of matches: every game fields two midlaners, so the sum
+ * counts champion appearances. It is also not divisible by two to recover
+ * matches, because the ranked list is not exhaustive - the mid pick rates sum
+ * to 188%, not 200%, so roughly an eighth of picks fall outside it. Labelling
+ * it "parties" would be the one kind of error this bar exists to rule out.
+ */
 export function TrustBar({
-  indexedGames,
+  appearances,
+  rankedChampions,
   patch,
   context
 }: {
-  indexedGames: number | null;
+  appearances: number | null;
+  rankedChampions: number;
   patch: string;
   context: string;
 }) {
   return (
     <div className="mt-5 flex gap-7 rounded-xl bg-ink px-4 py-3.5 text-[#cdd6d3]">
-      {indexedGames !== null && (
+      {appearances !== null && (
         <div>
-          <span className="block text-[9.5px] uppercase tracking-widest text-[#7d8a86]">Parties indexées</span>
-          <b className="text-base font-bold tracking-tight text-white">{number.format(indexedGames)}</b>
+          <span className="block text-[9.5px] uppercase tracking-widest text-[#7d8a86]">Apparitions analysées</span>
+          <b className="text-base font-bold tracking-tight text-white">{number.format(appearances)}</b>
         </div>
       )}
+      <div>
+        <span className="block text-[9.5px] uppercase tracking-widest text-[#7d8a86]">Champions classés</span>
+        <b className="text-base font-bold tracking-tight text-white">{rankedChampions}</b>
+      </div>
       <div>
         <span className="block text-[9.5px] uppercase tracking-widest text-[#7d8a86]">Patch</span>
         <b className="text-base font-bold tracking-tight text-white">{patch}</b>
@@ -2467,21 +2484,27 @@ async function loadExample() {
     (row) => ({ id: row.id, name: row.name, imageUrl: row.image_url ?? undefined })
   );
 
-  const indexedGames = stats.reduce<number | null>(
+  // Champion appearances, not matches. See the comment on TrustBar.
+  const appearances = stats.reduce<number | null>(
     (sum, champion) => (champion.games === null ? sum : (sum ?? 0) + champion.games),
     null
   );
 
-  return { recommendations, champions, indexedGames };
+  return { recommendations, champions, appearances, rankedChampions: stats.length };
 }
 
 export default async function HomePage() {
-  let example: { recommendations: Recommendation[]; champions: { id: string; name: string; imageUrl?: string }[]; indexedGames: number | null };
+  let example: {
+    recommendations: Recommendation[];
+    champions: { id: string; name: string; imageUrl?: string }[];
+    appearances: number | null;
+    rankedChampions: number;
+  };
 
   try {
     example = await loadExample();
   } catch {
-    example = { recommendations: [], champions: [], indexedGames: null };
+    example = { recommendations: [], champions: [], appearances: null, rankedChampions: 0 };
   }
 
   return (
@@ -2505,7 +2528,12 @@ export default async function HomePage() {
         )}
 
         <Explainer />
-        <TrustBar indexedGames={example.indexedGames} patch={PATCH} context={CONTEXT} />
+        <TrustBar
+          appearances={example.appearances}
+          rankedChampions={example.rankedChampions}
+          patch={PATCH}
+          context={CONTEXT}
+        />
       </div>
 
       <SiteFooter />
