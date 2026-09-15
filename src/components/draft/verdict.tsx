@@ -56,9 +56,7 @@ export function Verdict({ recommendation }: { recommendation: Recommendation }) 
         </div>
 
         <p className="col-span-full border-t border-rule-soft pt-2.5 text-xs leading-relaxed text-ink-muted">
-          {counter?.available
-            ? counter.detail
-            : "Le matchup n'a pas pu être évalué : aucun counter connu pour les picks adverses actuels."}
+          {counter?.detail}
         </p>
       </div>
     </div>

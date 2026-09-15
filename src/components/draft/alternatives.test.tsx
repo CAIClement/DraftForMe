@@ -41,4 +41,20 @@ describe("Alternatives", () => {
 
     expect(screen.queryByText(/parties/)).not.toBeInTheDocument();
   });
+
+  it("renders exactly two alternatives", () => {
+    render(<Alternatives recommendations={[build("Lissandra", 142000), build("Diana", 98000)]} />);
+
+    expect(screen.getAllByTestId("alternative")).toHaveLength(2);
+  });
+
+  it("never renders a dash for a missing win rate", () => {
+    const recommendation = build("Lissandra", 142000);
+    recommendation.winRate = null;
+
+    render(<Alternatives recommendations={[recommendation]} />);
+
+    expect(screen.queryByText(/—/)).not.toBeInTheDocument();
+    expect(screen.getByText("142 000 parties")).toBeInTheDocument();
+  });
 });

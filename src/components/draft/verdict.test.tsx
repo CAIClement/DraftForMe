@@ -57,13 +57,20 @@ describe("Verdict", () => {
     expect(screen.queryByText("Matchup")).not.toBeInTheDocument();
   });
 
-  it("says plainly when the matchup could not be assessed", () => {
+  it("renders the counter factor's own wording when it is available", () => {
+    render(<Verdict recommendation={build()} />);
+
+    expect(screen.getByText("Prend l'avantage sur zed.")).toBeInTheDocument();
+  });
+
+  it("still shows the counter sentence when the factor is unavailable", () => {
     const recommendation = build();
     recommendation.explanation.factors[2].available = false;
+    recommendation.explanation.factors[2].detail = "Ajoutez un pick adverse pour évaluer le matchup.";
 
     render(<Verdict recommendation={recommendation} />);
 
-    expect(screen.getByText(/matchup n'a pas pu être évalué/i)).toBeInTheDocument();
+    expect(screen.getByText("Ajoutez un pick adverse pour évaluer le matchup.")).toBeInTheDocument();
   });
 
   it("shows weights that sum to 100", () => {

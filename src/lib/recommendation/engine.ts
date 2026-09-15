@@ -166,9 +166,15 @@ export function recommendChampions(input: RecommendInput): Recommendation[] {
               label: "Matchup",
               score: round(counter.score),
               weight: round(weights.counter * 100),
+              // Rendered verbatim by the dossier, so it has to be true in
+              // every branch. `available` is false both when no enemy has been
+              // picked yet and when enemies are known but no relation covers
+              // them; one wording cannot honestly serve both.
               detail: counter.available
                 ? counterDetail(counter, names)
-                : "Aucun counter connu pour les picks adverses actuels.",
+                : hasEnemy
+                  ? "Le matchup n'a pas pu être évalué : aucun counter connu pour ces picks adverses."
+                  : "Ajoutez un pick adverse pour évaluer le matchup.",
               available: counter.available
             }
           ],

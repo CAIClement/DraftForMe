@@ -197,6 +197,23 @@ describe("counter relations in recommendations", () => {
     expect(counter?.detail).toBe("Prend l'avantage sur Zed.");
   });
 
+  it("asks for an enemy pick rather than claiming it searched", () => {
+    const [top] = run([]);
+    const counter = top.explanation.factors.find((factor) => factor.key === "counter");
+
+    expect(counter?.detail).toBe("Ajoutez un pick adverse pour évaluer le matchup.");
+  });
+
+  it("says the matchup could not be assessed when enemies are known but unmatched", () => {
+    const result = run(["orianna"]);
+    const ahri = result.find((entry) => entry.championId === "ahri");
+    const counter = ahri?.explanation.factors.find((factor) => factor.key === "counter");
+
+    expect(counter?.detail).toBe(
+      "Le matchup n'a pas pu être évalué : aucun counter connu pour ces picks adverses."
+    );
+  });
+
   it("warns when no counter relation covers the enemy picks", () => {
     const result = run(["orianna"]);
     const ahri = result.find((entry) => entry.championId === "ahri");
