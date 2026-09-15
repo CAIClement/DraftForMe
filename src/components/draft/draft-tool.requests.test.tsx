@@ -3,7 +3,7 @@
 // drag issues one request rather than one per tick. Every one of those eight
 // passes against an implementation with neither guard, so without this file a
 // later reader could delete the request id or the debounce and stay green.
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { DraftTool } from "./draft-tool";
 import type { Recommendation } from "@/lib/recommendation/types";
@@ -114,5 +114,31 @@ describe("DraftTool request handling", () => {
     await waitFor(() => expect(fetchSpy).toHaveBeenCalled());
     expect(fetchSpy).toHaveBeenCalledTimes(1);
     expect(JSON.parse(String(fetchSpy.mock.calls[0][1]?.body)).priority).toBe(90);
+  });
+
+  it("does not let a pending slider request carry a role the user has since changed", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(ok("Briar"));
+
+    render(
+      <DraftTool champions={champions} initialRole="mid" initialEnemyPicks={[]} initialRecommendations={initial} />
+    );
+
+    // The role changes inside the debounce window. The pending timer closed
+    // over the old role and would be issued last, so it would also take the
+    // highest request id and win.
+    fireEvent.change(screen.getByLabelText(/priorité/i), { target: { value: "90" } });
+    fireEvent.click(screen.getByRole("button", { name: "Top" }));
+
+    await waitFor(() => expect(fetchSpy).toHaveBeenCalled());
+
+    // Long enough that a surviving timer would have fired.
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 400));
+    });
+
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    const body = JSON.parse(String(fetchSpy.mock.calls[0][1]?.body));
+    expect(body.role).toBe("top");
+    expect(body.priority).toBe(90);
   });
 });
