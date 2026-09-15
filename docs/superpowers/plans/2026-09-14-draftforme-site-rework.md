@@ -703,6 +703,23 @@ describe("counter relations in recommendations", () => {
     expect(counter?.detail).toBe("Prend l'avantage sur Zed.");
   });
 
+  it("asks for an enemy pick rather than claiming it searched", () => {
+    const [top] = run([]);
+    const counter = top.explanation.factors.find((factor) => factor.key === "counter");
+
+    expect(counter?.detail).toBe("Ajoutez un pick adverse pour évaluer le matchup.");
+  });
+
+  it("says the matchup could not be assessed when enemies are known but unmatched", () => {
+    const result = run(["orianna"]);
+    const ahri = result.find((entry) => entry.championId === "ahri");
+    const counter = ahri?.explanation.factors.find((factor) => factor.key === "counter");
+
+    expect(counter?.detail).toBe(
+      "Le matchup n'a pas pu être évalué : aucun counter connu pour ces picks adverses."
+    );
+  });
+
   it("warns when no counter relation covers the enemy picks", () => {
     const result = run(["orianna"]);
     const ahri = result.find((entry) => entry.championId === "ahri");
@@ -834,9 +851,15 @@ export function recommendChampions(input: RecommendInput): Recommendation[] {
               label: "Matchup",
               score: round(counter.score),
               weight: round(weights.counter * 100),
+              // Rendered verbatim by the dossier, so it has to be true in
+              // every branch. `available` is false both when no enemy has been
+              // picked yet and when enemies are known but no relation covers
+              // them; one wording cannot honestly serve both.
               detail: counter.available
                 ? counterDetail(counter, names)
-                : "Aucun counter connu pour les picks adverses actuels.",
+                : hasEnemy
+                  ? "Le matchup n'a pas pu être évalué : aucun counter connu pour ces picks adverses."
+                  : "Ajoutez un pick adverse pour évaluer le matchup.",
               available: counter.available
             }
           ],
@@ -1344,13 +1367,20 @@ describe("Verdict", () => {
     expect(screen.queryByText("Matchup")).not.toBeInTheDocument();
   });
 
-  it("says plainly when the matchup could not be assessed", () => {
+  it("renders the counter factor's own wording when it is available", () => {
+    render(<Verdict recommendation={build()} />);
+
+    expect(screen.getByText("Prend l'avantage sur zed.")).toBeInTheDocument();
+  });
+
+  it("still shows the counter sentence when the factor is unavailable", () => {
     const recommendation = build();
     recommendation.explanation.factors[2].available = false;
+    recommendation.explanation.factors[2].detail = "Ajoutez un pick adverse pour évaluer le matchup.";
 
     render(<Verdict recommendation={recommendation} />);
 
-    expect(screen.getByText(/matchup n'a pas pu être évalué/i)).toBeInTheDocument();
+    expect(screen.getByText("Ajoutez un pick adverse pour évaluer le matchup.")).toBeInTheDocument();
   });
 
   it("shows weights that sum to 100", () => {
@@ -1375,26 +1405,56 @@ Expected: FAIL — cannot resolve `./verdict`.
 ```tsx
 import type { RecommendationFactor } from "@/lib/recommendation/types";
 
+/**
+ * Rounds the weights for display without letting them drift off their true
+ * total. The engine emits one decimal, so rounding each independently makes
+ * 16.5 / 43.5 / 40 render as 17 / 44 / 40 — 101%, on the one component whose
+ * whole job is to look rigorous. Largest-remainder fixes that.
+ *
+ * The target is the sum of the weights actually shown, not a hardcoded 100:
+ * when a factor is unavailable its weight is genuinely unaccounted for, and
+ * inflating the rest to 100 would be the same lie in the other direction.
+ */
+function displayWeights(factors: RecommendationFactor[]): number[] {
+  const target = Math.round(factors.reduce((sum, factor) => sum + factor.weight, 0));
+  const floors = factors.map((factor) => Math.floor(factor.weight));
+  const shown = [...floors];
+  let remainder = target - floors.reduce((sum, value) => sum + value, 0);
+
+  const byFraction = factors
+    .map((factor, index) => ({ index, fraction: factor.weight - Math.floor(factor.weight) }))
+    .sort((a, b) => b.fraction - a.fraction);
+
+  for (const { index } of byFraction) {
+    if (remainder <= 0) break;
+    shown[index] += 1;
+    remainder -= 1;
+  }
+
+  return shown;
+}
+
 export function FactorBars({ factors }: { factors: RecommendationFactor[] }) {
   const available = factors.filter((factor) => factor.available);
+  const weights = displayWeights(available);
 
   return (
     <div>
-      {available.map((factor) => (
+      {available.map((factor, index) => (
         <div key={factor.key} className="mb-2 flex items-center gap-2 text-[11px] text-ink-muted">
-          <em className="w-24 not-italic font-semibold">{factor.label}</em>
+          <span className="w-24 font-semibold">{factor.label}</span>
           <span className="relative h-[5px] flex-1 rounded-full bg-rule">
             <i
               className="absolute inset-y-0 left-0 block rounded-full bg-accent"
               style={{ width: `${Math.max(0, Math.min(100, factor.score))}%` }}
             />
           </span>
-          <u className="w-6 text-right font-bold not-underline text-ink tabular-nums">
+          <span className="w-6 text-right font-bold text-ink tabular-nums">
             {Math.round(factor.score)}
-          </u>
-          <s data-testid="factor-weight" className="w-12 text-right text-[10px] no-underline text-ink-faint">
-            ×{Math.round(factor.weight)} %
-          </s>
+          </span>
+          <span data-testid="factor-weight" className="w-12 text-right text-[10px] text-ink-faint">
+            ×{weights[index]} %
+          </span>
         </div>
       ))}
     </div>
@@ -1463,9 +1523,7 @@ export function Verdict({ recommendation }: { recommendation: Recommendation }) 
         </div>
 
         <p className="col-span-full border-t border-rule-soft pt-2.5 text-xs leading-relaxed text-ink-muted">
-          {counter?.available
-            ? counter.detail
-            : "Le matchup n'a pas pu être évalué : aucun counter connu pour les picks adverses actuels."}
+          {counter?.detail}
         </p>
       </div>
     </div>
@@ -1480,21 +1538,37 @@ import type { Recommendation } from "@/lib/recommendation/types";
 
 const number = new Intl.NumberFormat("fr-FR");
 
+// Joined rather than interpolated, so the separator cannot dangle when a fact
+// is missing. The spec's rule is that a null fact is omitted, never shown as
+// `0` or an em dash: a dash occupies the slot where a number goes and reads as
+// "we measured this and found nothing", which is the opposite of the point.
+function Facts({ recommendation }: { recommendation: Recommendation }) {
+  const facts = [
+    recommendation.winRate === null ? null : `${recommendation.winRate.toFixed(1)} %`,
+    recommendation.games === null ? null : `${number.format(recommendation.games)} parties`
+  ].filter((fact): fact is string => fact !== null);
+
+  if (facts.length === 0) return null;
+
+  return <span className="text-[10.5px] text-ink-faint">{facts.join(" · ")}</span>;
+}
+
 export function Alternatives({ recommendations }: { recommendations: Recommendation[] }) {
   if (recommendations.length === 0) return null;
 
   return (
     <div className="mt-2 flex gap-2">
       {recommendations.map((recommendation) => (
-        <div key={recommendation.championId} className="flex-1 rounded-lg border border-rule bg-surface px-3 py-2.5">
+        <div
+          key={recommendation.championId}
+          data-testid="alternative"
+          className="flex-1 rounded-lg border border-rule bg-surface px-3 py-2.5"
+        >
           <b className="block text-sm font-bold tracking-tight">
             {recommendation.championName}{" "}
             <em className="not-italic font-extrabold text-accent">{Math.round(recommendation.totalScore)}</em>
           </b>
-          <span className="text-[10.5px] text-ink-faint">
-            {recommendation.winRate === null ? "—" : `${recommendation.winRate.toFixed(1)} %`}
-            {recommendation.games !== null && ` · ${number.format(recommendation.games)} parties`}
-          </span>
+          <Facts recommendation={recommendation} />
         </div>
       ))}
     </div>
@@ -1549,6 +1623,22 @@ describe("Alternatives", () => {
     render(<Alternatives recommendations={[build("Lissandra", null)]} />);
 
     expect(screen.queryByText(/parties/)).not.toBeInTheDocument();
+  });
+
+  it("renders exactly two alternatives", () => {
+    render(<Alternatives recommendations={[build("Lissandra", 142000), build("Diana", 98000)]} />);
+
+    expect(screen.getAllByTestId("alternative")).toHaveLength(2);
+  });
+
+  it("never renders a dash for a missing win rate", () => {
+    const recommendation = build("Lissandra", 142000);
+    recommendation.winRate = null;
+
+    render(<Alternatives recommendations={[recommendation]} />);
+
+    expect(screen.queryByText(/—/)).not.toBeInTheDocument();
+    expect(screen.getByText("142 000 parties")).toBeInTheDocument();
   });
 });
 ```
