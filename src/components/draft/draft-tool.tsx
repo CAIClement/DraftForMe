@@ -5,7 +5,7 @@ import { DEFAULT_EXAMPLE } from "@/lib/draft/default-example";
 import type { Recommendation } from "@/lib/recommendation/types";
 import { Alternatives } from "./alternatives";
 import { EnemyPicks, type Champion } from "./enemy-picks";
-import { PriorityControl } from "./priority-control";
+import { PriorityControl, PriorityUnavailable } from "./priority-control";
 import { RefinePrompt } from "./refine-prompt";
 import { RoleSelector } from "./role-selector";
 import { Verdict } from "./verdict";
@@ -119,6 +119,11 @@ export function DraftTool({
 
   const [top, ...rest] = recommendations;
 
+  // The weighting question is only answerable when the player side of it has an
+  // answer. `available` on this factor is global rather than per-champion, so it
+  // is true exactly when the engine actually had a pool to weigh.
+  const playerFactor = top?.explanation.factors.find((factor) => factor.key === "player");
+
   return (
     <div className="rounded-xl border border-rule bg-surface p-4 shadow-sm">
       <div className="mb-3.5 grid gap-3.5 sm:grid-cols-[1.1fr_1fr]">
@@ -146,7 +151,11 @@ export function DraftTool({
         {top ? (
           <>
             <Verdict recommendation={top} />
-            <PriorityControl value={priority} onChange={changePriority} />
+            {playerFactor?.available ? (
+              <PriorityControl value={priority} onChange={changePriority} />
+            ) : (
+              <PriorityUnavailable />
+            )}
             <Alternatives recommendations={rest} />
             <RefinePrompt />
           </>

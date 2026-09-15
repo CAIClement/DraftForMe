@@ -21,7 +21,7 @@ function build(overrides: Partial<Recommendation> = {}): Recommendation {
     explanation: {
       summary: "Recommandé pour son matchup.",
       factors: [
-        { key: "meta", label: "Force dans le patch", score: 72, weight: 36, detail: "Rang #7 sur 64 en mid.", available: true },
+        { key: "meta", label: "Force dans le patch", score: 72, weight: 36, detail: "7e sur 64 au winrate en mid.", available: true },
         { key: "player", label: "Votre pool", score: 84, weight: 24, detail: "Dans vos habitudes.", available: true },
         { key: "counter", label: "Matchup", score: 91, weight: 40, detail: "Prend l'avantage sur zed.", available: true }
       ],

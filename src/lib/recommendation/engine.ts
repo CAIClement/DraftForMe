@@ -97,7 +97,13 @@ export function recommendChampions(input: RecommendInput): Recommendation[] {
     (champion) => !banned.has(champion.championId) && !picked.has(champion.championId)
   );
 
-  const names = new Map(input.stats.map((champion) => [champion.championId, champion.name]));
+  // Prefer the full champion table when the caller has one. `losesTo` holds
+  // enemy picks, and an enemy need not be ranked in the candidate's role -- eight
+  // seeded counters are not, so a stats-only map renders their raw slug.
+  const names = new Map(
+    (input.championNames ?? input.stats.map((champion) => ({ championId: champion.championId, name: champion.name })))
+      .map((entry) => [entry.championId, entry.name])
+  );
 
   // Bucket once rather than re-filtering the whole relation list per candidate.
   // Every candidate shares a role in practice, so the filter inside the loop
@@ -147,7 +153,10 @@ export function recommendChampions(input: RecommendInput): Recommendation[] {
               label: "Force dans le patch",
               score: round(meta),
               weight: round(weights.meta * 100),
-              detail: `Rang #${champion.rank} sur ${input.stats.length} en ${champion.role}.`,
+              // `rank` is the champion's position in a list the query ordered by
+              // win rate, not the blended meta rank the tier list carries, so the
+              // wording says winrate rather than letting "rang" imply otherwise.
+              detail: `${champion.rank}e sur ${input.stats.length} au winrate en ${champion.role}.`,
               available: true
             },
             {

@@ -44,7 +44,7 @@ export function Verdict({ recommendation }: { recommendation: Recommendation }) 
             label="Parties analysées"
             value={recommendation.games === null ? null : number.format(recommendation.games)}
           />
-          <Fact label="Rang méta" value={`#${recommendation.rank} / ${recommendation.totalRanked}`} />
+          <Fact label="Classement winrate" value={`#${recommendation.rank} / ${recommendation.totalRanked}`} />
           <Fact
             label="Pick / ban"
             value={

@@ -3,7 +3,10 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { DraftTool } from "./draft-tool";
 import type { Recommendation } from "@/lib/recommendation/types";
 
-function rec(name: string, score: number): Recommendation {
+// `hasPool` decides whether the priority slider exists at all, and the engine
+// reports it as the player factor's `available`. The default fixture is the
+// signed-out case every visitor gets; `withPool` is the signed-in one.
+function rec(name: string, score: number, { withPool = false } = {}): Recommendation {
   return {
     championId: name.toLowerCase(),
     championName: name,
@@ -22,7 +25,7 @@ function rec(name: string, score: number): Recommendation {
       summary: "",
       factors: [
         { key: "meta", label: "Force dans le patch", score: 70, weight: 60, detail: "", available: true },
-        { key: "player", label: "Votre pool", score: 50, weight: 0, detail: "", available: false },
+        { key: "player", label: "Votre pool", score: 50, weight: 0, detail: "", available: withPool },
         { key: "counter", label: "Matchup", score: 80, weight: 40, detail: "Prend l'avantage.", available: true }
       ],
       warnings: [],
@@ -70,13 +73,44 @@ describe("DraftTool", () => {
       .spyOn(globalThis, "fetch")
       .mockResolvedValue(new Response(JSON.stringify({ recommendations: [rec("Orianna", 85)] }), { status: 200 }));
 
-    render(<DraftTool champions={champions} initialRole="mid" initialEnemyPicks={["zed"]} initialRecommendations={initial} />);
+    render(
+      <DraftTool
+        champions={champions}
+        initialRole="mid"
+        initialEnemyPicks={["zed"]}
+        initialRecommendations={[rec("Galio", 88, { withPool: true })]}
+      />
+    );
 
     fireEvent.change(screen.getByLabelText(/priorité/i), { target: { value: "90" } });
 
     await waitFor(() => expect(fetchSpy).toHaveBeenCalled());
     const body = JSON.parse(String(fetchSpy.mock.calls[0][1]?.body));
     expect(body.priority).toBe(90);
+  });
+
+  // `computeWeights` throws `priority` away whenever the pool is empty, so with
+  // no pool the slider would take a drag, redraw its number, fire a request and
+  // return the identical ranking. It must not be on screen at all.
+  it("does not offer the priority slider when the player factor could not be assessed", () => {
+    render(<DraftTool champions={champions} initialRole="mid" initialEnemyPicks={["zed"]} initialRecommendations={initial} />);
+
+    expect(screen.queryByLabelText(/priorité/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/le classement est entièrement méta/i)).toBeInTheDocument();
+  });
+
+  it("offers the priority slider once the player factor is available", () => {
+    render(
+      <DraftTool
+        champions={champions}
+        initialRole="mid"
+        initialEnemyPicks={["zed"]}
+        initialRecommendations={[rec("Galio", 88, { withPool: true })]}
+      />
+    );
+
+    expect(screen.getByLabelText(/priorité/i)).toBeInTheDocument();
+    expect(screen.queryByText(/le classement est entièrement méta/i)).not.toBeInTheDocument();
   });
 
   it("sends an added enemy pick", async () => {

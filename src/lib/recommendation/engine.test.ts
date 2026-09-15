@@ -72,6 +72,25 @@ describe("recommendChampions", () => {
     expect(result[0].explanation.factors.some((factor) => factor.key === "player")).toBe(true);
   });
 
+  // The label on this row says "winrate", because `rank` is the row's position in
+  // a win-rate ordering rather than the tier list's blended meta rank. The detail
+  // has to say the same thing.
+  it("describes the meta factor's rank as a win-rate position", () => {
+    const result = recommendChampions({
+      stats,
+      playerPool: pool,
+      enemyPicks: [],
+      bannedChampionIds: [],
+      alreadyPickedChampionIds: [],
+      priority: 100,
+      topN: 1
+    });
+    const meta = result[0].explanation.factors.find((factor) => factor.key === "meta");
+
+    expect(meta?.detail).toBe("1e sur 3 au winrate en mid.");
+    expect(meta?.label).toBe("Force dans le patch");
+  });
+
   it("boosts meta rank when priority is meta-oriented", () => {
     const result = recommendChampions({
       stats,
@@ -187,6 +206,36 @@ describe("counter relations in recommendations", () => {
     const orianna = result.find((entry) => entry.championId === "orianna");
 
     expect(orianna?.counterScore).toBeGreaterThan(50);
+  });
+
+  // Reproduces the real top-lane case: anivia beats nasus and zaahen and loses
+  // to jayce, but jayce is not ranked in top, so a names map built from `stats`
+  // alone printed the raw slug next to two properly-named champions.
+  it("names an enemy that is absent from the candidate role's ranked list", () => {
+    const result = recommendChampions({
+      stats: counterStats,
+      playerPool: [],
+      enemyPicks: ["kassadin"],
+      bannedChampionIds: [],
+      alreadyPickedChampionIds: [],
+      priority: 50,
+      topN: 10,
+      counterRelations: [{ championId: "ahri", counteredByChampionId: "kassadin", role: "mid" }],
+      championNames: [{ championId: "kassadin", name: "Kassadin" }]
+    });
+    const ahri = result.find((entry) => entry.championId === "ahri");
+    const counter = ahri?.explanation.factors.find((factor) => factor.key === "counter");
+
+    expect(counterStats.some((champion) => champion.championId === "kassadin")).toBe(false);
+    expect(counter?.detail).toBe("En difficulté contre Kassadin.");
+  });
+
+  it("falls back to the candidates' own names when no champion table is supplied", () => {
+    const result = run(["zed"]);
+    const orianna = result.find((entry) => entry.championId === "orianna");
+    const counter = orianna?.explanation.factors.find((factor) => factor.key === "counter");
+
+    expect(counter?.detail).toBe("Prend l'avantage sur Zed.");
   });
 
   it("names the countered champion in the factor detail, not its id", () => {

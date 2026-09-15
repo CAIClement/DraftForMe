@@ -8,7 +8,9 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { DraftTool } from "./draft-tool";
 import type { Recommendation } from "@/lib/recommendation/types";
 
-function rec(name: string, score: number): Recommendation {
+// `withPool` mirrors the engine's `hasPool`, which is what decides whether the
+// priority slider is rendered at all. The two slider tests below need it.
+function rec(name: string, score: number, { withPool = false } = {}): Recommendation {
   return {
     championId: name.toLowerCase(),
     championName: name,
@@ -27,7 +29,7 @@ function rec(name: string, score: number): Recommendation {
       summary: "",
       factors: [
         { key: "meta", label: "Force dans le patch", score: 70, weight: 60, detail: "", available: true },
-        { key: "player", label: "Votre pool", score: 50, weight: 0, detail: "", available: false },
+        { key: "player", label: "Votre pool", score: 50, weight: 0, detail: "", available: withPool },
         { key: "counter", label: "Matchup", score: 80, weight: 40, detail: "Prend l'avantage.", available: true }
       ],
       warnings: [],
@@ -38,6 +40,7 @@ function rec(name: string, score: number): Recommendation {
 
 const champions = [{ id: "zed", name: "Zed" }];
 const initial = [rec("Galio", 88)];
+const initialWithPool = [rec("Galio", 88, { withPool: true })];
 
 function ok(name: string) {
   return new Response(JSON.stringify({ recommendations: [rec(name, 90)] }), { status: 200 });
@@ -103,7 +106,12 @@ describe("DraftTool request handling", () => {
     const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(ok("Briar"));
 
     render(
-      <DraftTool champions={champions} initialRole="mid" initialEnemyPicks={[]} initialRecommendations={initial} />
+      <DraftTool
+        champions={champions}
+        initialRole="mid"
+        initialEnemyPicks={[]}
+        initialRecommendations={initialWithPool}
+      />
     );
 
     const slider = screen.getByLabelText(/priorité/i);
@@ -120,7 +128,12 @@ describe("DraftTool request handling", () => {
     const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(ok("Briar"));
 
     render(
-      <DraftTool champions={champions} initialRole="mid" initialEnemyPicks={[]} initialRecommendations={initial} />
+      <DraftTool
+        champions={champions}
+        initialRole="mid"
+        initialEnemyPicks={[]}
+        initialRecommendations={initialWithPool}
+      />
     );
 
     // The role changes inside the debounce window. The pending timer closed

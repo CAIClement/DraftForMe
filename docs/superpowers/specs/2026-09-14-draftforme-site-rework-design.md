@@ -98,7 +98,7 @@ No dark mode in this spec. The page commits to the light palette and paints `bod
 
 A single page at `/`. `src/app/draft/page.tsx` becomes a redirect to `/`.
 
-1. **Header** — wordmark, a link to the explainer section, and the data context (`Patch 16.10 · EUW · Emerald+`) as quiet metadata rather than a badge.
+1. **Header** — wordmark, a link to the explainer section, and the data context (`Patch 16.3 · EUW · Emerald+`, derived from the seeded Data Dragon version) as quiet metadata rather than a badge.
 2. **Promise** — one heading, one sentence. Short, because the tool is directly underneath.
 3. **The tool, pre-filled and already solved.** Role selector with `mid` selected, two enemy picks present, and the resulting dossier rendered. The visitor sees the output before interacting with anything.
 4. **The dossier of the top pick**, expanded: weighted factors, the champion's real numbers, and the prose explanation.
@@ -234,3 +234,5 @@ Out of scope here, and worth their own specs:
 3. **Cache the landing page's reads.** `createClient()` calls `cookies()`, which opts `/` out of static rendering, so the highest-traffic page runs three Supabase queries on every visit including every bot hit. All three are anonymous public reads of patch-stable data. An `unstable_cache` with a revalidate window measured in hours would keep the arrives-already-populated property while cutting query volume to near zero.
 
 4. **Responsive and mobile layout.** Deliberately deferred by the user. The Tailwind migration in this spec is what makes it tractable.
+
+5. **Seed the real meta rank.** `data/tierlist_*.json` carries an OP.GG `rank` that blends win rate, pick rate and ban rate, and `scripts/build-seed-data.mjs` discards it because `champion_stats` has no `rank` column. The rank the dossier shows is therefore the row's position in a win-rate ordering — on mid, 51 of 55 champions sit at a position that is not their meta rank — which is why it is now labelled `Classement winrate`. Adding a `champion_stats.rank` column and seeding the tier-list value would let the dossier show a genuine meta rank alongside the win-rate one. Changing what feeds `metaScore` is a scoring change and belongs in that spec, not this one.

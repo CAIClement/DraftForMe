@@ -82,4 +82,7 @@ export type RecommendInput = {
   priority: number;
   topN: number;
   counterRelations?: CounterRelation[];
+  /** Display names for every champion, not just the candidates: `counterDetail`
+   *  names enemy picks, which need not be ranked in the candidate's role. */
+  championNames?: Array<{ championId: string; name: string }>;
 };
