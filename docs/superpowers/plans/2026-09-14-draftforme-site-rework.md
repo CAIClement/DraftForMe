@@ -2657,3 +2657,200 @@ Expected: `no duplicated token objects`.
 git add -A
 git commit -m "chore: complete the site rework" || echo "nothing to commit"
 ```
+---
+
+## Task 12: Stop the page asserting things that are not true
+
+The final cross-branch review found five places where the site states something false or offers a control that does nothing. All five violate the spec's governing rule — *every number on screen is real, and a fact we do not have is omitted rather than invented*. The branch is otherwise complete: 76 tests, clean type-check, successful build.
+
+Work in order. Each fix is independent; commit them together at the end.
+
+---
+
+## Fix 1 — `Patch 16.10` is fabricated
+
+`src/app/page.tsx` has `const PATCH = "16.10"`, rendered twice: in `SiteHeader` and as a `TrustBar` column.
+
+The string `16.10` appears **nowhere** in `data/`. The only version evidence in the repo is `champions.ddragon_version = '16.3.1'` on all 172 seeded rows — Data Dragon 16.3.x is patch **16.3**. The constant was carried over from `main`, where it lived inside the `LIVE BETA / OPERATIONAL` bar that this very spec deleted for being "decoration shaped like data".
+
+Replace it with the real value, and add the freshness signal the spec's Page Structure §8 promised and the plan quietly dropped.
+
+In `loadExample`, add `ddragon_version` to the champions select and `fetched_at` to the stats select:
+
+```ts
+    supabase
+      .from("champion_stats")
+      .select("champion_id, role, win_rate, pick_rate, ban_rate, games, fetched_at, champions(id, name, image_url)")
+      .eq("role", DEFAULT_EXAMPLE.role)
+      .eq("region", DEFAULT_EXAMPLE.region)
+      .eq("tier", DEFAULT_EXAMPLE.tier)
+      .order("win_rate", { ascending: false }),
+```
+
+```ts
+    supabase.from("champions").select("id, name, image_url, ddragon_version").order("name")
+```
+
+Derive both from the rows before mapping. `ddragon_version` is `major.minor.patch`; the League patch is the first two segments:
+
+```ts
+type ChampionRow = { id: string; name: string; image_url: string | null; ddragon_version: string };
+type DatedRow = { fetched_at: string };
+
+const championRows = (championResult.data ?? []) as unknown as ChampionRow[];
+
+// The League patch is the first two segments of the Data Dragon version:
+// "16.3.1" is patch 16.3. Derived rather than hardcoded, because a patch
+// number the data cannot support is exactly the kind of claim this bar exists
+// to rule out.
+const version = championRows[0]?.ddragon_version ?? null;
+const patch = version === null ? null : version.split(".").slice(0, 2).join(".");
+
+const fetchedAt = ((statsResult.data ?? []) as unknown as DatedRow[])
+  .map((row) => row.fetched_at)
+  .sort()
+  .at(-1) ?? null;
+```
+
+Return `patch` and `fetchedAt` from `loadExample`, and carry them through the empty-state fallback as `null`.
+
+`SiteHeader` takes the context string; build it so a missing patch drops that segment entirely rather than rendering "Patch null":
+
+```ts
+const context = [patch === null ? null : `Patch ${patch}`, "EUW", "Emerald+"]
+  .filter((part): part is string => part !== null)
+  .join(" · ");
+```
+
+Delete the `PATCH` constant. `TrustBar`'s `patch` prop becomes `string | null` and its tile is guarded like the others. Add an "À jour au" tile, also guarded:
+
+```tsx
+      {updatedAt !== null && (
+        <div>
+          <span className="block text-[9.5px] uppercase tracking-widest text-[#7d8a86]">À jour au</span>
+          <b className="text-base font-bold tracking-tight text-white">
+            {new Intl.DateTimeFormat("fr-FR", { dateStyle: "long" }).format(new Date(updatedAt))}
+          </b>
+        </div>
+      )}
+```
+
+---
+
+## Fix 2 — "Rang méta" is a win-rate rank
+
+`src/lib/data/normalize.ts` assigns `rank: index + 1` over rows the query ordered by `win_rate DESC`. Meanwhile `data/tierlist_*.json` carries a real OP.GG `rank` blending win rate, pick rate and ban rate — which `scripts/build-seed-data.mjs` discards, since `champion_stats` has no `rank` column.
+
+Measured on mid: **51 of 55 champions display a rank that is not their meta rank.** The displayed top three are Zilean (real rank #35), Sion (#29) and Pantheon (#43).
+
+Do **not** change what feeds `metaScore` — that is a scoring change and an explicit non-goal. Fix the labels so they describe what the number actually is.
+
+In `src/components/draft/verdict.tsx`, the Fact row label becomes `Classement winrate`.
+
+In `src/lib/recommendation/engine.ts`, the meta factor's detail becomes explicit about the ordering:
+
+```ts
+              detail: `${champion.rank}e sur ${input.stats.length} au winrate en ${champion.role}.`,
+```
+
+Leave the factor's `label` as `"Force dans le patch"` — that is what the score means; only the ranking's basis needed saying.
+
+Add to the spec's Follow-Up Work: seeding the real tier-list `rank` into a `champion_stats.rank` column, so the dossier can show a genuine meta rank alongside the win-rate one.
+
+---
+
+## Fix 3 — the priority slider does nothing, for every visitor
+
+`computeWeights` in `src/lib/recommendation/engine.ts` contains `if (!hasPool) { meta = 0.95; player = 0.05; }`, which discards `priority` outright.
+
+`hasPool` needs a pooled champion with at least 10 games, which needs a signed-in user. `src/app/auth/login/route.ts` is a stub that redirects to `/`, nothing initiates OAuth, no UI writes `champion_pool_entries`, and `src/app/page.tsx` hardcodes `playerPool: []`. So `hasPool` is always false: dragging the slider changes no weight, no score and no ordering. It only fires a debounced POST whose response is identical to the last one.
+
+This is the same defect `src/components/draft/refine-prompt.tsx` refuses by name in its own comment. Give it the same treatment.
+
+`DraftTool` already has the recommendation; key the control off whether the player factor could be assessed at all:
+
+```tsx
+  const playerFactor = top?.explanation.factors.find((factor) => factor.key === "player");
+```
+
+Render `PriorityControl` only when `playerFactor?.available` is true. Otherwise render the same shape of honest placeholder `RefinePrompt` uses, with a comment explaining that `computeWeights` discards `priority` entirely without a pool, so a live slider would accept a drag and drop it.
+
+---
+
+## Fix 4 — the trust bar's headline numbers are silently limited to one role
+
+`appearances` and `rankedChampions` are computed from `stats`, which `loadExample` fetched with `.eq("role", DEFAULT_EXAMPLE.role)`. They render as `Apparitions analysées 13 991 689` and `Champions classés 55`, with no role qualifier, beside `Région / élo EUW · Emerald+` which reads as the global scope — and they never change when the visitor switches role.
+
+The real index is **70 264 508 appearances across 242 ranked (champion, role) pairs**. The bar exists to prove the dataset is real and it understates it five-fold.
+
+Qualifying the labels with the role will not do: the numbers are server-rendered once and the role changes client-side, so "en mid" would become wrong the moment someone clicks Top.
+
+Add a fourth query to the `Promise.all`, unscoped by role, and compute the totals from it:
+
+```ts
+    supabase
+      .from("champion_stats")
+      .select("games")
+      .eq("region", DEFAULT_EXAMPLE.region)
+      .eq("tier", DEFAULT_EXAMPLE.tier)
+```
+
+```ts
+// Deliberately unscoped by role: these two numbers describe the whole indexed
+// dataset, they are rendered once on the server, and the visitor can switch
+// role without them updating. A role-qualified label would be wrong the moment
+// they did.
+const indexRows = (indexResult.data ?? []) as unknown as Array<{ games: number | null }>;
+const appearances = indexRows.reduce<number | null>(
+  (sum, row) => (row.games === null ? sum : (sum ?? 0) + row.games),
+  null
+);
+const rankedChampions = indexRows.length === 0 ? null : indexRows.length;
+```
+
+Treat a failure of this query the way the relations query is treated — log it, do not throw; the totals then come out `null` and their tiles are already guarded.
+
+`src/components/marketing/trust-bar.test.tsx`'s fixture uses the mid figures; update it to the real totals.
+
+---
+
+## Fix 5 — raw champion ids leak into the dossier's headline sentence
+
+`counterDetail` in `src/lib/recommendation/engine.ts` resolves names from a map built out of `input.stats` — that is, only the candidate role's ranked champions. But `losesTo` holds `countered_by_champion_id` values, and eight of those are absent from their own role's ranked list: `aurora, jayce, masteryi, monkeyking, ryze, udyr` in top, `malphite, pantheon` in jungle. For those the `?? championId` fallback renders the raw slug.
+
+It is reachable on real data. Top lane, enemies Jayce + Nasus + Zaahen, top pick Anivia:
+
+> Prend l'avantage sur Nasus, Zaahen. En difficulté contre **jayce**.
+
+A lowercase internal id in the same sentence as two properly-named champions, directly under an enemy chip reading "Jayce".
+
+Give the engine the names instead of making it infer them. Add to `RecommendInput` in `src/lib/recommendation/types.ts`:
+
+```ts
+  /** Display names for every champion, not just the candidates: `counterDetail`
+   *  names enemy picks, which need not be ranked in the candidate's role. */
+  championNames?: Array<{ championId: string; name: string }>;
+```
+
+In `recommendChampions`, prefer it and fall back to the stats-derived map:
+
+```ts
+  const names = new Map(
+    (input.championNames ?? input.stats.map((champion) => ({ championId: champion.championId, name: champion.name })))
+      .map((entry) => [entry.championId, entry.name])
+  );
+```
+
+`src/app/page.tsx` already queries the full `champions` table — pass it. `src/app/api/recommend/route.ts` does not; add a `champions` select to its `Promise.all` and pass that. Treat a failure of it as non-fatal and log it, consistent with the relations query.
+
+Add an engine test: a `losesTo` id that is absent from `stats` but present in `championNames` renders the display name, not the slug.
+
+---
+
+## Verification
+
+1. `npm test` — every file passing
+2. `npx tsc --noEmit` — completely clean
+3. `npm run build` — succeeds, and `/` is still listed **dynamic** (`ƒ`), not static
+4. `grep -rn '"16.10"' src/` — no matches
+5. Confirm by reading the rendered output, not just the tests, that the trust bar shows the global totals and a real patch number
