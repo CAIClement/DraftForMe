@@ -243,4 +243,20 @@ describe("counter relations in recommendations", () => {
     expect(counter?.available).toBe(false);
     expect(orianna?.counterScore).toBe(50);
   });
+
+  // The dossier renders this string as its most prominent sentence, with no
+  // fallback of its own. `counterDetail` builds from `beats` and `losesTo` and
+  // returns "" if both are empty, so an available factor with an empty detail
+  // would render a blank paragraph. `scoreCounter` sets `available` precisely
+  // when one of those arrays is non-empty, but that invariant lives in another
+  // module — this pins it from the consumer's side.
+  it("never produces an empty detail for a factor it marks available", () => {
+    for (const enemyPicks of [[], ["zed"], ["orianna"], ["zed", "orianna"], ["unknown"]]) {
+      for (const recommendation of run(enemyPicks)) {
+        const counter = recommendation.explanation.factors.find((factor) => factor.key === "counter");
+
+        expect(counter?.detail, `${recommendation.championId} vs [${enemyPicks}]`).not.toBe("");
+      }
+    }
+  });
 });

@@ -1566,7 +1566,7 @@ export function Alternatives({ recommendations }: { recommendations: Recommendat
         >
           <b className="block text-sm font-bold tracking-tight">
             {recommendation.championName}{" "}
-            <em className="not-italic font-extrabold text-accent">{Math.round(recommendation.totalScore)}</em>
+            <span className="font-extrabold text-accent">{Math.round(recommendation.totalScore)}</span>
           </b>
           <Facts recommendation={recommendation} />
         </div>
