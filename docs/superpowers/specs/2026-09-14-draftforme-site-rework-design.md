@@ -229,4 +229,8 @@ New coverage:
 Out of scope here, and worth their own specs:
 
 1. **Real per-pair win rates.** The counter relations seeded here are a binary signal covering roughly three opponents per champion. A true matchup win-rate source would replace the bonus/penalty mapping with measured percentages, fill the `matchups` table that already exists in the schema, and let the dossier show a per-matchup table.
-2. **Responsive and mobile layout.** Deliberately deferred by the user. The Tailwind migration in this spec is what makes it tractable.
+2. **Extract the shared recommendation data layer.** `src/app/page.tsx` and `src/app/api/recommend/route.ts` now build character-identical `champion_stats` and `counter_relations` queries and run the same mapping and engine call. A column change has to land in both or they diverge silently — and because the page's first interaction re-fetches through the route, a drift would show as the pre-solved example changing the instant the visitor touches anything. A `loadRecommendationInputs({ role, region, tier })` in `src/lib/data/` would also give the error handling one home instead of two.
+
+3. **Cache the landing page's reads.** `createClient()` calls `cookies()`, which opts `/` out of static rendering, so the highest-traffic page runs three Supabase queries on every visit including every bot hit. All three are anonymous public reads of patch-stable data. An `unstable_cache` with a revalidate window measured in hours would keep the arrives-already-populated property while cutting query volume to near zero.
+
+4. **Responsive and mobile layout.** Deliberately deferred by the user. The Tailwind migration in this spec is what makes it tractable.

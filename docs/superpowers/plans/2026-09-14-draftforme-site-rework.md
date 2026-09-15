@@ -897,7 +897,7 @@ Expected: PASS, including the 8 new tests. If anything still mentions `matchups`
 Run: `npx tsc --noEmit`
 Expected: exactly one error, `src/lib/data/normalize.ts:29` (`games` missing from `ChampionStats`). That line is Task 5 Step 3's work and closing it here would pre-empt that task's red step, so leave it. Any *other* error is yours and must be fixed now.
 
-- [ ] **Step 8: Commit**
+- [ ] **Step 9: Commit**
 
 ```bash
 git add src/lib/recommendation/
@@ -2374,7 +2374,7 @@ const number = new Intl.NumberFormat("fr-FR");
  * is NOT a number of matches: every game fields two midlaners, so the sum
  * counts champion appearances. It is also not divisible by two to recover
  * matches, because the ranked list is not exhaustive - the mid pick rates sum
- * to 188%, not 200%, so roughly an eighth of picks fall outside it. Labelling
+ * to 188%, not 200%, so about 6% of picks fall outside it. Labelling
  * it "parties" would be the one kind of error this bar exists to rule out.
  */
 export function TrustBar({
@@ -2384,7 +2384,7 @@ export function TrustBar({
   context
 }: {
   appearances: number | null;
-  rankedChampions: number;
+  rankedChampions: number | null;
   patch: string;
   context: string;
 }) {
@@ -2396,10 +2396,12 @@ export function TrustBar({
           <b className="text-base font-bold tracking-tight text-white">{number.format(appearances)}</b>
         </div>
       )}
-      <div>
-        <span className="block text-[9.5px] uppercase tracking-widest text-[#7d8a86]">Champions classés</span>
-        <b className="text-base font-bold tracking-tight text-white">{rankedChampions}</b>
-      </div>
+      {rankedChampions !== null && (
+        <div>
+          <span className="block text-[9.5px] uppercase tracking-widest text-[#7d8a86]">Champions classés</span>
+          <b className="text-base font-bold tracking-tight text-white">{rankedChampions}</b>
+        </div>
+      )}
       <div>
         <span className="block text-[9.5px] uppercase tracking-widest text-[#7d8a86]">Patch</span>
         <b className="text-base font-bold tracking-tight text-white">{patch}</b>
@@ -2452,7 +2454,7 @@ const CONTEXT = "EUW · Emerald+";
 async function loadExample() {
   const supabase = await createClient();
 
-  const [{ data: statsRows }, { data: relationRows }, { data: championRows }] = await Promise.all([
+  const [statsResult, relationResult, championResult] = await Promise.all([
     supabase
       .from("champion_stats")
       .select("champion_id, role, win_rate, pick_rate, ban_rate, games, champions(id, name, image_url)")
@@ -2466,6 +2468,25 @@ async function loadExample() {
       .eq("role", DEFAULT_EXAMPLE.role),
     supabase.from("champions").select("id, name, image_url").order("name")
   ]);
+
+  // A failed `champions` query is the dangerous one. `recommendations` derives
+  // from `stats`, so the tool still renders -- but `EnemyPicks` resolves its
+  // chips against `champions`, so every enemy pick silently disappears while
+  // the verdict above it still cites those picks by name. Throwing routes both
+  // fatal cases into the caller's visible degraded state instead.
+  if (statsResult.error) throw statsResult.error;
+  if (championResult.error) throw championResult.error;
+
+  if (relationResult.error) {
+    // Not fatal, but not silent either: the engine's "no counter relation
+    // known" wording is identical whether the relation is genuinely absent or
+    // this query fell over.
+    console.error("counter_relations query failed", relationResult.error);
+  }
+
+  const { data: statsRows } = statsResult;
+  const { data: relationRows } = relationResult;
+  const { data: championRows } = championResult;
 
   const stats = mapStatsRowsToChampionStats((statsRows ?? []) as unknown as StatsRow[]);
 
@@ -2490,7 +2511,14 @@ async function loadExample() {
     null
   );
 
-  return { recommendations, champions, appearances, rankedChampions: stats.length };
+  // An unknown count is not a count of zero, and this row exists to establish
+  // that real data sits behind the product.
+  return {
+    recommendations,
+    champions,
+    appearances,
+    rankedChampions: stats.length === 0 ? null : stats.length
+  };
 }
 
 export default async function HomePage() {
@@ -2498,13 +2526,13 @@ export default async function HomePage() {
     recommendations: Recommendation[];
     champions: { id: string; name: string; imageUrl?: string }[];
     appearances: number | null;
-    rankedChampions: number;
+    rankedChampions: number | null;
   };
 
   try {
     example = await loadExample();
   } catch {
-    example = { recommendations: [], champions: [], appearances: null, rankedChampions: 0 };
+    example = { recommendations: [], champions: [], appearances: null, rankedChampions: null };
   }
 
   return (
@@ -2528,12 +2556,14 @@ export default async function HomePage() {
         )}
 
         <Explainer />
-        <TrustBar
-          appearances={example.appearances}
-          rankedChampions={example.rankedChampions}
-          patch={PATCH}
-          context={CONTEXT}
-        />
+        {example.rankedChampions !== null && (
+          <TrustBar
+            appearances={example.appearances}
+            rankedChampions={example.rankedChampions}
+            patch={PATCH}
+            context={CONTEXT}
+          />
+        )}
       </div>
 
       <SiteFooter />
@@ -2542,7 +2572,37 @@ export default async function HomePage() {
 }
 ```
 
-- [ ] **Step 7: Run the whole suite and type-check**
+- [ ] **Step 7: Test the trust bar's guards**
+
+Create `src/components/marketing/trust-bar.test.tsx`:
+
+```tsx
+import { render, screen } from "@testing-library/react";
+import { describe, expect, it } from "vitest";
+import { TrustBar } from "./trust-bar";
+
+describe("TrustBar", () => {
+  it("shows the counts when they are known", () => {
+    render(<TrustBar appearances={13991689} rankedChampions={55} patch="16.10" context="EUW" />);
+
+    expect(screen.getByText("13 991 689")).toBeInTheDocument();
+    expect(screen.getByText("55")).toBeInTheDocument();
+  });
+
+  it("omits a count it does not have rather than showing a zero", () => {
+    render(<TrustBar appearances={null} rankedChampions={null} patch="16.10" context="EUW" />);
+
+    expect(screen.queryByText("Apparitions analysées")).not.toBeInTheDocument();
+    expect(screen.queryByText("Champions classés")).not.toBeInTheDocument();
+    expect(screen.queryByText("0")).not.toBeInTheDocument();
+  });
+});
+```
+
+Run: `npm test -- src/components/marketing/trust-bar.test.tsx`
+Expected: PASS, 2 tests.
+
+- [ ] **Step 8: Run the whole suite and type-check**
 
 Run: `npm test`
 Expected: PASS, every file.
