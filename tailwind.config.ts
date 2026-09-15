@@ -5,12 +5,16 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        ink: "#0f1115",
-        panel: "#171b22",
-        line: "#2a303a",
-        gold: "#c8aa6e",
-        teal: "#0ac8b9",
-        danger: "#e84057"
+        paper: "var(--paper)",
+        surface: "var(--surface)",
+        "surface-sunk": "var(--surface-sunk)",
+        ink: "var(--ink)",
+        "ink-muted": "var(--ink-muted)",
+        "ink-faint": "var(--ink-faint)",
+        rule: "var(--rule)",
+        "rule-soft": "var(--rule-soft)",
+        accent: "var(--accent)",
+        "accent-wash": "var(--accent-wash)"
       }
     }
   },

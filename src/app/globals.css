@@ -3,14 +3,26 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
+
+  --paper: #f7f4ef;
+  --surface: #ffffff;
+  --surface-sunk: #f2efe9;
+  --ink: #14171a;
+  --ink-muted: #5e574c;
+  --ink-faint: #8a8378;
+  --rule: #e0dbd2;
+  --rule-soft: #efece6;
+  --accent: #0f766e;
+  --accent-wash: #f2faf8;
 }
 
 body {
   min-height: 100vh;
   margin: 0;
-  color: #eef2f6;
-  font-family: var(--font-body, Arial, Helvetica, sans-serif);
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body, system-ui, sans-serif);
 }
 
 button,
