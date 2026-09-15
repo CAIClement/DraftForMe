@@ -22,7 +22,7 @@ const CONTEXT = "EUW · Emerald+";
 async function loadExample() {
   const supabase = await createClient();
 
-  const [{ data: statsRows }, { data: relationRows }, { data: championRows }] = await Promise.all([
+  const [statsResult, relationResult, championResult] = await Promise.all([
     supabase
       .from("champion_stats")
       .select("champion_id, role, win_rate, pick_rate, ban_rate, games, champions(id, name, image_url)")
@@ -36,6 +36,25 @@ async function loadExample() {
       .eq("role", DEFAULT_EXAMPLE.role),
     supabase.from("champions").select("id, name, image_url").order("name")
   ]);
+
+  // A failed `champions` query is the dangerous one. `recommendations` derives
+  // from `stats`, so the tool still renders -- but `EnemyPicks` resolves its
+  // chips against `champions`, so every enemy pick silently disappears while
+  // the verdict above it still cites those picks by name. Throwing routes both
+  // fatal cases into the caller's visible degraded state instead.
+  if (statsResult.error) throw statsResult.error;
+  if (championResult.error) throw championResult.error;
+
+  if (relationResult.error) {
+    // Not fatal, but not silent either: the engine's "no counter relation
+    // known" wording is identical whether the relation is genuinely absent or
+    // this query fell over.
+    console.error("counter_relations query failed", relationResult.error);
+  }
+
+  const { data: statsRows } = statsResult;
+  const { data: relationRows } = relationResult;
+  const { data: championRows } = championResult;
 
   const stats = mapStatsRowsToChampionStats((statsRows ?? []) as unknown as StatsRow[]);
 
@@ -60,7 +79,14 @@ async function loadExample() {
     null
   );
 
-  return { recommendations, champions, appearances, rankedChampions: stats.length };
+  // An unknown count is not a count of zero, and this row exists to establish
+  // that real data sits behind the product.
+  return {
+    recommendations,
+    champions,
+    appearances,
+    rankedChampions: stats.length === 0 ? null : stats.length
+  };
 }
 
 export default async function HomePage() {
@@ -68,13 +94,13 @@ export default async function HomePage() {
     recommendations: Recommendation[];
     champions: { id: string; name: string; imageUrl?: string }[];
     appearances: number | null;
-    rankedChampions: number;
+    rankedChampions: number | null;
   };
 
   try {
     example = await loadExample();
   } catch {
-    example = { recommendations: [], champions: [], appearances: null, rankedChampions: 0 };
+    example = { recommendations: [], champions: [], appearances: null, rankedChampions: null };
   }
 
   return (
@@ -98,12 +124,14 @@ export default async function HomePage() {
         )}
 
         <Explainer />
-        <TrustBar
-          appearances={example.appearances}
-          rankedChampions={example.rankedChampions}
-          patch={PATCH}
-          context={CONTEXT}
-        />
+        {example.rankedChampions !== null && (
+          <TrustBar
+            appearances={example.appearances}
+            rankedChampions={example.rankedChampions}
+            patch={PATCH}
+            context={CONTEXT}
+          />
+        )}
       </div>
 
       <SiteFooter />

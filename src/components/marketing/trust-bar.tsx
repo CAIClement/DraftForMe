@@ -8,7 +8,7 @@ const number = new Intl.NumberFormat("fr-FR");
  * is NOT a number of matches: every game fields two midlaners, so the sum
  * counts champion appearances. It is also not divisible by two to recover
  * matches, because the ranked list is not exhaustive - the mid pick rates sum
- * to 188%, not 200%, so roughly an eighth of picks fall outside it. Labelling
+ * to 188%, not 200%, so about 6% of picks fall outside it. Labelling
  * it "parties" would be the one kind of error this bar exists to rule out.
  */
 export function TrustBar({
@@ -18,7 +18,7 @@ export function TrustBar({
   context
 }: {
   appearances: number | null;
-  rankedChampions: number;
+  rankedChampions: number | null;
   patch: string;
   context: string;
 }) {
@@ -30,10 +30,12 @@ export function TrustBar({
           <b className="text-base font-bold tracking-tight text-white">{number.format(appearances)}</b>
         </div>
       )}
-      <div>
-        <span className="block text-[9.5px] uppercase tracking-widest text-[#7d8a86]">Champions classés</span>
-        <b className="text-base font-bold tracking-tight text-white">{rankedChampions}</b>
-      </div>
+      {rankedChampions !== null && (
+        <div>
+          <span className="block text-[9.5px] uppercase tracking-widest text-[#7d8a86]">Champions classés</span>
+          <b className="text-base font-bold tracking-tight text-white">{rankedChampions}</b>
+        </div>
+      )}
       <div>
         <span className="block text-[9.5px] uppercase tracking-widest text-[#7d8a86]">Patch</span>
         <b className="text-base font-bold tracking-tight text-white">{patch}</b>
