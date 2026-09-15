@@ -8,7 +8,8 @@ import { mapCounterRelationRows, mapStatsRowsToChampionStats } from "@/lib/data/
 import { DEFAULT_EXAMPLE } from "@/lib/draft/default-example";
 import { recommendChampions } from "@/lib/recommendation/engine";
 import type { Recommendation } from "@/lib/recommendation/types";
-import { createClient } from "@/lib/supabase/server";
+import { createPublicClient } from "@/lib/supabase/public";
+import { unstable_cache } from "next/cache";
 
 type StatsRow = Parameters<typeof mapStatsRowsToChampionStats>[0][number];
 type RelationRow = Parameters<typeof mapCounterRelationRows>[0][number];
@@ -17,11 +18,33 @@ type DatedRow = { fetched_at: string };
 
 const CONTEXT = "EUW · Emerald+";
 
+// DO NOT REMOVE as "redundant given the cache" -- the cache is exactly why it is
+// needed. Once `loadExample` is wrapped in `unstable_cache` this page has no
+// remaining dynamic input, so Next would happily prerender it at build time.
+// There is no `.env.local` in this repo, so at build time `createPublicClient()`
+// throws, the `catch` below produces the degraded state, and "Les données de
+// draft ne sont pas disponibles" gets baked into static HTML and served to every
+// visitor until the next deploy. `force-dynamic` keeps `/` server-rendered per
+// request; `unstable_cache` still absorbs the query volume underneath it. That
+// pairing is the point: the cache without the trap.
+export const dynamic = "force-dynamic";
+
+// The underlying data only changes when a patch is scraped, so an hours-long
+// window costs nothing in freshness. It also buys outage tolerance: on a plan
+// where the Supabase project pauses after ~7 days idle, a cached read keeps
+// serving real content while the project is asleep, instead of the first visitor
+// back hitting a dead query and seeing the degraded state.
+const EXAMPLE_REVALIDATE_SECONDS = 6 * 60 * 60;
+
 // Resolved on the server so the page arrives already populated: no empty flash,
 // and the example is indexable. Calls the engine directly rather than fetching
 // this app's own API route over HTTP.
+//
+// Every query below is an anonymous read of patch-stable public data -- no
+// session, no cookie, and `playerPool` is hardcoded empty -- which is what lets
+// the whole function sit behind `unstable_cache`. Hence the cookie-free client.
 async function loadExample() {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
 
   const [statsResult, relationResult, championResult, indexResult] = await Promise.all([
     supabase
@@ -130,6 +153,13 @@ async function loadExample() {
   };
 }
 
+// No arguments: the one input, `DEFAULT_EXAMPLE`, is a module constant that
+// `loadExample` closes over, so the key array below is the whole cache key and
+// every visitor to `/` shares one entry.
+const loadCachedExample = unstable_cache(loadExample, ["home-default-example"], {
+  revalidate: EXAMPLE_REVALIDATE_SECONDS
+});
+
 export default async function HomePage() {
   let example: {
     recommendations: Recommendation[];
@@ -141,7 +171,7 @@ export default async function HomePage() {
   };
 
   try {
-    example = await loadExample();
+    example = await loadCachedExample();
   } catch {
     example = {
       recommendations: [],
