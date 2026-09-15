@@ -24,29 +24,40 @@ export async function POST(request: Request) {
     data: { user }
   } = await supabase.auth.getUser();
 
-  const { data: statsRows, error: statsError } = await supabase
-    .from("champion_stats")
-    .select("champion_id, role, win_rate, pick_rate, ban_rate, games, champions(id, name, image_url)")
-    .eq("role", parsed.data.role)
-    .eq("region", parsed.data.region)
-    .eq("tier", parsed.data.tier)
-    .order("win_rate", { ascending: false });
+  const [statsResult, poolResult, relationResult] = await Promise.all([
+    supabase
+      .from("champion_stats")
+      .select("champion_id, role, win_rate, pick_rate, ban_rate, games, champions(id, name, image_url)")
+      .eq("role", parsed.data.role)
+      .eq("region", parsed.data.region)
+      .eq("tier", parsed.data.tier)
+      .order("win_rate", { ascending: false }),
+    user
+      ? supabase
+          .from("champion_pool_entries")
+          .select("champion_id, confidence, games, win_rate, champions(id, name)")
+          .eq("user_id", user.id)
+      : Promise.resolve({ data: [], error: null }),
+    supabase
+      .from("counter_relations")
+      .select("champion_id, countered_by_champion_id, role")
+      .eq("role", parsed.data.role)
+  ]);
+
+  const { data: statsRows, error: statsError } = statsResult;
+  const { data: poolRows } = poolResult;
+  const { data: relationRows, error: relationError } = relationResult;
 
   if (statsError) {
     return NextResponse.json({ error: "Unable to load champion stats." }, { status: 500 });
   }
 
-  const { data: poolRows } = user
-    ? await supabase
-        .from("champion_pool_entries")
-        .select("champion_id, confidence, games, win_rate, champions(id, name)")
-        .eq("user_id", user.id)
-    : { data: [] };
-
-  const { data: relationRows } = await supabase
-    .from("counter_relations")
-    .select("champion_id, countered_by_champion_id, role")
-    .eq("role", parsed.data.role);
+  if (relationError) {
+    // Not fatal: stats and pool still produce a usable ranking without the
+    // counter term. But it must not pass silently — the engine's "no counter
+    // relation known" warning is indistinguishable from this outage to a user.
+    console.error("counter_relations query failed", relationError);
+  }
 
   const stats = mapStatsRowsToChampionStats((statsRows ?? []) as unknown as StatsRow[]);
   const playerPool = mapPoolRowsToPlayerPool((poolRows ?? []) as unknown as PoolRow[]);
