@@ -1793,6 +1793,67 @@ describe("DraftTool", () => {
     expect(body.priority).toBe(90);
   });
 
+  it("sends an added enemy pick", async () => {
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue(new Response(JSON.stringify({ recommendations: [rec("Orianna", 85)] }), { status: 200 }));
+
+    render(<DraftTool champions={champions} initialRole="mid" initialEnemyPicks={["zed"]} initialRecommendations={initial} />);
+
+    fireEvent.change(screen.getByLabelText("Rechercher un pick ennemi"), { target: { value: "caitlyn" } });
+    fireEvent.click(screen.getByRole("button", { name: "Caitlyn" }));
+
+    await waitFor(() => expect(fetchSpy).toHaveBeenCalled());
+    const body = JSON.parse(String(fetchSpy.mock.calls[0][1]?.body));
+    expect(body.enemyPicks).toEqual(["zed", "caitlyn"]);
+  });
+
+  it("sends the reduced list when an enemy pick is removed", async () => {
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue(new Response(JSON.stringify({ recommendations: [rec("Orianna", 85)] }), { status: 200 }));
+
+    render(<DraftTool champions={champions} initialRole="mid" initialEnemyPicks={["zed"]} initialRecommendations={initial} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Retirer Zed" }));
+
+    await waitFor(() => expect(fetchSpy).toHaveBeenCalled());
+    const body = JSON.parse(String(fetchSpy.mock.calls[0][1]?.body));
+    expect(body.enemyPicks).toEqual([]);
+  });
+
+  it("finds a punctuated champion by its slug", () => {
+    render(
+      <DraftTool
+        champions={[...champions, { id: "kaisa", name: "Kai'Sa" }]}
+        initialRole="mid"
+        initialEnemyPicks={[]}
+        initialRecommendations={initial}
+      />
+    );
+
+    fireEvent.change(screen.getByLabelText("Rechercher un pick ennemi"), { target: { value: "kaisa" } });
+
+    expect(screen.getByRole("button", { name: "Kai'Sa" })).toBeInTheDocument();
+  });
+
+  it("clears the error banner once a later request succeeds", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(new Response("", { status: 500 }));
+
+    render(<DraftTool champions={champions} initialRole="mid" initialEnemyPicks={["zed"]} initialRecommendations={initial} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Top" }));
+    await waitFor(() => expect(screen.getByRole("alert")).toBeInTheDocument());
+
+    fetchSpy.mockResolvedValue(
+      new Response(JSON.stringify({ recommendations: [rec("Darius", 90)] }), { status: 200 })
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Jungle" }));
+
+    await waitFor(() => expect(screen.getByText("Darius")).toBeInTheDocument());
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
   it("keeps the previous result on screen when the request fails", async () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response("", { status: 500 }));
 
@@ -1874,14 +1935,18 @@ export function EnemyPicks({
     .map((id) => champions.find((champion) => champion.id === id))
     .filter((champion): champion is Champion => champion !== undefined);
 
+  // Matched against the id as well as the display name: ids are the
+  // punctuation-stripped slugs, so a search for "kaisa" finds Kai'Sa, which
+  // matching on the name alone never would.
+  const needle = query.trim().toLowerCase();
   const matches =
-    query.trim() === ""
+    needle === ""
       ? []
       : champions
           .filter(
             (champion) =>
               !selectedIds.includes(champion.id) &&
-              champion.name.toLowerCase().includes(query.trim().toLowerCase())
+              (champion.name.toLowerCase().includes(needle) || champion.id.includes(needle))
           )
           .slice(0, 6);
 
@@ -1904,6 +1969,9 @@ export function EnemyPicks({
       <input
         id="enemy-search"
         type="search"
+        role="combobox"
+        aria-expanded={matches.length > 0}
+        aria-controls="enemy-search-results"
         value={query}
         onChange={(event) => setQuery(event.target.value)}
         placeholder="Ajouter un champion adverse"
@@ -1911,7 +1979,7 @@ export function EnemyPicks({
       />
 
       {matches.length > 0 && (
-        <ul className="mt-1.5 flex flex-wrap gap-1.5">
+        <ul id="enemy-search-results" aria-live="polite" className="mt-1.5 flex flex-wrap gap-1.5">
           {matches.map((champion) => (
             <li key={champion.id}>
               <button
@@ -1936,27 +2004,21 @@ export function EnemyPicks({
 `src/components/draft/refine-prompt.tsx`:
 
 ```tsx
-"use client";
-
-import { useState } from "react";
-
+// Deliberately not a live input. Weighting by a player's pool needs an account,
+// and `src/app/auth/login/route.ts` is currently a stub that redirects to `/`,
+// so a working field would have nowhere to send a Riot ID. A control that
+// accepts text and silently drops it is the one thing that would undercut a
+// page whose whole premise is that everything on it is real. It states what is
+// coming instead, and holds no state.
 export function RefinePrompt() {
-  const [riotId, setRiotId] = useState("");
-
   return (
     <div className="mt-3 flex items-center gap-3 rounded-lg border border-rule bg-surface-sunk px-3.5 py-2.5 text-xs text-ink-muted">
-      <label htmlFor="riot-id">
+      <span>
         Affinez avec <b className="text-ink">votre</b> pool : on pondère selon les champions que vous jouez vraiment.
-      </label>
-      <input
-        id="riot-id"
-        type="text"
-        value={riotId}
-        onChange={(event) => setRiotId(event.target.value)}
-        placeholder="Nom#TAG"
-        autoComplete="username"
-        className="ml-auto w-36 rounded-md border border-rule bg-surface px-2.5 py-1.5"
-      />
+      </span>
+      <span className="ml-auto shrink-0 rounded-md border border-rule px-2.5 py-1.5 text-ink-faint">
+        Bientôt
+      </span>
     </div>
   );
 }
@@ -1998,7 +2060,7 @@ export function PriorityControl({ value, onChange }: { value: number; onChange: 
 ```tsx
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { DEFAULT_EXAMPLE } from "@/lib/draft/default-example";
 import type { Recommendation } from "@/lib/recommendation/types";
 import { Alternatives } from "./alternatives";
@@ -2026,10 +2088,20 @@ export function DraftTool({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Only the newest request may write state. Without this, two in-flight
+  // requests resolve in arbitrary order and the slower one wins, leaving
+  // recommendations on screen that do not match the visible controls.
+  const requestId = useRef(0);
+
+  // The slider fires on every tick of a drag, not on release, so one drag
+  // would otherwise be dozens of POSTs against a database-backed route.
+  const priorityTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   // The previous result deliberately stays on screen while a request is in
   // flight and after a failure: emptying it would punish the user for a
   // transient error and undo the "already solved" premise of the page.
   async function refresh(nextRole: string, nextEnemyPicks: string[], nextPriority: number) {
+    const id = ++requestId.current;
     setIsLoading(true);
     setError(null);
 
@@ -2048,17 +2120,21 @@ export function DraftTool({
         })
       });
 
+      if (id !== requestId.current) return;
+
       if (!response.ok) {
         setError("Impossible de mettre à jour la recommandation. Le résultat affiché est le précédent.");
         return;
       }
 
       const payload = (await response.json()) as { recommendations: Recommendation[] };
+      if (id !== requestId.current) return;
       setRecommendations(payload.recommendations);
     } catch {
+      if (id !== requestId.current) return;
       setError("Impossible de mettre à jour la recommandation. Le résultat affiché est le précédent.");
     } finally {
-      setIsLoading(false);
+      if (id === requestId.current) setIsLoading(false);
     }
   }
 
@@ -2079,9 +2155,18 @@ export function DraftTool({
     void refresh(role, next, priority);
   }
 
+  // The number beside the slider tracks the thumb immediately; only the
+  // request is deferred. There is deliberately no `useEffect` in this file --
+  // that is what makes it structurally impossible to fetch on first paint,
+  // which the pre-solved example depends on. The cost is that a timer can
+  // outlive an unmount by one interval; the request id then discards its
+  // result, so the worst case is a single wasted fetch.
   function changePriority(nextPriority: number) {
     setPriority(nextPriority);
-    void refresh(role, enemyPicks, nextPriority);
+    if (priorityTimer.current) clearTimeout(priorityTimer.current);
+    priorityTimer.current = setTimeout(() => {
+      void refresh(role, enemyPicks, nextPriority);
+    }, 250);
   }
 
   const [top, ...rest] = recommendations;
@@ -2131,7 +2216,7 @@ export function DraftTool({
 - [ ] **Step 5: Run the tests**
 
 Run: `npm test -- src/components/draft/draft-tool.test.tsx`
-Expected: PASS, 4 tests.
+Expected: PASS, 8 tests.
 
 - [ ] **Step 6: Delete the superseded components**
 
