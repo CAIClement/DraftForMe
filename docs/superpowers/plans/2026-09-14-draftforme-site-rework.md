@@ -2101,6 +2101,14 @@ export function DraftTool({
   // flight and after a failure: emptying it would punish the user for a
   // transient error and undo the "already solved" premise of the page.
   async function refresh(nextRole: string, nextEnemyPicks: string[], nextPriority: number) {
+    // A pending slider request closed over the role and picks of an older
+    // render, and because it would be issued last it would also carry the
+    // highest request id -- so the guard below would hand the stale one the
+    // win. Every other path already sends the current priority, which makes
+    // that pending request redundant anyway. Clearing an already-fired handle
+    // from inside the timer's own callback is a no-op.
+    if (priorityTimer.current) clearTimeout(priorityTimer.current);
+
     const id = ++requestId.current;
     setIsLoading(true);
     setError(null);
