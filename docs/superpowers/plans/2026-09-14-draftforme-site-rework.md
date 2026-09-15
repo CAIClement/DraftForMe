@@ -2634,7 +2634,14 @@ Expected: no output.
 - [ ] **Step 3: Production build**
 
 Run: `npm run build`
-Expected: build succeeds. `/` builds as a dynamic route (it reads Supabase per request) and `/draft` as a redirect.
+
+This is the first build on this branch, and `/` changed from a static component to a Server Component that reads Supabase, so treat the route table as the real output rather than just checking the exit code.
+
+Expected: the build succeeds, and in the printed route table **`/` is marked dynamic** (`f` / `Dynamic`, server-rendered on demand) and `/draft` appears as a redirect.
+
+**If `/` is listed as static (`o` / `Static`), stop — that is a defect, not a passing build.** There is no `.env.local`, so `createClient()` throws on the missing keys and `HomePage`'s `catch` produces the degraded state. That same `catch` also sits between Next and the dynamic-bailout signal that `await cookies()` raises during static generation. If Next did not see the bailout, it will have prerendered the *outage* page into static HTML and shipped it to every visitor, permanently. The fix in that case is to let the bailout through — either re-throw anything that is not the missing-keys error, or add `export const dynamic = "force-dynamic"` to `src/app/page.tsx`.
+
+Record which way it went, with the route table.
 
 - [ ] **Step 4: Confirm the old surface is gone**
 
