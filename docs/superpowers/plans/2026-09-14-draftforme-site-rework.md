@@ -57,6 +57,7 @@
 | `src/lib/recommendation/engine.ts` | Consume relations, carry facts through |
 | `src/lib/data/normalize.ts` | Map `games`, map counter-relation rows |
 | `src/app/api/recommend/route.ts` | Select `games`, query relations |
+| `src/lib/supabase/types.ts` | Declare `counter_relations` on the `Database` type |
 | `scripts/build-seed-data.mjs` | Join sample sizes, emit counter relations |
 | `tailwind.config.ts` | Map CSS variables into the palette |
 | `src/app/globals.css` | Token definitions |
@@ -871,7 +872,7 @@ Expected: PASS, including the 8 new tests. If anything still mentions `matchups`
 - [ ] **Step 7: Type-check**
 
 Run: `npx tsc --noEmit`
-Expected: errors only in `src/components/coach/*` and `src/app/page.tsx`, which Tasks 7–10 replace. Errors anywhere else must be fixed now.
+Expected: exactly one error, `src/lib/data/normalize.ts:29` (`games` missing from `ChampionStats`). That line is Task 5 Step 3's work and closing it here would pre-empt that task's red step, so leave it. Any *other* error is yours and must be fixed now.
 
 - [ ] **Step 8: Commit**
 
@@ -959,7 +960,40 @@ Import `CounterRelation` from `@/lib/recommendation/types`.
 Run: `npm test -- src/lib/data/normalize.test.ts`
 Expected: PASS.
 
-- [ ] **Step 5: Query the relations in the route**
+- [ ] **Step 5: Declare the table in the generated Database type**
+
+The Supabase client is typed (`createServerClient<Database>` in `src/lib/supabase/server.ts`), so `.from("counter_relations")` will not compile until the table exists in `src/lib/supabase/types.ts`. `champion_stats` there already carries `games`, so nothing else in that file needs touching. Add, beside the other tables:
+
+```ts
+      counter_relations: TableDefinition<
+        {
+          id: string;
+          champion_id: string;
+          countered_by_champion_id: string;
+          role: string;
+          source: string;
+          fetched_at: string;
+        },
+        {
+          champion_id: string;
+          countered_by_champion_id: string;
+          role: string;
+          source: string;
+          id?: string;
+          fetched_at?: string;
+        },
+        Partial<{
+          id: string;
+          champion_id: string;
+          countered_by_champion_id: string;
+          role: string;
+          source: string;
+          fetched_at: string;
+        }>
+      >;
+```
+
+- [ ] **Step 6: Query the relations in the route**
 
 In `src/app/api/recommend/route.ts`, add `games` to the stats select:
 
@@ -988,18 +1022,18 @@ where `CounterRelationRowType` is declared beside the existing row aliases:
 type CounterRelationRowType = Parameters<typeof mapCounterRelationRows>[0][number];
 ```
 
-- [ ] **Step 6: Type-check and run the suite**
+- [ ] **Step 7: Type-check and run the suite**
 
 Run: `npx tsc --noEmit`
-Expected: errors only in `src/components/coach/*` and `src/app/page.tsx`.
+Expected: **clean, no output.** Task 4 left exactly one error, `src/lib/data/normalize.ts:29`, and Step 3 closes it. Earlier drafts of this plan predicted errors in `src/components/coach/*` and `src/app/page.tsx`; that prediction was wrong — every change to `Recommendation` and `RecommendationFactor` is additive and those files only read the shape. Any error at all here is a real problem to fix.
 
 Run: `npm test`
-Expected: PASS except the known-failing `coach-workspace.test.tsx`, which Task 9 deletes.
+Expected: PASS, every file, `coach-workspace.test.tsx` included.
 
-- [ ] **Step 7: Commit**
+- [ ] **Step 8: Commit**
 
 ```bash
-git add src/lib/data/ src/app/api/recommend/route.ts
+git add src/lib/data/ src/lib/supabase/types.ts src/app/api/recommend/route.ts
 git commit -m "feat: pass counter relations and sample sizes through the API"
 ```
 
