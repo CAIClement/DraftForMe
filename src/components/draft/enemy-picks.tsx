@@ -22,14 +22,18 @@ export function EnemyPicks({
     .map((id) => champions.find((champion) => champion.id === id))
     .filter((champion): champion is Champion => champion !== undefined);
 
+  // Matched against the id as well as the display name: ids are the
+  // punctuation-stripped slugs, so a search for "kaisa" finds Kai'Sa, which
+  // matching on the name alone never would.
+  const needle = query.trim().toLowerCase();
   const matches =
-    query.trim() === ""
+    needle === ""
       ? []
       : champions
           .filter(
             (champion) =>
               !selectedIds.includes(champion.id) &&
-              champion.name.toLowerCase().includes(query.trim().toLowerCase())
+              (champion.name.toLowerCase().includes(needle) || champion.id.includes(needle))
           )
           .slice(0, 6);
 
@@ -52,6 +56,9 @@ export function EnemyPicks({
       <input
         id="enemy-search"
         type="search"
+        role="combobox"
+        aria-expanded={matches.length > 0}
+        aria-controls="enemy-search-results"
         value={query}
         onChange={(event) => setQuery(event.target.value)}
         placeholder="Ajouter un champion adverse"
@@ -59,7 +66,7 @@ export function EnemyPicks({
       />
 
       {matches.length > 0 && (
-        <ul className="mt-1.5 flex flex-wrap gap-1.5">
+        <ul id="enemy-search-results" aria-live="polite" className="mt-1.5 flex flex-wrap gap-1.5">
           {matches.map((champion) => (
             <li key={champion.id}>
               <button

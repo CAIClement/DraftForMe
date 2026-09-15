@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { DEFAULT_EXAMPLE } from "@/lib/draft/default-example";
 import type { Recommendation } from "@/lib/recommendation/types";
 import { Alternatives } from "./alternatives";
@@ -28,10 +28,20 @@ export function DraftTool({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Only the newest request may write state. Without this, two in-flight
+  // requests resolve in arbitrary order and the slower one wins, leaving
+  // recommendations on screen that do not match the visible controls.
+  const requestId = useRef(0);
+
+  // The slider fires on every tick of a drag, not on release, so one drag
+  // would otherwise be dozens of POSTs against a database-backed route.
+  const priorityTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   // The previous result deliberately stays on screen while a request is in
   // flight and after a failure: emptying it would punish the user for a
   // transient error and undo the "already solved" premise of the page.
   async function refresh(nextRole: string, nextEnemyPicks: string[], nextPriority: number) {
+    const id = ++requestId.current;
     setIsLoading(true);
     setError(null);
 
@@ -50,17 +60,21 @@ export function DraftTool({
         })
       });
 
+      if (id !== requestId.current) return;
+
       if (!response.ok) {
         setError("Impossible de mettre à jour la recommandation. Le résultat affiché est le précédent.");
         return;
       }
 
       const payload = (await response.json()) as { recommendations: Recommendation[] };
+      if (id !== requestId.current) return;
       setRecommendations(payload.recommendations);
     } catch {
+      if (id !== requestId.current) return;
       setError("Impossible de mettre à jour la recommandation. Le résultat affiché est le précédent.");
     } finally {
-      setIsLoading(false);
+      if (id === requestId.current) setIsLoading(false);
     }
   }
 
@@ -81,9 +95,18 @@ export function DraftTool({
     void refresh(role, next, priority);
   }
 
+  // The number beside the slider tracks the thumb immediately; only the
+  // request is deferred. There is deliberately no `useEffect` in this file --
+  // that is what makes it structurally impossible to fetch on first paint,
+  // which the pre-solved example depends on. The cost is that a timer can
+  // outlive an unmount by one interval; the request id then discards its
+  // result, so the worst case is a single wasted fetch.
   function changePriority(nextPriority: number) {
     setPriority(nextPriority);
-    void refresh(role, enemyPicks, nextPriority);
+    if (priorityTimer.current) clearTimeout(priorityTimer.current);
+    priorityTimer.current = setTimeout(() => {
+      void refresh(role, enemyPicks, nextPriority);
+    }, 250);
   }
 
   const [top, ...rest] = recommendations;
