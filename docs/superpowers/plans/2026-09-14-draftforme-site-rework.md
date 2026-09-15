@@ -1099,10 +1099,22 @@ select {
       }
 ```
 
-- [ ] **Step 3: Verify the build picks up the tokens**
+- [ ] **Step 3: Verify Tailwind actually emits the new utilities**
 
-Run: `npx tsc --noEmit`
-Expected: unchanged from Task 5.
+`npx tsc --noEmit` says nothing about CSS, so it cannot verify this step. Compile the stylesheet against a scratch file that uses the new classes and confirm the custom properties reach the output:
+
+```bash
+mkdir -p .scratch
+printf '<div class="bg-paper text-ink-muted border-rule bg-accent-wash text-accent"></div>' > .scratch/tokens-probe.html
+npx tailwindcss -i src/app/globals.css -o .scratch/tokens-probe.css --content .scratch/tokens-probe.html 2>&1 | tail -3
+grep -c "var(--paper)\|var(--ink-muted)\|var(--rule)\|var(--accent-wash)\|var(--accent)" .scratch/tokens-probe.css
+```
+
+Expected: the grep prints **5**. If it prints fewer, a token name in `tailwind.config.ts` does not match the custom property in `globals.css`.
+
+Then remove the scratch directory: `rm -rf .scratch`. Do not commit it.
+
+**Known and accepted:** `src/components/coach/champion-picker.tsx` and `recommendation-card.tsx` use the old palette (`bg-panel`, `border-line`, `text-teal`, `bg-danger`). Removing those colours leaves them referencing utilities Tailwind no longer generates, so that screen renders unstyled from here until Task 9 deletes both files. Tailwind drops unknown classes silently and no test asserts styling, so nothing will fail — this is a deliberate transient state, not a regression to investigate.
 
 - [ ] **Step 4: Commit**
 
