@@ -74,13 +74,22 @@ The match API does not return participants' ranks, and fetching them would cost 
 
 When the same match is reachable through players of two different ranks, the first seed to reach it wins the label.
 
+### Known sampling limits
+
+To verify during the real run, and to carry into project 2:
+
+- Players are drawn from the first pages of each division's listing. If Riot orders league entries by LP, the sample leans towards the top of each division rather than spreading evenly across it.
+- One seed player can contribute all of their current-patch matches, so a single prolific player can dominate their rank's share.
+- Seed players in the extreme tiers (Iron, Challenger) carry survivorship bias: reaching those tiers already selects for unusual players. `match_ids.seed_puuid` is stored precisely so the training project can cap or reweight matches per seed.
+- The seed makes a draw reproducible only for the same league listings, in an uninterrupted run. It does not make the whole dataset rebuildable: listings change over time, and a resumed run restarts the random generator from the same seed against a store that already holds prior draws, which is not the same as replaying the original sequence.
+
 ## Architecture
 
 A package `ml/collect/`, following the conventions of `ml/`: constants in `ml/paths.py`, tests in `test/ml/`.
 
 | Module | Responsibility | Depends on |
 |---|---|---|
-| `riot_client.py` | HTTP calls to the Riot API: routing to `euw1` for league endpoints and `europe` for match endpoints; key read from `RIOT_API_KEY`; rate limiting for both windows (20/1 s and 100/120 s) per routing host; 429 handling | `httpx` |
+| `riot_client.py` | HTTP calls to the Riot API: routing to `euw1` for league endpoints and `europe` for match endpoints; key read from `RIOT_API_KEY`; rate limiting per routing host; 429 handling | `httpx` |
 | `sampling.py` | The sampling plan: ranks, per-rank quotas, batch sizes | nothing |
 | `extract.py` | A pure function turning a raw match into a compact row, and deciding whether a match is valid | nothing |
 | `store.py` | SQLite persistence and resume state | `sqlite3` |
@@ -90,8 +99,10 @@ A package `ml/collect/`, following the conventions of `ml/`: constants in `ml/pa
 Command:
 
 ```
-python -m ml.collect.run --target 30000 [--patch <major.minor>] [--seed 42]
+python -m ml.collect.run --target 30000 [--patch <major.minor>] [--seed 42] [--db <path>]
 ```
+
+`--patch` is normalised to `major.minor`: `16.08` gives `16.8`, `16.18.1` gives `16.18`; a value that does not parse this way is rejected before anything runs. `--target` must be at least the number of tiers (10), so every tier gets at least one match.
 
 `httpx` is added to `ml/requirements.txt`.
 
@@ -105,9 +116,17 @@ The target patch defaults to the first two segments of the newest version listed
 
 A match belongs to the target patch when the first two segments of its `gameVersion` match. Match ids for a player are returned newest first, so the first match from an older patch ends collection for that player instead of spending requests on everything behind it.
 
+### Rate limiting
+
+Riot's development-key limits are 20 requests per second and 100 requests every two minutes, per routing value. The limiter enforces both as sliding windows, but pads them slightly — 1.1 s and 121 s — because the Windows monotonic clock is coarse and the timestamp is taken before the request is sent, so a padded window keeps a burst from landing on Riot's exact edge.
+
+The limiter's state lives in memory only: it does not persist across restarts. A 429 received right after a restart, before the limiter has relearned the pace, is still handled correctly by waiting for the `Retry-After` delay Riot returns with it.
+
 ## Storage
 
-A single SQLite database at `ml/artifacts/matches.sqlite`, ignored by git along with its `-journal` and `-wal` files.
+A single SQLite database at `ml/artifacts/matches.sqlite` (`MATCHES_DB_PATH` in `ml/paths.py`, overridable with `--db`), ignored by git along with its `-journal` and `-wal` files.
+
+Saving a match surfaces any constraint violation instead of silently ignoring it; the one conflict that is intentionally ignored is a duplicate `match_id`, which the resume logic relies on.
 
 **`players`** — `puuid` (primary key), `summoner_id` (kept when league entries identify players by summoner id, so an already-drawn player is recognised before conversion), `tier`, `division`, `sampled_at`, `ids_status` (`pending`, `done`, `failed`).
 
@@ -135,6 +154,16 @@ Riot's `teamPosition` values map as `TOP → top`, `JUNGLE → jungle`, `MIDDLE 
 
 **`league_cursors`** — `tier`, `division` (primary key together), `next_page`, `exhausted`. Records how far each division's listing has been read, so a resumed run does not re-read pages it has already drawn from.
 
+### Location for the full multi-hour run
+
+`ml/artifacts/` sits inside the repository, which for this owner is inside a OneDrive-synced folder. OneDrive can lock a database file mid-write during a long run. For the full collection run, pass `--db` pointing outside OneDrive, for example:
+
+```
+--db "$env:LOCALAPPDATA\DraftForMe\matches.sqlite"
+```
+
+This is a recommendation for that run, not a change to the default: `MATCHES_DB_PATH` is unchanged.
+
 ## Collection Flow
 
 Three phases, each resumable from the state in SQLite:
@@ -149,12 +178,15 @@ Progress is printed per rank, so a rank falling behind is visible during the run
 
 ### Valid match
 
-A match is stored only if all of the following hold. Otherwise it is marked `skipped_invalid`:
+A match is stored only if all of the following hold. Otherwise it is marked `skipped_invalid` — never left to crash the run:
 
 - `queueId` is 420
 - the game did not end in an early surrender (remake)
+- the game was not aborted: `endOfGameResult`, when present, is `GameComplete`
 - there are exactly ten participants, five per team
 - every participant has a non-empty `teamPosition`, and no position is repeated within a team
+- exactly one team is recorded as the winner
+- the payload is well-formed: no required field is missing or null
 
 ## Error Handling
 
@@ -166,6 +198,19 @@ A match is stored only if all of the following hold. Otherwise it is marked `ski
 | **Match not found** (404) | Marked `not_found`, never retried |
 | **Rank cannot reach its quota** (common for Challenger early in a patch) | Collection continues on the other ranks, and the final summary reports the imbalance explicitly |
 | **`RIOT_API_KEY` missing** | Exits before any request, explaining how to set it |
+| **Resuming on a different patch** (the database already holds matches from another patch) | Refused before any request is sent, with a message suggesting `--patch <stored patch>` to finish that patch, or a separate `--db` to collect the new one |
+
+### Exit codes
+
+| Code | Meaning |
+|---|---|
+| 0 | Finished |
+| 2 | `RIOT_API_KEY` missing, or invalid arguments |
+| 3 | Key expired or access refused (401 or 403) — the message prints the failing status and path, never the key |
+| 4 | Persistent Riot server or network error |
+| 5 | Patch mismatch, or patch detection failed (Data Dragon unreachable) |
+| 6 | SQLite error (with a hint to move `--db` outside a OneDrive-synced folder) |
+| 130 | Interrupted (Ctrl-C) |
 
 ## Unverified API Details
 
