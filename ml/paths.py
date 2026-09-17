@@ -10,6 +10,8 @@ DATASET_PATH = ARTIFACT_DIR / "training_dataset.csv"
 MODEL_PATH = ARTIFACT_DIR / "champion_recommender.joblib"
 METADATA_PATH = ARTIFACT_DIR / "champion_recommender_metadata.json"
 MATCHES_DB_PATH = ARTIFACT_DIR / "matches.sqlite"
+WIN_ARTIFACT_DIR = ARTIFACT_DIR / "win"
+SEED_SQL_PATH = PROJECT_ROOT / "supabase" / "seed.sql"
 
 DEFAULT_REGION = "euw"
 DEFAULT_TIER = "emerald_plus"
