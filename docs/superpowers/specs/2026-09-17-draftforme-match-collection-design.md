@@ -241,3 +241,23 @@ Then **a short real run by the owner**, `--target 20` with their key, which also
 2. **Project 3 — integration**, gated on Riot's answer about using a model trained on API data in the public product.
 3. **Register DraftForMe on the Riot developer portal**, describing the model, which is also the path to a production key.
 4. **Refresh the statistics the site displays.** The seeded data derives patch 16.3; the site states that honestly, but it is several months behind the live game.
+
+## Real-run findings
+
+Short run on 2026-09-17 with the owner's development key: `python -m ml.collect.run --target 20 --db ml/artifacts/matches-smoke.sqlite`. It ended with exit code 0 and all ten tiers at 2 / 2.
+
+- **Patch:** detected from Data Dragon as 16.18. Every stored match has game version `16.18.817.5716`.
+- **League endpoints:** the paths are correct. All six divisional tiers and the three apex listings returned entries.
+- **Player identity:** league entries carry `puuid`, and no longer carry `summonerId`. None of the 500 drawn players has a `summoner_id`, and no conversion request was needed. The `summonerId` fallback in `resolve_puuid` is kept but was never used.
+- **Match fields:** the names `extract.py` relies on match real responses. That covers `teamPosition`, `championId`, `teamId`, `gameEndedInEarlySurrender`, team `win` and `bans`, and `endOfGameResult` (`GameComplete`). Re-extracting the 20 stored rows from their raw payloads gave identical rows. No code needed correcting.
+- **Statuses after the run:**
+
+  | Status | Match ids |
+  | --- | --- |
+  | `done` | 20 |
+  | `skipped_invalid` | 1 |
+  | `skipped_patch` | 1,363 |
+  | `pending` | 969 |
+
+- **Cost per match:** for 18 of the 28 players whose ids were listed, the newest ranked match was already on an older patch. That single download cut off the player's whole list. In this sample, each stored match cost about two match downloads plus most of a listing. The ratio should improve once pending ids from already-listed players are consumed. Still, the full run will take more than one request per match.
+- **Size:** a raw payload is about 11 KB gzipped, so 30,000 matches is roughly 350 MB of database.
