@@ -17,6 +17,7 @@ This is project 2 of 3 (see `2026-09-17-draftforme-match-collection-design.md`).
 | Decision rule | Lower test log loss than each reference, with the 95 % bootstrap interval of the difference above zero |
 | Partial drafts | Supported from training onwards; the decision is taken on full drafts |
 | Models | Regularised logistic regression in stages (main candidate) and gradient boosting (comparison), both scikit-learn |
+| Champion priors | Every model reads the public win rates the rule engine uses, so the question becomes what learning from real drafts adds on top of them |
 
 ### Why these choices
 
@@ -67,10 +68,24 @@ One feature per champion and role, taking **+1** when that champion plays that r
 - The blue-side advantage is carried by the intercept alone.
 - A hidden pick is simply 0, which is what makes partial drafts possible.
 
+### Champion priors from public statistics
+
+Every model also receives the public win rate of each drafted champion, read from the same `champion_stats` rows in `supabase/seed.sql` that the rule engine uses. Those rates come from millions of games, so they carry far more evidence about a champion's strength than 30,000 matches can hold.
+
+Per draft this is six numbers, all antisymmetric like the rest of the encoding:
+
+- one per role: the log-odds of the blue champion's public win rate minus the log-odds of the red one's;
+- their total.
+
+A champion the statistics do not rank in the role it was played falls back to its mean across the roles they do rank it in, then to neutral (log-odds 0). A hidden pick contributes 0.
+
+**Why.** A first real run on 11,124 collected matches showed the rule engine beating the learned model (test log loss 0.6881 against 0.6910, AUC 0.5465 against 0.5206), while the same win rates recomputed from the collected matches were clearly worse (0.7088). The gap was not the rules: it was the evidence behind them. Handing the model those public rates makes the question a fair one, and changes what a win means: not "do public statistics beat the rules", but **"does learning from real drafts add anything on top of public statistics"**. The references are unchanged, so the comparison still answers the project's original question too.
+
 ### Logistic regression stages
 
-Each stage adds features to the previous one:
+Each stage adds features to the previous one, and every stage includes the champion priors above:
 
+0. **Priors only:** no champion columns at all, so this stage measures what the public statistics alone are worth once calibrated. It is the floor every other stage must beat.
 1. **Champions:** the signed champion-by-role features.
 2. **Lane matchups:** one feature per pair of champions facing each other in the same role, +1 when the pair's first champion (by champion id) is blue and -1 when it is red. Kept only for pairs seen at least 5 times in training.
 3. **Synergies:** one feature per same-team pair for bottom + support and jungle + mid, signed by side. Same threshold of 5.
@@ -88,13 +103,13 @@ Training uses every training match once as a full draft, plus 2 copies with 1 to
 
 ### A. Logistic regression (main candidate)
 
-`LogisticRegression` with L2 regularisation. For each stage, the regularisation strength C is chosen on validation log loss from 0.003, 0.01, 0.03, 0.1, 0.3 and 1.0; the best stage is then chosen the same way.
+`LogisticRegression` with L2 regularisation. For each stage, the regularisation strength C is chosen on validation log loss from 0.0003, 0.001, 0.003, 0.01, 0.03, 0.1, 0.3 and 1.0; the best stage is then chosen the same way. The grid reaches below 0.003 because the first real run picked that value, the lowest then available, at every stage.
 
 ### B. Gradient boosting (comparison)
 
 `HistGradientBoostingClassifier` on:
 
-- the stage 1 features;
+- the stage 1 features, champion priors included;
 - per team, the mean smoothed win rate of its champions;
 - per role, the smoothed win-rate difference of the lane matchup.
 
@@ -151,7 +166,7 @@ A package `ml/win/`, following `ml/collect/`: constants in `ml/paths.py`, tests 
 |---|---|
 | `data.py` | Read-only loading, refusals, grouped and stratified split, split file |
 | `encoding.py` | Signed encoding, matchups, synergies, elo crossing, masking |
-| `baselines.py` | Engine port reading `seed.sql`, win-rate baseline, logistic calibration |
+| `baselines.py` | Engine port reading `seed.sql`, champion priors from the same public win rates, win-rate baseline, logistic calibration |
 | `models.py` | Logistic stages with their grids, gradient boosting with its grid |
 | `metrics.py` | Log loss, AUC, accuracy, paired bootstrap |
 | `select.py` | Command: trains everything, chooses on validation, saves the model and the validation report |
@@ -206,6 +221,7 @@ Unit tests in `test/ml/`, without network, on small synthetic datasets:
 - **Metrics:** accuracy does not credit a tied prediction; the calibration table's quantile bins hold similar numbers of matches instead of leaving most of them empty.
 - **Bootstrap:** the interval is correct on a case with a known answer; grouping by seed player widens the interval when the gap over a reference varies by player, and weights groups by their size.
 - **Training weights:** a match's masked copies carry half weight each.
+- **Champion priors:** swapping teams negates them; a hidden pick contributes 0; a champion the statistics do not rank in the role it was played falls back to its mean across ranked roles, then to neutral; on a synthetic world where only the public rates decide the outcome, a model with the priors beats the same model without them.
 - **End to end:** on synthetic matches with a planted synergy, stage 3 recovers it and beats the win-rate baseline.
 - **Test lock:** a second run of `ml.win.test` recomputes nothing, and `ml.win.select` refuses to run once the test has been evaluated.
 - **Corrupt artifacts:** a `test_report.json` that cannot be parsed and a `model.joblib` that cannot be loaded are each reported with a message instead of crashing; a well-formed model file of the wrong shape still raises.
