@@ -13,6 +13,10 @@ from ml.collect.sampling import TIERS, divisions_for, draw_batch, tier_quotas
 from ml.collect.store import Store
 
 
+class PatchMismatchError(RuntimeError):
+    """The store already holds matches from a patch other than the one being collected."""
+
+
 class MatchSource(Protocol):
     def league_page(self, tier: str, division: str, page: int) -> list[dict[str, Any]]: ...
 
@@ -35,7 +39,7 @@ class Summary:
 
 def entry_key(entry: dict[str, Any]) -> str:
     """How a league entry is recognised before its puuid is known."""
-    return str(entry.get("puuid") or entry["summonerId"])
+    return str(entry.get("puuid") or entry.get("summonerId") or "")
 
 
 def collect(
@@ -52,6 +56,10 @@ def collect(
     Every step is committed to `store` as it happens, so stopping at any point and
     calling this again resumes where it left off.
     """
+    other = store.patches() - {patch}
+    if other:
+        raise PatchMismatchError(", ".join(sorted(other)))
+
     quotas = tier_quotas(target)
     exhausted: set[str] = set()
 
@@ -139,7 +147,7 @@ def _download_pending(source: MatchSource, store: Store, tier: str, quota: int, 
 def _list_matches(source: MatchSource, store: Store, puuid: str, tier: str) -> None:
     try:
         match_ids = source.match_ids(puuid)
-    except (NotFoundError, RiotServerError):
+    except NotFoundError:
         store.mark_player(puuid, "failed")
         return
     store.add_match_ids(match_ids, seed_tier=tier, seed_puuid=puuid)
@@ -160,7 +168,7 @@ def _draw_players(
             store.advance_cursor(tier, division, exhausted=True)
             continue
 
-        by_key = {entry_key(entry): entry for entry in entries}
+        by_key = {key: entry for entry in entries if (key := entry_key(entry))}
         chosen = draw_batch(by_key.keys(), store.known_player_keys(), rng)
         if not chosen:
             # Every player on this page is already known: move on to the next page.
@@ -172,7 +180,7 @@ def _draw_players(
             entry = by_key[key]
             try:
                 puuid = source.resolve_puuid(entry)
-            except (NotFoundError, RiotServerError):
+            except NotFoundError:
                 # Recorded as failed so the same unresolvable player is never drawn again.
                 store.add_player(f"unresolved:{key}", tier, division, summoner_id=key, ids_status="failed")
                 continue

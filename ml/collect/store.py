@@ -193,6 +193,10 @@ class Store:
         rows = self._db.execute("select seed_tier, count(*) as n from matches group by seed_tier").fetchall()
         return {row["seed_tier"]: row["n"] for row in rows}
 
+    def patches(self) -> set[str]:
+        rows = self._db.execute("select distinct patch from matches").fetchall()
+        return {row["patch"] for row in rows}
+
     # --- league cursors ------------------------------------------------------
 
     def cursor(self, tier: str, division: str) -> tuple[int, bool]:

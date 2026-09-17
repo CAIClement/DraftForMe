@@ -1,7 +1,9 @@
 import random
 
+import pytest
 from collect_fixtures import PATCH, make_match, world
-from ml.collect.collect import collect
+from ml.collect.collect import PatchMismatchError, collect
+from ml.collect.riot_client import RiotServerError
 from ml.collect.sampling import TIERS
 from ml.collect.store import Store
 
@@ -79,3 +81,39 @@ def test_a_second_run_resumes_without_downloading_again(tmp_path):
 
     assert source.calls == []
     assert summary.collected == {tier: 2 for tier in TIERS}
+
+
+def test_refuses_to_resume_a_database_filled_on_another_patch():
+    store = Store(":memory:")
+    run(world(), store)
+
+    other_source = world()
+    with pytest.raises(PatchMismatchError):
+        collect(other_source, store, target=20, patch="16.19", rng=random.Random(1), log=lambda message: None)
+
+    assert other_source.calls == []
+
+
+def test_a_server_error_while_listing_stops_the_run_and_keeps_the_player_pending():
+    source = world()
+
+    def failing_match_ids(puuid, count=100):
+        raise RiotServerError("outage")
+
+    source.match_ids = failing_match_ids
+    store = Store(":memory:")
+
+    with pytest.raises(RiotServerError):
+        run(source, store)
+
+    assert store.pending_players("IRON") == ["iron-1"]
+
+
+def test_ignores_league_entries_without_any_identifier():
+    source = world()
+    source.leagues["IRON"].append({"leaguePoints": 3})
+    store = Store(":memory:")
+
+    summary = run(source, store)
+
+    assert summary.collected["IRON"] == 2

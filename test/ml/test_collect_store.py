@@ -55,6 +55,19 @@ def test_saving_the_same_match_twice_counts_it_once():
     assert store.matches_per_tier() == {"GOLD": 1}
 
 
+def test_patches_returns_the_distinct_saved_patches():
+    store = Store(":memory:")
+    raw_1 = make_match(match_id="M1", game_version="16.18.712.1234")
+    raw_2 = make_match(match_id="M2", game_version="16.19.100.1")
+    store.add_match_ids(["M1"], seed_tier="GOLD", seed_puuid="a")
+    store.add_match_ids(["M2"], seed_tier="GOLD", seed_puuid="b")
+
+    store.save_match(extract_match(raw_1, seed_tier="GOLD"), raw_1)
+    store.save_match(extract_match(raw_2, seed_tier="GOLD"), raw_2)
+
+    assert store.patches() == {"16.18", "16.19"}
+
+
 def test_saving_a_row_with_a_missing_required_value_raises():
     store = Store(":memory:")
     raw = make_match(match_id="M1")
