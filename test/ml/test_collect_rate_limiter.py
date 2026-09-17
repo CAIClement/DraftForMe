@@ -29,7 +29,7 @@ def test_waits_when_the_per_second_window_is_full():
 
     limiter.acquire(PLATFORM)
 
-    assert clock.sleeps == [pytest.approx(1.0)]
+    assert clock.sleeps == [pytest.approx(1.1)]
 
 
 def test_waits_when_the_two_minute_window_is_full():
@@ -43,7 +43,7 @@ def test_waits_when_the_two_minute_window_is_full():
 
     limiter.acquire(REGION)
 
-    assert clock.sleeps == [pytest.approx(110.0)]
+    assert clock.sleeps == [pytest.approx(111.0)]
 
 
 def test_tracks_each_host_separately():

@@ -7,8 +7,10 @@ from collections import deque
 from collections.abc import Callable
 
 # Development and personal keys: 20 requests every second and 100 every two
-# minutes, enforced per region.
-DEFAULT_WINDOWS: tuple[tuple[int, float], ...] = ((20, 1.0), (100, 120.0))
+# minutes, enforced per region. The windows are padded slightly because the
+# Windows clock is coarse and the stamp is taken before the request is sent,
+# so the limiter never lets a burst reach Riot's exact edge.
+DEFAULT_WINDOWS: tuple[tuple[int, float], ...] = ((20, 1.1), (100, 121.0))
 
 
 class RateLimiter:
