@@ -79,3 +79,35 @@ def write_database(
         )
         db.commit()
     return match_ids
+
+
+def write_seed_sql(
+    path: Path,
+    champions: dict[str, int],
+    stats: list[tuple[str, str, float]],
+    relations: list[tuple[str, str, str]] = (),
+) -> Path:
+    """Writes a seed.sql in the exact statement format of supabase/seed.sql.
+
+    `stats` rows are (slug, role, win_rate); `relations` rows are (champion, countered_by, role).
+    """
+    lines = [
+        f"insert into public.champions (id, riot_key, slug, name, image_url, tags, ddragon_version) "
+        f"values ('{slug}', '{key}', '{slug}', '{slug.title()}', 'https://example.test/{slug}.png', '{{\"Mage\"}}', '16.3.1') "
+        f"on conflict (id) do update set name = excluded.name;"
+        for slug, key in champions.items()
+    ]
+    lines += [
+        f"insert into public.champion_stats (champion_id, role, region, tier, win_rate, pick_rate, ban_rate, games, source) "
+        f"values ('{slug}', '{role}', 'euw', 'emerald_plus', {win_rate}, 5.0, 1.0, 1000, 'opgg_cache') "
+        f"on conflict (champion_id, role, region, tier, source) do update set win_rate = excluded.win_rate;"
+        for slug, role, win_rate in stats
+    ]
+    lines += [
+        f"insert into public.counter_relations (champion_id, countered_by_champion_id, role, source) "
+        f"values ('{slug}', '{countered_by}', '{role}', 'opgg_cache') "
+        f"on conflict (champion_id, countered_by_champion_id, role, source) do update set fetched_at = now();"
+        for slug, countered_by, role in relations
+    ]
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return path
