@@ -17,6 +17,8 @@ from scipy import sparse
 from ml.win.data import ROLES
 
 PICKS = 10
+# Standard blue/red pick order; a draft in progress always hides a suffix of it.
+PICK_ORDER = "BRRBBRRBBR"
 MIN_PAIR_COUNT = 5
 STAGES = (1, 2, 3, 4)
 SYNERGY_ROLES = (("adc", "support"), ("jungle", "mid"))
@@ -74,7 +76,7 @@ class DraftEncoder:
 
     def fit(self, drafts: np.ndarray, tiers: Sequence[str]) -> DraftEncoder:
         counts: Counter[tuple] = Counter()
-        for draft, tier in zip(drafts, tiers):
+        for draft, tier in zip(drafts, tiers, strict=True):
             counts.update(key for key, _ in draft_terms(draft, tier, self.stage))
         kept = [
             key
@@ -88,7 +90,7 @@ class DraftEncoder:
         rows: list[int] = []
         cols: list[int] = []
         values: list[float] = []
-        for row, (draft, tier) in enumerate(zip(drafts, tiers)):
+        for row, (draft, tier) in enumerate(zip(drafts, tiers, strict=True)):
             for key, sign in draft_terms(draft, tier, self.stage):
                 column = self.columns.get(key)
                 if column is not None:
@@ -106,10 +108,19 @@ def swap_sides(drafts: np.ndarray) -> np.ndarray:
 
 
 def hide_picks(drafts: np.ndarray, hidden_counts: Sequence[int], rng: np.random.Generator) -> np.ndarray:
-    """A copy of `drafts` where row i has `hidden_counts[i]` picks, chosen at random, set to 0."""
+    """A copy of `drafts` where row i has `hidden_counts[i]` picks hidden, the way a draft in progress
+    would: a draft always hides a suffix of `PICK_ORDER`, so hiding `h` picks in total fixes how many
+    of them are on each side (2 blue and 3 red for 5 hidden, for instance). Which slots are hidden
+    inside each side is still chosen at random, since the pick order does not say which role a pick is.
+    """
     result = drafts.copy()
     for row, hidden in zip(result, hidden_counts):
-        row[rng.choice(PICKS, size=int(hidden), replace=False)] = 0
+        hidden = int(hidden)
+        blue_hidden = PICK_ORDER[PICKS - hidden :].count("B")
+        red_hidden = hidden - blue_hidden
+        blue_slots = rng.choice(5, size=blue_hidden, replace=False)
+        red_slots = rng.choice(5, size=red_hidden, replace=False) + 5
+        row[np.concatenate([blue_slots, red_slots]).astype(int)] = 0
     return result
 
 

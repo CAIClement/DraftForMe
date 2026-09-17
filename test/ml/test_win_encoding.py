@@ -1,7 +1,8 @@
+import ml.collect.sampling
 import numpy as np
 import pytest
 
-from ml.win.encoding import DraftEncoder, hide_picks, swap_sides, with_masked_copies
+from ml.win.encoding import PICKS, TIER_GROUPS, DraftEncoder, hide_picks, swap_sides, with_masked_copies
 from win_fixtures import random_drafts
 
 DRAFT = np.array([[101, 201, 301, 401, 501, 102, 202, 302, 402, 502]])
@@ -44,12 +45,13 @@ def test_swapping_the_teams_negates_every_feature():
     rng = np.random.default_rng(3)
     drafts = random_drafts(200, rng)
     tiers = np.array(["GOLD", "IRON", "MASTER", "EMERALD"] * 50)
-    encoder = DraftEncoder(4, min_pair_count=1).fit(drafts, tiers)
+    partial = hide_picks(drafts, rng.integers(1, PICKS, size=len(drafts)), rng)
 
-    original = encoder.transform(drafts, tiers).toarray()
-    swapped = encoder.transform(swap_sides(drafts), tiers).toarray()
-
-    assert np.array_equal(swapped, -original)
+    for candidate in (drafts, partial):
+        encoder = DraftEncoder(4, min_pair_count=1).fit(candidate, tiers)
+        original = encoder.transform(candidate, tiers).toarray()
+        swapped = encoder.transform(swap_sides(candidate), tiers).toarray()
+        assert np.array_equal(swapped, -original)
 
 
 def test_a_hidden_pick_zeroes_its_champion_lane_and_synergy_features():
@@ -88,6 +90,34 @@ def test_hide_picks_hides_exactly_the_requested_number():
 
     assert [int((row == 0).sum()) for row in hidden] == list(range(1, 10))
     assert (drafts != 0).all()
+
+    # A real draft always hides a suffix of B, R, R, B, B, R, R, B, B, R: hiding 5 picks is
+    # always 2 blue and 3 red, and the split for every other total follows the same rule.
+    blue_hidden = [int((row[:5] == 0).sum()) for row in hidden]
+    red_hidden = [int((row[5:] == 0).sum()) for row in hidden]
+    assert blue_hidden == [0, 1, 2, 2, 2, 3, 4, 4, 4]
+    assert red_hidden == [total - blue for total, blue in zip(range(1, 10), blue_hidden)]
+
+
+def test_rejects_a_tier_list_that_does_not_match_the_drafts():
+    with pytest.raises(ValueError):
+        DraftEncoder(1).fit(np.repeat(DRAFT, 2, axis=0), ["GOLD"])
+
+
+def test_every_collected_tier_has_a_group():
+    assert set(TIER_GROUPS) == set(ml.collect.sampling.TIERS)
+
+
+def test_column_order_does_not_depend_on_the_order_of_the_training_rows():
+    rng = np.random.default_rng(5)
+    drafts = random_drafts(30, rng)
+    tiers = np.array((["GOLD", "IRON", "MASTER", "EMERALD"] * 8)[:30])
+    permutation = rng.permutation(len(drafts))
+
+    encoder = DraftEncoder(4, min_pair_count=1).fit(drafts, tiers)
+    shuffled_encoder = DraftEncoder(4, min_pair_count=1).fit(drafts[permutation], tiers[permutation])
+
+    assert encoder.columns == shuffled_encoder.columns
 
 
 def test_masked_copies_keep_labels_tiers_and_origin_aligned():
