@@ -2,18 +2,11 @@ import json
 
 import numpy as np
 
-from ml.win.baselines import RateTables, References, load_engine_data
+from ml.win.baselines import References, load_engine_data
 from ml.win.data import Dataset
 from ml.win.encoding import hide_picks
 from ml.win.metrics import summary
-from ml.win.models import (
-    AGGREGATE_FOLDS,
-    BoostingDraftModel,
-    LogisticDraftModel,
-    aggregate_features,
-    candidate_models,
-    select_model,
-)
+from ml.win.models import AGGREGATE_FOLDS, BoostingDraftModel, LogisticDraftModel, candidate_models, select_model
 from win_fixtures import random_drafts, write_seed_sql
 
 
@@ -115,38 +108,28 @@ def test_select_model_keeps_the_lowest_validation_log_loss_and_reports_every_can
 
 
 def test_a_matchs_own_outcome_never_reaches_its_aggregate_features():
-    """`BoostingDraftModel.fit` computes each fold's rate tables from the other folds only. Rebuilds that
-    same fold assignment and table fitting here, with the same seed `BoostingDraftModel` would use, since
-    masked copies do not change it (the tables are always fit from the unmasked training drafts, and the
-    fold assignment is over the original matches, not the expanded rows). Flipping a row's own label must
-    leave its own aggregate features untouched, while flipping a label from a different fold must not.
+    """`BoostingDraftModel.fit` keeps its out-of-fold aggregates as `train_aggregates_`. Fits the real
+    model twice on the same training set, the second time with one match's label flipped, and checks
+    that match's own row is untouched (its own fold's table always excludes it) while a match from a
+    different fold does move (that fold's table does include it), the way true out-of-fold tables should.
     """
-    drafts, labels = dominant_champion_world(200, seed=6)
+    drafts, labels = dominant_champion_world(60, seed=6)
     seed = 0
+    params = {"learning_rate": 0.1, "max_leaf_nodes": 15, "l2_regularization": 1.0}
+
+    baseline = BoostingDraftModel(params, seed=seed).fit(dataset(drafts, labels)).train_aggregates_
+
+    # Only used to pick which rows to compare; the model computes the real fold assignment itself.
     folds = np.random.default_rng(seed).permutation(len(drafts)) % AGGREGATE_FOLDS
+    flipped_row = 0
+    other_rows = np.flatnonzero(folds != folds[flipped_row])
 
-    def aggregate_for_row(row, labels_used):
-        fold = folds[row]
-        tables = RateTables().fit(drafts[folds != fold], labels_used[folds != fold])
-        return aggregate_features(tables, drafts[[row]])[0]
+    flipped_labels = labels.copy()
+    flipped_labels[flipped_row] = 1 - flipped_labels[flipped_row]
+    after = BoostingDraftModel(params, seed=seed).fit(dataset(drafts, flipped_labels)).train_aggregates_
 
-    own_row = 0
-    other_rows = np.flatnonzero(folds != folds[own_row])
-
-    baseline = aggregate_for_row(own_row, labels)
-
-    flipped_own = labels.copy()
-    flipped_own[own_row] = 1 - flipped_own[own_row]
-    assert np.array_equal(aggregate_for_row(own_row, flipped_own), baseline)
-
-    changed = False
-    for other_row in other_rows[:5]:
-        flipped_other = labels.copy()
-        flipped_other[other_row] = 1 - flipped_other[other_row]
-        if not np.array_equal(aggregate_for_row(own_row, flipped_other), baseline):
-            changed = True
-            break
-    assert changed
+    assert np.array_equal(after[flipped_row], baseline[flipped_row])
+    assert any(not np.array_equal(after[row], baseline[row]) for row in other_rows[:5])
 
 
 def test_the_candidate_list_covers_every_stage_and_the_boosting_grid():

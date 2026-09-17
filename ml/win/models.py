@@ -110,6 +110,9 @@ class BoostingDraftModel:
             rows = folds[origin] == fold
             aggregates[rows] = aggregate_features(tables, drafts[rows])
 
+        # Kept so tests can check that a row's aggregates never see its own outcome.
+        self.train_aggregates_ = aggregates
+
         self.tables = RateTables().fit(train.drafts, train.labels)
         sample_weight = np.concatenate(
             [np.full(len(train), 1.0), np.full(len(drafts) - len(train), MASKED_WEIGHT)]
