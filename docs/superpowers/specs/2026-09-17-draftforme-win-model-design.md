@@ -42,6 +42,8 @@ This is project 2 of 3 (see `2026-09-17-draftforme-match-collection-design.md`).
 `data.py` loads the `matches` table and, for each match, the `seed_puuid` from `match_ids`. It refuses:
 
 - a missing database;
+- a `--db` that is not a readable collection database (a wrong file, or a SQLite file without the schema);
+- a database holding no matches at all;
 - a database holding more than one patch;
 - fewer than 1,000 matches.
 
@@ -78,7 +80,9 @@ A matchup or synergy feature is 0 when either of its champions is hidden.
 
 ### Partial drafts
 
-Training uses every training match once as a full draft, plus 2 copies with 1 to 9 picks hidden at random (fixed seed). Selection and the decision use full drafts; results on partial drafts are reported for information.
+Training uses every training match once as a full draft, plus 2 copies with 1 to 9 picks hidden (fixed seed). A draft in progress always hides a suffix of the real pick order B, R, R, B, B, R, R, B, B, R, so the number hidden on each side follows from the total hidden; only which slots inside each side are hidden is random. The partial-draft reports at 3, 5 and 8 known picks (see Metrics and Decision) therefore describe states a real draft can reach. Selection and the decision use full drafts; results on partial drafts are reported for information.
+
+**Training weights.** In both models below, a match's two masked copies each weigh half, so every match and its copies carry equal total weight and full drafts are half the training objective instead of a third. Measured on a synthetic world with a planted synergy, this improved the full-draft validation log loss by about 0.0017 over weighting every row equally.
 
 ## Models
 
@@ -94,7 +98,7 @@ Training uses every training match once as a full draft, plus 2 copies with 1 to
 - per team, the mean smoothed win rate of its champions;
 - per role, the smoothed win-rate difference of the lane matchup.
 
-The aggregated win rates are computed **out of fold** (5 folds over training) and smoothed towards 50 %, so a match never sees its own outcome. Settings (learning rate, maximum leaf nodes, L2) come from a small grid on validation. Training includes the same masked copies.
+The aggregated win rates are computed **out of fold** (5 folds over training) and smoothed towards 50 %, so a match never sees its own outcome. Settings (learning rate, maximum leaf nodes, L2) come from a small grid on validation. Training includes the same masked copies, weighted as described above.
 
 The decision applies to the better of A and B on validation. If B is chosen, project 3 must first settle how to run it (a model server or a conversion), since only A runs inside the site as it is.
 
@@ -107,7 +111,7 @@ Neither reference produces a probability, so each one's team score is turned int
 A Python port of `src/lib/recommendation/engine.ts` and `counter.ts`, restricted to what a match can supply:
 
 - **Data:** read from `supabase/seed.sql`. That covers `champions` (for the `riot_key` to champion id mapping), `champion_stats` (OP.GG, EUW, Emerald+, patch 16.3) and `counter_relations`.
-- **Meta score:** as on the site, a champion's rank is its position in its role ordered by win rate, and the score is `100 - (rank - 1) / total * 90`.
+- **Meta score:** as on the site, a champion's rank is its position in its role ordered by win rate, and the score is `100 - (rank - 1) / total * 90`. Champions tied on win rate are ranked alphabetically by slug, to keep the port reproducible; the site's own order on ties is undefined, so a tied champion's meta score can differ from the site's by about one rank step.
 - **Counter score:** `scoreCounter` against the enemy picks, using the relations of the champion's role.
 - **Player score:** the engine's neutral value of 5, since there is no pool.
 - **Weights:** `computeWeights` exactly as the engine does with no pool: meta 0.57, player 0.03, counter 0.40 once an enemy pick is known; meta 0.95 and player 0.05 otherwise.
@@ -124,16 +128,19 @@ The win rate of each champion in each role over the training matches, smoothed t
 
 On the test set, for the chosen model and both references:
 
-- log loss, AUC and accuracy;
-- for each reference, the log-loss difference (reference minus model) with its **95 % interval from a paired bootstrap of 2,000 resamples** over test matches, fixed seed.
+- log loss, AUC and accuracy (a predicted probability of exactly 0.5 counts as half a correct guess);
+- for each reference, the log-loss difference (reference minus model) with its **95 % interval from a paired bootstrap of 10,000 resamples** over test matches, fixed seed.
 
-**The model beats the references when both intervals lie entirely above zero.** AUC and accuracy are reported but do not decide.
+**The deciding interval.** Matches are resampled by whole seed player (a cluster bootstrap), not individually: a seed player contributes many matches that share a tier and a champion, so resampling them independently understates how much the gap over a reference varies. The report carries both `comparisons` (grouped by seed player, which decides) and `comparisons_by_match` (matches resampled independently, kept for information only). The bootstrap uses 10,000 resamples rather than 2,000: at 2,000 the noise on the deciding endpoint was about 3 % of the interval's half-width.
+
+**The model beats the references when both grouped intervals lie entirely above zero.** AUC and accuracy are reported but do not decide.
 
 Reported for information only, never deciding:
 
 - the same metrics per tier group;
 - the same metrics on partial drafts (3, 5 and 8 known picks);
-- a calibration table (10 probability bins);
+- for each comparison, a 0.5 % trimmed difference alongside the mean one, and, for each summary, the share of its total log loss carried by the 10 worst matches, so a reader can see when a verdict rests on a handful of matches;
+- a calibration table, using quantile bins rather than equal-width ones, because draft probabilities sit in a narrow band around 0.5 and equal-width bins would leave most of them empty;
 - the largest weights of the logistic regression, as a sanity check.
 
 ## Architecture
@@ -157,7 +164,7 @@ python -m ml.win.select --db <path to matches.sqlite> [--seed 42] [--artifacts <
 python -m ml.win.test [--artifacts <dir>] [--seed-sql <path>]
 ```
 
-No new dependency: `scikit-learn`, `numpy`, `pandas` and `joblib` are already in `ml/requirements.txt`.
+`scikit-learn`, `numpy`, `pandas` and `joblib` are already in `ml/requirements.txt`. `scipy` (sparse matrices, the trimmed mean) was already installed transitively through scikit-learn; it is now declared in `ml/requirements.txt` in its own right.
 
 ## Outputs
 
@@ -165,10 +172,12 @@ In `ml/artifacts/win/`, ignored by git:
 
 - `split.json`: the match ids of each set, the seed, the patch, and the database path that `ml.win.test` reads back.
 - `model.joblib`, plus `model_weights.json` when logistic regression is chosen.
-- `validation_report.json`: every stage, the boosting model and both references on validation.
-- `test_report.json`: the test report, with its date and the decision.
+- `validation_report.json`: every stage, the boosting model and both references on validation, and the sizes of the training, validation and test splits.
+- `test_report.json`: the test report, with its date, the seed, the number of training matches, and the decision.
 
 **The test lock.** If `test_report.json` exists, `ml.win.test` prints the recorded result and recomputes nothing, and `ml.win.select` refuses to choose a new model, since choosing after seeing the test would bias it. Starting over requires deleting `ml/artifacts/win/` deliberately.
+
+**Corrupt artifacts.** A `test_report.json` that cannot be parsed is reported and exits 3, naming the file, rather than crashing. A `model.joblib` that cannot be loaded (or was produced by an incompatible version) is reported and exits 5, telling the person to rerun `ml.win.select`. A well-formed `model.joblib` of the wrong shape (for instance holding something other than the expected dict) is left to raise, since that is a real defect and not a symptom of a corrupt file.
 
 The outcome is then copied by hand into a `Results` section of this spec.
 
@@ -180,9 +189,9 @@ Command output is in French and never contains characters outside cp1252. Each e
 |---|---|
 | 0 | Finished |
 | 2 | Invalid arguments, or a missing database |
-| 3 | The database holds more than one patch or fewer than 1,000 matches, or, for `ml.win.test`, no longer holds the recorded patch or every match of the split |
+| 3 | The database holds more than one patch or fewer than 1,000 matches, or is not a readable collection database, or holds no matches at all, or, for `ml.win.test`, no longer holds the recorded patch or every match of the split, or `test_report.json` exists but cannot be parsed |
 | 4 | `seed.sql` is missing or cannot be parsed |
-| 5 | `ml.win.test` run before `ml.win.select` has produced a model, or `ml.win.select` run after the test set was evaluated |
+| 5 | `ml.win.test` run before `ml.win.select` has produced a model, or `ml.win.select` run after the test set was evaluated, or `model.joblib` cannot be loaded |
 
 A champion present at test time but never seen in training contributes 0; their count is reported.
 
@@ -190,12 +199,16 @@ A champion present at test time but never seen in training contributes 0; their 
 
 Unit tests in `test/ml/`, without network, on small synthetic datasets:
 
-- **Split:** no seed player appears in two sets; per-tier proportions hold.
-- **Encoding:** swapping teams negates every feature; a hidden pick zeroes its matchup and synergy features.
-- **Engine port:** the cases of `engine.test.ts` and `counter.test.ts` give the same scores.
-- **Bootstrap:** the interval is correct on a case with a known answer.
+- **Split:** no seed player appears in two sets; per-tier proportions hold, even when players contribute very different numbers of matches.
+- **Data refusals:** a missing database, a file that is not a collection database, a database with no matches at all, one with too few matches, and one with more than one patch each give their own message and exit code.
+- **Encoding:** swapping teams negates every feature; a hidden pick zeroes its matchup and synergy features; hiding picks always hides a suffix of the real pick order.
+- **Engine port:** the cases of `engine.test.ts` and `counter.test.ts` give the same scores; ties in win rate are broken by slug.
+- **Metrics:** accuracy does not credit a tied prediction; the calibration table's quantile bins hold similar numbers of matches instead of leaving most of them empty.
+- **Bootstrap:** the interval is correct on a case with a known answer; grouping by seed player widens the interval when the gap over a reference varies by player, and weights groups by their size.
+- **Training weights:** a match's masked copies carry half weight each.
 - **End to end:** on synthetic matches with a planted synergy, stage 3 recovers it and beats the win-rate baseline.
 - **Test lock:** a second run of `ml.win.test` recomputes nothing, and `ml.win.select` refuses to run once the test has been evaluated.
+- **Corrupt artifacts:** a `test_report.json` that cannot be parsed and a `model.joblib` that cannot be loaded are each reported with a message instead of crashing; a well-formed model file of the wrong shape still raises.
 
 ## Follow-Up Work
 
