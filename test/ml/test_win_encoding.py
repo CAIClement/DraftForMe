@@ -17,6 +17,17 @@ def column(encoder, key):
     return encoder.columns[key]
 
 
+def test_stage_0_produces_no_champion_columns_at_all():
+    encoder, matrix = encoded(0, DRAFT, ["GOLD"])
+
+    assert encoder.columns == {}
+    assert matrix.shape == (1, 0)
+
+    # Also true on a partially hidden draft, and for a draft with no champions the encoder ever saw.
+    unseen = np.array([[199, 299, 399, 499, 599, 198, 298, 398, 498, 598]])
+    assert encoder.transform(unseen, ["GOLD"]).shape == (1, 0)
+
+
 def test_stage_1_signs_each_champion_by_side_and_role():
     encoder, matrix = encoded(1, DRAFT, ["GOLD"])
 
@@ -27,10 +38,11 @@ def test_stage_1_signs_each_champion_by_side_and_role():
 
 
 def test_each_stage_adds_its_features_to_the_previous_ones():
-    sizes = [len(encoded(stage, DRAFT, ["GOLD"])[0].columns) for stage in (1, 2, 3, 4)]
+    sizes = [len(encoded(stage, DRAFT, ["GOLD"])[0].columns) for stage in (0, 1, 2, 3, 4)]
 
-    # 10 champions, then 5 lane pairs, then 2 synergies per team, then 10 champion-by-elo features.
-    assert sizes == [10, 15, 19, 29]
+    # No champion columns at stage 0, then 10 champions, then 5 lane pairs, then 2 synergies per
+    # team, then 10 champion-by-elo features.
+    assert sizes == [0, 10, 15, 19, 29]
 
 
 def test_lane_and_synergy_features_carry_the_expected_signs():

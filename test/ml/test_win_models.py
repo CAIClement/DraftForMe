@@ -135,6 +135,6 @@ def test_a_matchs_own_outcome_never_reaches_its_aggregate_features():
 def test_the_candidate_list_covers_every_stage_and_the_boosting_grid():
     names = [model.name for model in candidate_models(seed=0)]
 
-    assert len(names) == 27
+    assert len(names) == 33  # stage 0 (priors only) now adds 6 more candidates to the grid
     assert sum("palier 4" in name for name in names) == 6
     assert sum(name.startswith("gradient boosting") for name in names) == 3

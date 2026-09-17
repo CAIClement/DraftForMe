@@ -20,7 +20,7 @@ PICKS = 10
 # Standard blue/red pick order; a draft in progress always hides a suffix of it.
 PICK_ORDER = "BRRBBRRBBR"
 MIN_PAIR_COUNT = 5
-STAGES = (1, 2, 3, 4)
+STAGES = (0, 1, 2, 3, 4)
 SYNERGY_ROLES = (("adc", "support"), ("jungle", "mid"))
 TIER_GROUPS = {
     "IRON": "iron-silver",
@@ -39,7 +39,13 @@ PAIR_KINDS = ("lane", "synergy")
 
 
 def draft_terms(draft: Sequence[int], tier: str, stage: int) -> Iterator[tuple[tuple, int]]:
-    """Yields (feature key, sign) for every feature of `stage` present in the draft."""
+    """Yields (feature key, sign) for every feature of `stage` present in the draft.
+
+    Stage 0 yields nothing: it measures what the champion priors alone are worth once calibrated,
+    with no champion columns at all.
+    """
+    if stage == 0:
+        return
     for team_start, sign in ((0, 1), (5, -1)):
         team = draft[team_start : team_start + 5]
         for role_index, champion in enumerate(team):
