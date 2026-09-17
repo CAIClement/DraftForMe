@@ -54,3 +54,61 @@ def make_match(
             ],
         },
     }
+
+
+import copy
+
+from ml.collect.riot_client import NotFoundError
+from ml.collect.sampling import TIERS
+
+
+class FakeSource:
+    """Stands in for RiotClient. Only division "I", page 1 has players; every call is recorded."""
+
+    def __init__(
+        self,
+        leagues: dict[str, list[dict[str, Any]]],
+        player_matches: dict[str, list[str]],
+        matches: dict[str, dict[str, Any]],
+    ) -> None:
+        self.leagues = leagues
+        self.player_matches = player_matches
+        self.matches = matches
+        self.calls: list[tuple[str, ...]] = []
+
+    def league_page(self, tier: str, division: str, page: int) -> list[dict[str, Any]]:
+        self.calls.append(("league", tier, division, str(page)))
+        if division != "I" or page != 1:
+            return []
+        return [dict(entry) for entry in self.leagues.get(tier, [])]
+
+    def resolve_puuid(self, entry: dict[str, Any]) -> str:
+        return str(entry["puuid"])
+
+    def match_ids(self, puuid: str, count: int = 100) -> list[str]:
+        self.calls.append(("ids", puuid))
+        return list(self.player_matches.get(puuid, []))[:count]
+
+    def match(self, match_id: str) -> dict[str, Any]:
+        self.calls.append(("match", match_id))
+        if match_id not in self.matches:
+            raise NotFoundError(match_id)
+        return copy.deepcopy(self.matches[match_id])
+
+    def close(self) -> None:
+        pass
+
+
+def world(tiers: tuple[str, ...] | list[str] = TIERS, matches_per_player: int = 3) -> FakeSource:
+    """One player per tier, each with `matches_per_player` current-patch matches named TIER_1, TIER_2, ..."""
+    leagues: dict[str, list[dict[str, Any]]] = {}
+    player_matches: dict[str, list[str]] = {}
+    matches: dict[str, dict[str, Any]] = {}
+    for tier in tiers:
+        puuid = f"{tier.lower()}-1"
+        leagues[tier] = [{"puuid": puuid, "summonerId": f"s-{puuid}"}]
+        match_ids = [f"{tier}_{n}" for n in range(1, matches_per_player + 1)]
+        player_matches[puuid] = match_ids
+        for match_id in match_ids:
+            matches[match_id] = make_match(match_id=match_id)
+    return FakeSource(leagues, player_matches, matches)
