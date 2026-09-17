@@ -2,11 +2,18 @@ import json
 
 import numpy as np
 
-from ml.win.baselines import References, load_engine_data
+from ml.win.baselines import RateTables, References, load_engine_data
 from ml.win.data import Dataset
 from ml.win.encoding import hide_picks
 from ml.win.metrics import summary
-from ml.win.models import BoostingDraftModel, LogisticDraftModel, candidate_models, select_model
+from ml.win.models import (
+    AGGREGATE_FOLDS,
+    BoostingDraftModel,
+    LogisticDraftModel,
+    aggregate_features,
+    candidate_models,
+    select_model,
+)
 from win_fixtures import random_drafts, write_seed_sql
 
 
@@ -105,6 +112,41 @@ def test_select_model_keeps_the_lowest_validation_log_loss_and_reports_every_can
     assert [row["model"] for row in rows] == [candidate.name for candidate in candidates]
     assert rows[1]["log_loss"] == min(row["log_loss"] for row in rows)
     assert len(lines) == 2
+
+
+def test_a_matchs_own_outcome_never_reaches_its_aggregate_features():
+    """`BoostingDraftModel.fit` computes each fold's rate tables from the other folds only. Rebuilds that
+    same fold assignment and table fitting here, with the same seed `BoostingDraftModel` would use, since
+    masked copies do not change it (the tables are always fit from the unmasked training drafts, and the
+    fold assignment is over the original matches, not the expanded rows). Flipping a row's own label must
+    leave its own aggregate features untouched, while flipping a label from a different fold must not.
+    """
+    drafts, labels = dominant_champion_world(200, seed=6)
+    seed = 0
+    folds = np.random.default_rng(seed).permutation(len(drafts)) % AGGREGATE_FOLDS
+
+    def aggregate_for_row(row, labels_used):
+        fold = folds[row]
+        tables = RateTables().fit(drafts[folds != fold], labels_used[folds != fold])
+        return aggregate_features(tables, drafts[[row]])[0]
+
+    own_row = 0
+    other_rows = np.flatnonzero(folds != folds[own_row])
+
+    baseline = aggregate_for_row(own_row, labels)
+
+    flipped_own = labels.copy()
+    flipped_own[own_row] = 1 - flipped_own[own_row]
+    assert np.array_equal(aggregate_for_row(own_row, flipped_own), baseline)
+
+    changed = False
+    for other_row in other_rows[:5]:
+        flipped_other = labels.copy()
+        flipped_other[other_row] = 1 - flipped_other[other_row]
+        if not np.array_equal(aggregate_for_row(own_row, flipped_other), baseline):
+            changed = True
+            break
+    assert changed
 
 
 def test_the_candidate_list_covers_every_stage_and_the_boosting_grid():

@@ -1,4 +1,8 @@
-"""The candidate models, and choosing between them on validation log loss."""
+"""The candidate models, and choosing between them on validation log loss.
+
+Full drafts are weighted so they carry the same total weight as their masked copies combined: half
+the training objective instead of a third, while partial drafts are still learned.
+"""
 
 from __future__ import annotations
 
@@ -15,6 +19,9 @@ from ml.win.encoding import STAGES, DraftEncoder, with_masked_copies
 from ml.win.metrics import summary
 
 MASKED_COPIES = 2
+# Every match then carries the same total weight as its masked copies together, so full drafts are
+# half the objective instead of a third, while partial drafts are still learned.
+MASKED_WEIGHT = 1 / MASKED_COPIES
 LOGISTIC_C_GRID = (0.003, 0.01, 0.03, 0.1, 0.3, 1.0)
 BOOSTING_GRID = (
     {"learning_rate": 0.05, "max_leaf_nodes": 15, "l2_regularization": 1.0},
@@ -48,8 +55,11 @@ class LogisticDraftModel:
         drafts, labels, tiers, _ = with_masked_copies(train.drafts, train.labels, train.tiers, MASKED_COPIES, rng)
         # Columns come from the full drafts only: masked copies must not inflate pair counts.
         self.encoder = DraftEncoder(self.stage).fit(train.drafts, train.tiers)
+        sample_weight = np.concatenate(
+            [np.full(len(train), 1.0), np.full(len(drafts) - len(train), MASKED_WEIGHT)]
+        )
         self.model = LogisticRegression(C=self.c, max_iter=5000)
-        self.model.fit(self.encoder.transform(drafts, tiers), labels)
+        self.model.fit(self.encoder.transform(drafts, tiers), labels, sample_weight=sample_weight)
         return self
 
     def predict(self, drafts: np.ndarray, tiers: np.ndarray) -> np.ndarray:
@@ -101,10 +111,13 @@ class BoostingDraftModel:
             aggregates[rows] = aggregate_features(tables, drafts[rows])
 
         self.tables = RateTables().fit(train.drafts, train.labels)
+        sample_weight = np.concatenate(
+            [np.full(len(train), 1.0), np.full(len(drafts) - len(train), MASKED_WEIGHT)]
+        )
         self.model = HistGradientBoostingClassifier(
             max_iter=BOOSTING_ITERATIONS, early_stopping=False, random_state=self.seed, **self.params
         )
-        self.model.fit(self._matrix(drafts, tiers, aggregates), labels)
+        self.model.fit(self._matrix(drafts, tiers, aggregates), labels, sample_weight=sample_weight)
         return self
 
     def _matrix(self, drafts: np.ndarray, tiers: np.ndarray, aggregates: np.ndarray) -> np.ndarray:
