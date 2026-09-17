@@ -62,7 +62,7 @@ def write_database(
         match_rows.append([values[column] for column in MATCH_COLUMNS] + [b""])
         id_rows.append((match_id, tier, f"player-{player}", index % matches_per_player, "done", 1))
 
-    pending_tier = TIERS[0] if len(match_ids) == 0 else TIERS[0 % len(TIERS)]
+    pending_tier = TIERS[0]
     pending_puuid = "player-0"
     for i in range(pending_ids):
         id_rows.append((f"EUW1_pending_{i}", pending_tier, pending_puuid, matches_per_player + i, "pending", 0))

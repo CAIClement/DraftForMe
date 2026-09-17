@@ -63,7 +63,7 @@ def load_matches(db_path: Path | str, min_matches: int = MIN_MATCHES) -> pd.Data
         with closing(sqlite3.connect(f"{path.resolve().as_uri()}?mode=ro", uri=True)) as db:
             frame = pd.read_sql_query(query, db)
     except (sqlite3.Error, pd.errors.DatabaseError) as error:
-        raise DatasetRejected(f"{path} n'est pas une base de collecte lisible ({error})") from error
+        raise DatasetRejected(f"{path} n'est pas une base de collecte lisible ({error.__cause__ or error})") from error
 
     if len(frame) == 0:
         raise DatasetRejected("la base ne contient aucune partie")
