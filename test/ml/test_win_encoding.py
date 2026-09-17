@@ -1,7 +1,7 @@
-import ml.collect.sampling
 import numpy as np
 import pytest
 
+import ml.collect.sampling
 from ml.win.encoding import PICKS, TIER_GROUPS, DraftEncoder, hide_picks, swap_sides, with_masked_copies
 from win_fixtures import random_drafts
 
@@ -102,6 +102,10 @@ def test_hide_picks_hides_exactly_the_requested_number():
 def test_rejects_a_tier_list_that_does_not_match_the_drafts():
     with pytest.raises(ValueError):
         DraftEncoder(1).fit(np.repeat(DRAFT, 2, axis=0), ["GOLD"])
+
+    encoder = DraftEncoder(1).fit(DRAFT, ["GOLD"])
+    with pytest.raises(ValueError):
+        encoder.transform(np.repeat(DRAFT, 2, axis=0), ["GOLD"])
 
 
 def test_every_collected_tier_has_a_group():

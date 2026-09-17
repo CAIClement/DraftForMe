@@ -114,7 +114,7 @@ def hide_picks(drafts: np.ndarray, hidden_counts: Sequence[int], rng: np.random.
     inside each side is still chosen at random, since the pick order does not say which role a pick is.
     """
     result = drafts.copy()
-    for row, hidden in zip(result, hidden_counts):
+    for row, hidden in zip(result, hidden_counts, strict=True):
         hidden = int(hidden)
         blue_hidden = PICK_ORDER[PICKS - hidden :].count("B")
         red_hidden = hidden - blue_hidden
