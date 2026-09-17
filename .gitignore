@@ -14,3 +14,7 @@ __pycache__/
 .venv-ml/
 ml/artifacts/training_dataset.csv
 .scratch/
+ml/artifacts/matches*.sqlite
+ml/artifacts/matches*.sqlite-journal
+ml/artifacts/matches*.sqlite-wal
+ml/artifacts/matches*.sqlite-shm
