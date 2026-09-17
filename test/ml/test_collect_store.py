@@ -1,3 +1,6 @@
+import sqlite3
+
+import pytest
 from collect_fixtures import make_match
 from ml.collect.extract import extract_match
 from ml.collect.store import Store
@@ -38,6 +41,32 @@ def test_saving_a_match_counts_it_and_keeps_the_raw_response():
     assert store.match_status("M1") == "done"
     assert store.load_raw("M1") == raw
     assert store.next_pending_match("GOLD") is None
+
+
+def test_saving_the_same_match_twice_counts_it_once():
+    store = Store(":memory:")
+    raw = make_match(match_id="M1")
+    store.add_match_ids(["M1"], seed_tier="GOLD", seed_puuid="a")
+    row = extract_match(raw, seed_tier="GOLD")
+
+    store.save_match(row, raw)
+    store.save_match(row, raw)
+
+    assert store.matches_per_tier() == {"GOLD": 1}
+
+
+def test_saving_a_row_with_a_missing_required_value_raises():
+    store = Store(":memory:")
+    raw = make_match(match_id="M1")
+    store.add_match_ids(["M1"], seed_tier="GOLD", seed_puuid="a")
+    row = extract_match(raw, seed_tier="GOLD")
+    row["game_creation"] = None
+
+    with pytest.raises(sqlite3.IntegrityError):
+        store.save_match(row, raw)
+
+    assert store.matches_per_tier() == {}
+    assert store.match_status("M1") == "pending"
 
 
 def test_skipping_older_matches_only_touches_that_players_later_positions():

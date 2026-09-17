@@ -176,7 +176,10 @@ class Store:
         values = [row[column] for column in MATCH_COLUMNS]
         values.append(gzip.compress(json.dumps(raw).encode("utf-8")))
         with self._db:
-            self._db.execute(f"insert or ignore into matches ({columns}) values ({placeholders})", values)
+            self._db.execute(
+                f"insert into matches ({columns}) values ({placeholders}) on conflict(match_id) do nothing",
+                values,
+            )
             self._db.execute(
                 "update match_ids set status = 'done', attempts = attempts + 1 where match_id = ?",
                 (row["match_id"],),
