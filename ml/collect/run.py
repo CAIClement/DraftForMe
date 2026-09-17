@@ -35,8 +35,9 @@ DDRAGON_VERSIONS_URL = "https://ddragon.leagueoflegends.com/api/versions.json"
 MISSING_KEY_MESSAGE = (
     "RIOT_API_KEY n'est pas défini.\n"
     "Récupère ta clé sur https://developer.riotgames.com puis, dans PowerShell :\n"
-    '  $env:RIOT_API_KEY = "RGAPI-..."\n'
-    "et relance la commande. La clé n'est jamais écrite sur le disque."
+    '  $env:RIOT_API_KEY = [Net.NetworkCredential]::new("", (Read-Host "Cle Riot" -AsSecureString)).Password\n'
+    "et relance la commande. La clé ne passe ni par l'écran ni par l'historique PowerShell, "
+    "et ce programme ne l'écrit jamais sur le disque."
 )
 
 EXPIRED_KEY_MESSAGE = (
@@ -58,7 +59,7 @@ SERVER_ERROR_MESSAGE = (
 PATCH_MISMATCH_MESSAGE = (
     "La base contient déjà des parties du patch {stored} (patch visé : {patch}).\n"
     "Pour terminer cette collecte, relance avec --patch {stored}.\n"
-    "Pour collecter le patch {patch}, utilise une autre base, par exemple --db ml/artifacts/matches-{patch}.sqlite"
+    "Pour collecter le patch {patch}, utilise une autre base, par exemple --db {suggested}"
 )
 
 DETECTION_FAILED_MESSAGE = (
@@ -169,7 +170,8 @@ def _run(
         out(f"Détail : {error}")
         return 4
     except PatchMismatchError as error:
-        out(PATCH_MISMATCH_MESSAGE.format(stored=str(error), patch=patch))
+        suggested = Path(args.db).with_name(f"matches-{patch}.sqlite")
+        out(PATCH_MISMATCH_MESSAGE.format(stored=str(error), patch=patch, suggested=suggested))
         return 5
     except sqlite3.OperationalError as error:
         out(DB_ERROR_MESSAGE.format(error=error))

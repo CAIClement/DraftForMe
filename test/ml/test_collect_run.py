@@ -109,7 +109,8 @@ def test_the_summary_reports_each_tier_and_names_the_short_ones(tmp_path):
 
 
 def test_a_patch_mismatch_on_resume_names_the_stored_patch(tmp_path):
-    db = str(tmp_path / "m.sqlite")
+    db_dir = tmp_path / "elsewhere"
+    db = str(db_dir / "m.sqlite")
 
     first_code = main(
         ["--target", "20", "--db", db],
@@ -131,6 +132,8 @@ def test_a_patch_mismatch_on_resume_names_the_stored_patch(tmp_path):
 
     assert code == 5
     assert any("--patch 16.18" in line for line in outputs)
+    suggested = str(db_dir / "matches-16.19.sqlite")
+    assert any(suggested in line for line in outputs)
 
 
 def test_the_patch_argument_is_normalised_to_major_minor():

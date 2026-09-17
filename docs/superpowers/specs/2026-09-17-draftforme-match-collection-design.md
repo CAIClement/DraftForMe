@@ -124,13 +124,13 @@ The limiter's state lives in memory only: it does not persist across restarts. A
 
 ## Storage
 
-A single SQLite database at `ml/artifacts/matches.sqlite` (`MATCHES_DB_PATH` in `ml/paths.py`, overridable with `--db`), ignored by git along with its `-journal` and `-wal` files.
+A single SQLite database at `ml/artifacts/matches.sqlite` (`MATCHES_DB_PATH` in `ml/paths.py`, overridable with `--db`), ignored by git along with its `-journal`, `-wal` and `-shm` files.
 
 Saving a match surfaces any constraint violation instead of silently ignoring it; the one conflict that is intentionally ignored is a duplicate `match_id`, which the resume logic relies on.
 
 **`players`** — `puuid` (primary key), `summoner_id` (kept when league entries identify players by summoner id, so an already-drawn player is recognised before conversion), `tier`, `division`, `sampled_at`, `ids_status` (`pending`, `done`, `failed`).
 
-**`match_ids`** — `match_id` (primary key), `seed_tier`, `seed_puuid`, `position` (0 is the seed player's newest match; it is what lets an older-patch match end collection for that player), `status` (`pending`, `done`, `skipped_patch`, `skipped_invalid`, `not_found`, `failed`), `attempts`.
+**`match_ids`** — `match_id` (primary key), `seed_tier`, `seed_puuid`, `position` (0 is the seed player's newest match; it is what lets an older-patch match end collection for that player), `status` (`pending`, `done`, `skipped_patch`, `skipped_invalid`, `not_found`, `failed`), `attempts`. A downloaded payload whose own `metadata.matchId` disagrees with the id it was requested under is marked `skipped_invalid` under the requested id, rather than saved under the wrong id or left pending forever. A `failed` match is retried automatically at the start of the next run, up to 3 attempts in total; beyond that it stays `failed`.
 
 **`matches`** — one row per valid match:
 
@@ -195,16 +195,19 @@ A match is stored only if all of the following hold. Otherwise it is marked `ski
 | **Key expired or invalid** (401 or 403) | Stops cleanly with: key expired, regenerate it on the developer portal and rerun. Nothing is lost. |
 | **Rate limit exceeded** (429) | Waits for the `Retry-After` delay, then continues |
 | **Riot server error** (5xx) **or network error** (timeout, connection failure) | Retried with exponential backoff — 2, 4, 8, 16, 32, 60 s (about two minutes) — before giving up. A match download that still fails is marked `failed` and skipped. A league listing, a player's match-id listing, or a summoner-id to puuid conversion that still fails stops the command cleanly with exit code 4 and a message; nothing is marked `failed`, and the run resumes from where it stopped |
+| **A match stays `failed` across a restart** (for example a long outage that outlasted the backoff for every pending match) | At the start of each run, every `failed` match with fewer than 3 recorded attempts is put back to `pending` and downloaded again; one that has failed 3 times stays `failed` |
 | **Match not found** (404) | Marked `not_found`, never retried |
+| **Malformed payload, or a downloaded payload whose own `metadata.matchId` disagrees with the id it was requested under** | Marked `skipped_invalid` and skipped; never saved under the wrong id and never retried forever |
 | **Rank cannot reach its quota** (common for Challenger early in a patch) | Collection continues on the other ranks, and the final summary reports the imbalance explicitly |
 | **`RIOT_API_KEY` missing** | Exits before any request, explaining how to set it |
-| **Resuming on a different patch** (the database already holds matches from another patch) | Refused before any request is sent, with a message suggesting `--patch <stored patch>` to finish that patch, or a separate `--db` to collect the new one |
+| **Resuming on a different patch** (the database already holds matches from another patch) | Refused before any request is sent, with a message suggesting `--patch <stored patch>` to finish that patch, or a separate `--db` sibling of the one in use, for example `matches-16.19.sqlite` next to the current database, to collect the new one |
 
 ### Exit codes
 
 | Code | Meaning |
 |---|---|
 | 0 | Finished |
+| 1 | Unexpected error with a Python traceback — for example an HTTP 404 on a league path, another unhandled 4xx such as 400, or an unexpected SQLite integrity or database error. The run is still resumable, but the same item may fail again on every restart |
 | 2 | `RIOT_API_KEY` missing, or invalid arguments |
 | 3 | Key expired or access refused (401 or 403) — the message prints the failing status and path, never the key |
 | 4 | Persistent Riot server or network error |
@@ -216,7 +219,7 @@ A match is stored only if all of the following hold. Otherwise it is marked `ski
 
 The Riot API reference is rendered client-side and could not be read, and available secondary sources disagree on one point that matters here: whether league entries return a player's `puuid` directly, or only a legacy `summonerId` that must be converted with an extra request before the match API can be called.
 
-The design handles both. The client inspects the first league response: if entries carry `puuid`, it is used directly; if not, each drawn player costs one additional conversion request. That cost is negligible, since each player yields up to a hundred match ids.
+The design handles both. The decision is made per entry, not once for the whole response: `resolve_puuid` uses an entry's `puuid` when present, and converts its `summonerId` with one additional request only when it is not. That cost is negligible, since each player yields up to a hundred match ids.
 
 The exact league endpoint paths and the match fields named in this document are to be confirmed against real responses during the first short run. Any mismatch is fixed in `riot_client.py` or `extract.py` alone, which is why those responsibilities are isolated.
 
