@@ -102,7 +102,9 @@ def load_engine_data(seed_path: Path) -> EngineData:
 
     meta_by_role = {}
     for role, rows in win_rates.items():
-        # The site orders a role's statistics by win rate and ranks by position.
+        # The site orders a role's statistics by win rate and ranks by position. Ties are broken
+        # by slug here to keep the port reproducible; the site's own order on ties is undefined,
+        # which can shift a tied champion's meta score by about one rank step.
         ordered = sorted(rows, key=lambda row: (-row[0], row[1]))
         meta_by_role[role] = {slug: meta_score(rank, len(ordered)) for rank, (_, slug) in enumerate(ordered, start=1)}
     return EngineData(slug_by_key, meta_by_role, relations_by_role)

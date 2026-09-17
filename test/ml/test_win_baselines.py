@@ -74,6 +74,19 @@ def test_ranks_come_from_win_rate_order_within_each_role(tmp_path):
     assert data.slug_by_key[103] == "ahri"
 
 
+def test_ties_in_win_rate_are_broken_by_slug(tmp_path):
+    # ahri and orianna are tied at 52.0 in mid; zed trails at 50.0. The site's own order on a tie
+    # is undefined, so the port breaks it by slug: ahri ranks ahead of orianna.
+    seed = write_seed_sql(
+        tmp_path / "seed.sql",
+        champions={"ahri": 103, "orianna": 61, "zed": 238},
+        stats=[("zed", "mid", 50.0), ("ahri", "mid", 52.0), ("orianna", "mid", 52.0)],
+    )
+    data = load_engine_data(seed)
+
+    assert data.meta_by_role["mid"] == pytest.approx({"ahri": 100, "orianna": 70, "zed": 40})
+
+
 def test_a_champion_missing_from_the_statistics_gets_a_neutral_meta_score(tmp_path):
     data = engine_fixture(tmp_path)
 
