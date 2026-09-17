@@ -38,10 +38,21 @@ def patch_key(patch: str) -> tuple[int, int]:
 
 def extract_match(raw: dict[str, Any], seed_tier: str) -> dict[str, Any]:
     """Returns the row for the `matches` table, or raises InvalidMatch."""
+    try:
+        return _build_row(raw, seed_tier)
+    except InvalidMatch:
+        raise
+    except (KeyError, TypeError, ValueError) as error:
+        raise InvalidMatch(f"malformed payload: {error!r}") from error
+
+
+def _build_row(raw: dict[str, Any], seed_tier: str) -> dict[str, Any]:
     info = raw.get("info") or {}
 
     if info.get("queueId") != RANKED_SOLO_QUEUE:
         raise InvalidMatch("not ranked solo/duo")
+    if info.get("endOfGameResult", "GameComplete") != "GameComplete":
+        raise InvalidMatch("game not completed")
 
     participants = info.get("participants") or []
     if any(participant.get("gameEndedInEarlySurrender") for participant in participants):
@@ -67,6 +78,8 @@ def extract_match(raw: dict[str, Any], seed_tier: str) -> dict[str, Any]:
     teams = {team.get("teamId"): team for team in info.get("teams") or []}
     if set(teams) != {BLUE_TEAM, RED_TEAM}:
         raise InvalidMatch("expected two teams")
+    if bool(teams[BLUE_TEAM].get("win")) == bool(teams[RED_TEAM].get("win")):
+        raise InvalidMatch("no single winner")
 
     row: dict[str, Any] = {
         "match_id": raw["metadata"]["matchId"],
