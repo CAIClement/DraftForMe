@@ -84,7 +84,8 @@ A package `ml/collect/`, following the conventions of `ml/`: constants in `ml/pa
 | `sampling.py` | The sampling plan: ranks, per-rank quotas, batch sizes | nothing |
 | `extract.py` | A pure function turning a raw match into a compact row, and deciding whether a match is valid | nothing |
 | `store.py` | SQLite persistence and resume state | `sqlite3` |
-| `run.py` | Command-line entry point | the four above |
+| `collect.py` | The three-phase collection loop, written against a `MatchSource` protocol so it can be tested with a fake | `extract`, `sampling`, `store`, `riot_client` errors |
+| `run.py` | Command-line entry point: arguments, key check, patch detection, final summary | `collect`, `riot_client`, `store` |
 
 Command:
 
@@ -108,9 +109,9 @@ A match belongs to the target patch when the first two segments of its `gameVers
 
 A single SQLite database at `ml/artifacts/matches.sqlite`, ignored by git along with its `-journal` and `-wal` files.
 
-**`players`** — `puuid` (primary key), `tier`, `division`, `sampled_at`, `ids_status` (`pending`, `done`, `failed`).
+**`players`** — `puuid` (primary key), `summoner_id` (kept when league entries identify players by summoner id, so an already-drawn player is recognised before conversion), `tier`, `division`, `sampled_at`, `ids_status` (`pending`, `done`, `failed`).
 
-**`match_ids`** — `match_id` (primary key), `seed_tier`, `seed_puuid`, `status` (`pending`, `done`, `skipped_patch`, `skipped_invalid`, `not_found`, `failed`), `attempts`.
+**`match_ids`** — `match_id` (primary key), `seed_tier`, `seed_puuid`, `position` (0 is the seed player's newest match; it is what lets an older-patch match end collection for that player), `status` (`pending`, `done`, `skipped_patch`, `skipped_invalid`, `not_found`, `failed`), `attempts`.
 
 **`matches`** — one row per valid match:
 
@@ -131,6 +132,8 @@ A single SQLite database at `ml/artifacts/matches.sqlite`, ignored by git along 
 The raw response is kept, at an estimated 150 MB for 30,000 matches, so that project 2 can extract a field this project did not — pick order, for instance — without repeating twelve hours of collection.
 
 Riot's `teamPosition` values map as `TOP → top`, `JUNGLE → jungle`, `MIDDLE → mid`, `BOTTOM → adc`, `UTILITY → support`.
+
+**`league_cursors`** — `tier`, `division` (primary key together), `next_page`, `exhausted`. Records how far each division's listing has been read, so a resumed run does not re-read pages it has already drawn from.
 
 ## Collection Flow
 
@@ -159,7 +162,7 @@ A match is stored only if all of the following hold. Otherwise it is marked `ski
 |---|---|
 | **Key expired or invalid** (401 or 403) | Stops cleanly with: key expired, regenerate it on the developer portal and rerun. Nothing is lost. |
 | **Rate limit exceeded** (429) | Waits for the `Retry-After` delay, then continues |
-| **Riot server error** (5xx) | Retries up to 3 times with exponential backoff (2 s, 4 s, 8 s), then marks the item `failed` and moves on |
+| **Riot server error** (5xx) **or network error** (timeout, connection failure) | Retried with exponential backoff — 2, 4, 8, 16, 32, 60 s (about two minutes) — before giving up. A match download that still fails is marked `failed` and skipped. A league listing, a player's match-id listing, or a summoner-id to puuid conversion that still fails stops the command cleanly with exit code 4 and a message; nothing is marked `failed`, and the run resumes from where it stopped |
 | **Match not found** (404) | Marked `not_found`, never retried |
 | **Rank cannot reach its quota** (common for Challenger early in a patch) | Collection continues on the other ranks, and the final summary reports the imbalance explicitly |
 | **`RIOT_API_KEY` missing** | Exits before any request, explaining how to set it |
