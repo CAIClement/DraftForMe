@@ -67,12 +67,6 @@ def main(
         return 5
 
     try:
-        artifacts.mkdir(parents=True, exist_ok=True)
-    except OSError as error:
-        out(f"Impossible de créer le dossier {artifacts} : {error}.")
-        return 2
-
-    try:
         frame = load_matches(args.db)
     except MissingDatabaseError:
         out(f"Base introuvable : {args.db}")
@@ -86,6 +80,12 @@ def main(
     except SeedDataError as error:
         out(f"Données du moteur illisibles : {error}.")
         return 4
+
+    try:
+        artifacts.mkdir(parents=True, exist_ok=True)
+    except OSError as error:
+        out(f"Impossible de créer le dossier {artifacts} : {error}.")
+        return 2
 
     patch = str(frame["patch"].iloc[0])
     split = split_matches(frame, args.seed)
