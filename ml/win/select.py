@@ -23,7 +23,7 @@ from pathlib import Path
 import joblib
 
 from ml.paths import SEED_SQL_PATH, WIN_ARTIFACT_DIR
-from ml.win.baselines import References, SeedDataError, champions_missing_from_engine, load_engine_data
+from ml.win.baselines import ChampionPrior, References, SeedDataError, champions_missing_from_engine, load_engine_data
 from ml.win.data import (
     DatasetRejected,
     MissingDatabaseError,
@@ -56,7 +56,7 @@ def main(
     argv: Sequence[str] | None = None,
     *,
     out: Callable[[str], None] = print,
-    candidates_factory: Callable[[int], Sequence[DraftModel]] = candidate_models,
+    candidates_factory: Callable[[int, ChampionPrior], Sequence[DraftModel]] = candidate_models,
 ) -> int:
     args = parse_args(argv)
     artifacts = Path(args.artifacts)
@@ -97,8 +97,9 @@ def main(
         f"{len(split.test)} de test mises de côté."
     )
 
+    prior = ChampionPrior(engine_data)
     out("Modèles candidats (log loss de validation) :")
-    best, rows = select_model(train, validation, candidates_factory(args.seed), log=out)
+    best, rows = select_model(train, validation, candidates_factory(args.seed, prior), log=out)
 
     references = References(engine_data).fit(train.drafts, train.labels)
     reference_rows = [

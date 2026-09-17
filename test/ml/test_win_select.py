@@ -5,7 +5,7 @@ import numpy as np
 from ml.win.baselines import References
 from ml.win.models import BoostingDraftModel
 from win_command_fixtures import run_select, small_candidates, world
-from win_fixtures import random_drafts, write_database
+from win_fixtures import neutral_prior, random_drafts, write_database
 
 
 def test_select_saves_the_split_the_model_its_weights_and_a_validation_report(tmp_path):
@@ -19,7 +19,9 @@ def test_select_saves_the_split_the_model_its_weights_and_a_validation_report(tm
     weights = json.loads((artifacts / "model_weights.json").read_text(encoding="utf-8"))
     assert weights["stage"] in (1, 2)
     report = json.loads((artifacts / "validation_report.json").read_text(encoding="utf-8"))
-    assert [row["model"] for row in report["candidates"]] == [model.name for model in small_candidates(42)]
+    assert [row["model"] for row in report["candidates"]] == [
+        model.name for model in small_candidates(42, neutral_prior())
+    ]
     assert {row["model"] for row in report["references"]} == {References.ENGINE, References.WIN_RATES}
     assert report["chosen"] in {row["model"] for row in report["candidates"]}
     assert any(line.startswith("Modèle retenu") for line in lines)
@@ -33,7 +35,9 @@ def test_select_removes_stale_weights_when_boosting_is_chosen(tmp_path):
     (artifacts / "model_weights.json").write_text("{}", encoding="utf-8")
 
     boosting = {"learning_rate": 0.1, "max_leaf_nodes": 15, "l2_regularization": 1.0}
-    code, _ = run_select(db, seed_sql, artifacts, candidates=lambda seed: [BoostingDraftModel(boosting, seed)])
+    code, _ = run_select(
+        db, seed_sql, artifacts, candidates=lambda seed, prior: [BoostingDraftModel(boosting, seed, prior)]
+    )
 
     assert code == 0
     assert not (artifacts / "model_weights.json").exists()
