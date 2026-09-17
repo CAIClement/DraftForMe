@@ -58,7 +58,7 @@ SERVER_ERROR_MESSAGE = (
 PATCH_MISMATCH_MESSAGE = (
     "La base contient déjà des parties du patch {stored} (patch visé : {patch}).\n"
     "Pour terminer cette collecte, relance avec --patch {stored}.\n"
-    "Pour collecter le patch {patch}, utilise une autre base, par exemple --db matches-{patch}.sqlite"
+    "Pour collecter le patch {patch}, utilise une autre base, par exemple --db ml/artifacts/matches-{patch}.sqlite"
 )
 
 DETECTION_FAILED_MESSAGE = (
