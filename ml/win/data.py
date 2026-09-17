@@ -59,9 +59,14 @@ def load_matches(db_path: Path | str, min_matches: int = MIN_MATCHES) -> pd.Data
         + ", ".join(f"m.{column}" for column in PICK_COLUMNS)
         + ", m.blue_win from matches m join match_ids i on i.match_id = m.match_id order by m.match_id"
     )
-    with closing(sqlite3.connect(f"{path.resolve().as_uri()}?mode=ro", uri=True)) as db:
-        frame = pd.read_sql_query(query, db)
+    try:
+        with closing(sqlite3.connect(f"{path.resolve().as_uri()}?mode=ro", uri=True)) as db:
+            frame = pd.read_sql_query(query, db)
+    except (sqlite3.Error, pd.errors.DatabaseError) as error:
+        raise DatasetRejected(f"{path} n'est pas une base de collecte lisible ({error})") from error
 
+    if len(frame) == 0:
+        raise DatasetRejected("la base ne contient aucune partie")
     patches = sorted(frame["patch"].unique())
     if len(patches) > 1:
         raise DatasetRejected(f"la base contient plusieurs patchs : {', '.join(patches)}")

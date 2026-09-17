@@ -33,8 +33,14 @@ def write_database(
     *,
     patch: str = "16.18",
     matches_per_player: int = 5,
+    pending_ids: int = 0,
 ) -> list[str]:
-    """Writes a collection database with the real schema. Seed players cycle through the ten tiers."""
+    """Writes a collection database with the real schema. Seed players cycle through the ten tiers.
+
+    `pending_ids` adds that many extra rows to `match_ids` only, with no matching `matches` row,
+    ids that cannot collide with the downloaded ones (`EUW1_pending_{i}`), status `pending`, and
+    the seed puuid of an existing player: simulating match ids that were listed but never downloaded.
+    """
     match_ids = [f"EUW1_{index}" for index in range(len(drafts))]
     match_rows = []
     id_rows = []
@@ -55,6 +61,11 @@ def write_database(
         values.update({column: int(champion) for column, champion in zip(PICK_COLUMNS, draft)})
         match_rows.append([values[column] for column in MATCH_COLUMNS] + [b""])
         id_rows.append((match_id, tier, f"player-{player}", index % matches_per_player, "done", 1))
+
+    pending_tier = TIERS[0] if len(match_ids) == 0 else TIERS[0 % len(TIERS)]
+    pending_puuid = "player-0"
+    for i in range(pending_ids):
+        id_rows.append((f"EUW1_pending_{i}", pending_tier, pending_puuid, matches_per_player + i, "pending", 0))
 
     columns = ", ".join((*MATCH_COLUMNS, "raw_gzip"))
     placeholders = ", ".join("?" for _ in range(len(MATCH_COLUMNS) + 1))
