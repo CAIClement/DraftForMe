@@ -74,3 +74,14 @@ For the first publish, create a Hugging Face Space with the Gradio SDK and uploa
 - `data/champion_stats_euw_emerald_plus_support.json`
 
 Keep the main Next.js app on the expert TypeScript engine until the ML model has been evaluated and manually tested.
+
+## Win Model
+
+Trains a win-probability model on the ranked matches collected by `ml.collect`, and compares it with the site's rule engine and plain champion win rates. Design: `docs/superpowers/specs/2026-09-17-draftforme-win-model-design.md`.
+
+```powershell
+python -m ml.win.select --db "$env:LOCALAPPDATA\DraftForMe\matches.sqlite"
+python -m ml.win.test
+```
+
+`ml.win.select` splits the matches, trains every candidate and keeps the best on validation. It can be run again freely until `ml.win.test` has been run. `ml.win.test` evaluates the test set once; afterwards it only prints the saved report, and `ml.win.select` refuses to choose a new model. Starting over means deleting `ml/artifacts/win/` deliberately.

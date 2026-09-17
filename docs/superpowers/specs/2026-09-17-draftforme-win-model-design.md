@@ -84,7 +84,7 @@ Training uses every training match once as a full draft, plus 2 copies with 1 to
 
 ### A. Logistic regression (main candidate)
 
-`LogisticRegression` with L2 regularisation. For each stage, the regularisation strength is chosen from a small grid on validation log loss; the best stage is then chosen the same way.
+`LogisticRegression` with L2 regularisation. For each stage, the regularisation strength C is chosen on validation log loss from 0.003, 0.01, 0.03, 0.1, 0.3 and 1.0; the best stage is then chosen the same way.
 
 ### B. Gradient boosting (comparison)
 
@@ -153,8 +153,8 @@ A package `ml/win/`, following `ml/collect/`: constants in `ml/paths.py`, tests 
 Commands:
 
 ```
-python -m ml.win.select --db <path to matches.sqlite> [--seed 42]
-python -m ml.win.test
+python -m ml.win.select --db <path to matches.sqlite> [--seed 42] [--artifacts <dir>] [--seed-sql <path>]
+python -m ml.win.test [--artifacts <dir>] [--seed-sql <path>]
 ```
 
 No new dependency: `scikit-learn`, `numpy`, `pandas` and `joblib` are already in `ml/requirements.txt`.
@@ -163,12 +163,12 @@ No new dependency: `scikit-learn`, `numpy`, `pandas` and `joblib` are already in
 
 In `ml/artifacts/win/`, ignored by git:
 
-- `split.json`: the match ids of each set, the seed, and the patch.
+- `split.json`: the match ids of each set, the seed, the patch, and the database path that `ml.win.test` reads back.
 - `model.joblib`, plus `model_weights.json` when logistic regression is chosen.
 - `validation_report.json`: every stage, the boosting model and both references on validation.
 - `test_report.json`: the test report, with its date and the decision.
 
-**The test lock.** If `test_report.json` exists, `ml.win.test` prints the recorded result and recomputes nothing. Running the test again requires deleting the file deliberately.
+**The test lock.** If `test_report.json` exists, `ml.win.test` prints the recorded result and recomputes nothing, and `ml.win.select` refuses to choose a new model, since choosing after seeing the test would bias it. Starting over requires deleting `ml/artifacts/win/` deliberately.
 
 The outcome is then copied by hand into a `Results` section of this spec.
 
@@ -180,9 +180,9 @@ Command output is in French and never contains characters outside cp1252. Each e
 |---|---|
 | 0 | Finished |
 | 2 | Invalid arguments, or a missing database |
-| 3 | The database holds more than one patch, or fewer than 1,000 matches |
+| 3 | The database holds more than one patch or fewer than 1,000 matches, or, for `ml.win.test`, no longer holds the recorded patch or every match of the split |
 | 4 | `seed.sql` is missing or cannot be parsed |
-| 5 | `ml.win.test` run before `ml.win.select` has produced a model |
+| 5 | `ml.win.test` run before `ml.win.select` has produced a model, or `ml.win.select` run after the test set was evaluated |
 
 A champion present at test time but never seen in training contributes 0; their count is reported.
 
@@ -195,7 +195,7 @@ Unit tests in `test/ml/`, without network, on small synthetic datasets:
 - **Engine port:** the cases of `engine.test.ts` and `counter.test.ts` give the same scores.
 - **Bootstrap:** the interval is correct on a case with a known answer.
 - **End to end:** on synthetic matches with a planted synergy, stage 3 recovers it and beats the win-rate baseline.
-- **Test lock:** a second run of `ml.win.test` recomputes nothing.
+- **Test lock:** a second run of `ml.win.test` recomputes nothing, and `ml.win.select` refuses to run once the test has been evaluated.
 
 ## Follow-Up Work
 
