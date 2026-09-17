@@ -113,6 +113,29 @@ def test_grouped_resampling_widens_the_interval_when_the_gap_varies_by_player():
     assert grouped["difference"] == pytest.approx(ungrouped["difference"])
 
 
+def test_grouped_resampling_weights_groups_by_their_size():
+    """A grouped test where every group has the same size would still pass if the code
+    averaged per-group means instead of weighting by how many matches each group holds.
+    Forty groups of twenty moderate matches and eight single-match groups with an extreme
+    value make the size-weighted mean and the unweighted mean of per-group means far apart,
+    so the interval can be checked against both."""
+    labels = np.ones(808, dtype=int)
+    model = np.ones(808)
+    reference = np.concatenate([np.full(800, math.exp(-0.1)), np.full(8, math.exp(-10.0))])
+    groups = np.concatenate([np.repeat(np.arange(40), 20), np.arange(40, 48)])
+
+    differences = match_losses(labels, reference) - match_losses(labels, model)
+    group_means = np.array([differences[groups == group].mean() for group in np.unique(groups)])
+    size_weighted = differences.mean()
+    unweighted = group_means.mean()
+    assert unweighted > 5 * size_weighted
+
+    result = paired_bootstrap(labels, reference, model, groups=groups, seed=9)
+
+    assert result["low"] <= size_weighted <= result["high"]
+    assert not result["low"] <= unweighted <= result["high"]
+
+
 def test_a_few_certain_and_wrong_predictions_show_up_in_the_diagnostics():
     labels = np.ones(600, dtype=int)
     reference = np.full(600, math.exp(-0.30))
