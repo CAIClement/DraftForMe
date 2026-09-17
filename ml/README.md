@@ -84,4 +84,4 @@ python -m ml.win.select --db "$env:LOCALAPPDATA\DraftForMe\matches.sqlite"
 python -m ml.win.test
 ```
 
-`ml.win.select` splits the matches, trains every candidate and keeps the best on validation. It can be run again freely until `ml.win.test` has been run. `ml.win.test` evaluates the test set once; afterwards it only prints the saved report, and `ml.win.select` refuses to choose a new model. Starting over means deleting `ml/artifacts/win/` deliberately.
+`ml.win.select` splits the matches, trains every candidate and keeps the best on validation. It can be run again freely until `ml.win.test` has been run. `ml.win.test` evaluates the test set once; afterwards it only prints the saved report, and `ml.win.select` refuses to choose a new model. This lock is a convention, not something the code can enforce: deleting only `test_report.json` lets `ml.win.select` choose a new model and `ml.win.test` evaluate the same test set again, after its verdict has already been seen. Starting over means deleting the whole `ml/artifacts/win/` directory, and a second verdict on the same matches is worth less than the first whatever the files say.

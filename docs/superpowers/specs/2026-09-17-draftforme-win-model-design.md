@@ -175,7 +175,7 @@ In `ml/artifacts/win/`, ignored by git:
 - `validation_report.json`: every stage, the boosting model and both references on validation, and the sizes of the training, validation and test splits.
 - `test_report.json`: the test report, with its date, the seed, the number of training matches, and the decision.
 
-**The test lock.** If `test_report.json` exists, `ml.win.test` prints the recorded result and recomputes nothing, and `ml.win.select` refuses to choose a new model, since choosing after seeing the test would bias it. Starting over requires deleting `ml/artifacts/win/` deliberately.
+**The test lock.** If `test_report.json` exists, `ml.win.test` prints the recorded result and recomputes nothing, and `ml.win.select` refuses to choose a new model, since choosing after seeing the test would bias it. The lock is a convention, not something the code can enforce: deleting only `test_report.json` lets `ml.win.select` choose a new model and `ml.win.test` evaluate the same test set again, after its verdict has already been seen. Starting over means deleting the whole `ml/artifacts/win/` directory deliberately, and a second verdict on the same matches is worth less than the first whatever the files say.
 
 **Corrupt artifacts.** A `test_report.json` that cannot be parsed is reported and exits 3, naming the file, rather than crashing. A `model.joblib` that cannot be loaded (or was produced by an incompatible version) is reported and exits 5, telling the person to rerun `ml.win.select`. A well-formed `model.joblib` of the wrong shape (for instance holding something other than the expected dict) is left to raise, since that is a real defect and not a symptom of a corrupt file.
 
@@ -188,7 +188,7 @@ Command output is in French and never contains characters outside cp1252. Each e
 | Code | Situation |
 |---|---|
 | 0 | Finished |
-| 2 | Invalid arguments, or a missing database |
+| 2 | Invalid arguments, a missing database, or, for `ml.win.select`, an `--artifacts` path that cannot be made into a directory |
 | 3 | The database holds more than one patch or fewer than 1,000 matches, or is not a readable collection database, or holds no matches at all, or, for `ml.win.test`, no longer holds the recorded patch or every match of the split, or `test_report.json` exists but cannot be parsed |
 | 4 | `seed.sql` is missing or cannot be parsed |
 | 5 | `ml.win.test` run before `ml.win.select` has produced a model, or `ml.win.select` run after the test set was evaluated, or `model.joblib` cannot be loaded |
