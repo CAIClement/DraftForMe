@@ -42,6 +42,9 @@ def test_test_evaluates_once_then_only_prints_the_saved_report(tmp_path):
     assert report["top_weights"][0]["key"] == ["champion", "top", 101]
     assert report["comparisons"][References.ENGINE]["low"] > 0
     assert report["missing_from_engine"] == 30  # 6 champions in each of 5 roles
+    split_payload = json.loads((artifacts / "split.json").read_text(encoding="utf-8"))
+    assert report["seed"] == split_payload["seed"]
+    assert report["train_matches"] == len(split_payload["train"])
     assert lines[-1].startswith("Verdict")
     for line in lines:
         line.encode("cp1252")
@@ -97,3 +100,35 @@ def test_the_verdict_uses_the_interval_grouped_by_seed_player(tmp_path):
         assert report["comparisons"][name] != report["comparisons_by_match"][name]
     expected_verdict = all(comparison["low"] > 0 for comparison in report["comparisons"].values())
     assert report["beats_references"] == expected_verdict
+
+
+def test_test_reports_a_corrupt_model_instead_of_crashing(tmp_path):
+    db, seed_sql, artifacts = world(tmp_path)
+    run_select(db, seed_sql, artifacts)
+    model_path = artifacts / "model.joblib"
+    data = model_path.read_bytes()
+    model_path.write_bytes(data[: len(data) // 2])
+
+    code, lines = run_test(artifacts, seed_sql)
+
+    assert code == 5
+    assert "illisible" in lines[0]
+    assert not (artifacts / "test_report.json").exists()
+    for line in lines:
+        line.encode("cp1252")
+
+
+def test_test_reports_a_corrupt_saved_report_instead_of_crashing(tmp_path):
+    db, seed_sql, artifacts = world(tmp_path)
+    run_select(db, seed_sql, artifacts)
+    run_test(artifacts, seed_sql)
+    report_path = artifacts / "test_report.json"
+    data = report_path.read_bytes()
+    report_path.write_bytes(data[: len(data) // 2])
+
+    code, lines = run_test(artifacts, seed_sql)
+
+    assert code == 3
+    assert "corrompu" in lines[0]
+    for line in lines:
+        line.encode("cp1252")

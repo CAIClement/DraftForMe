@@ -11,9 +11,10 @@ when the gap over a reference varies by player. The interval resampling individu
 Exit codes:
   0  finished, or the saved report was printed
   2  the database recorded by ml.win.select no longer exists
-  3  the database no longer holds the recorded patch or every test match
+  3  the database no longer holds the recorded patch or every test match, or the saved
+     report is corrupt
   4  supabase/seed.sql is missing or unreadable
-  5  ml.win.select has not produced a model yet
+  5  ml.win.select has not produced a model yet, or the saved model is unreadable
 """
 
 from __future__ import annotations
@@ -140,7 +141,11 @@ def main(
     report_path = artifacts / TEST_REPORT_FILE
 
     if report_path.is_file():
-        report = json.loads(report_path.read_text(encoding="utf-8"))
+        try:
+            report = json.loads(report_path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError) as error:
+            out(f"{report_path} est corrompu ({error}). Supprime ce fichier pour relancer l'évaluation.")
+            return 3
         out(f"Le jeu de test a déjà été évalué le {report['date']}. Résultat enregistré, rien n'est recalculé :")
         print_report(report, out)
         return 0
@@ -169,9 +174,21 @@ def main(
         out(f"Données du moteur illisibles : {error}.")
         return 4
 
-    model = joblib.load(artifacts / MODEL_FILE)["model"]
+    model_path = artifacts / MODEL_FILE
+    try:
+        model = joblib.load(model_path)["model"]
+    except Exception as error:  # joblib and pickle raise many exception types on a corrupt file
+        out(f"{model_path} est illisible ({error}). Relance python -m ml.win.select --db <base>.")
+        return 5
+
     references = References(engine_data).fit(train.drafts, train.labels)
-    report = {"date": now(), "patch": meta["patch"], **evaluate(model, references, train, test, meta["seed"])}
+    report = {
+        "date": now(),
+        "patch": meta["patch"],
+        "seed": meta["seed"],
+        "train_matches": len(train),
+        **evaluate(model, references, train, test, meta["seed"]),
+    }
     report_path.write_text(json.dumps(report, indent=1, ensure_ascii=False), encoding="utf-8")
 
     print_report(report, out)
