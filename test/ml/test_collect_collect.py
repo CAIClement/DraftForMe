@@ -117,3 +117,60 @@ def test_ignores_league_entries_without_any_identifier():
     summary = run(source, store)
 
     assert summary.collected["IRON"] == 2
+
+
+def test_a_match_whose_payload_id_does_not_match_the_requested_id_is_skipped_and_downloaded_once():
+    source = world()
+    # The payload's own metadata.matchId disagrees with the id it was requested under.
+    source.matches["GOLD_2"] = make_match(match_id="GOLD_2_WRONG")
+    store = Store(":memory:")
+
+    summary = run(source, store)
+
+    assert store.match_status("GOLD_2") == "skipped_invalid"
+    assert summary.collected["GOLD"] == 2
+    assert summary.short_tiers() == []
+    assert source.calls.count(("match", "GOLD_2")) == 1
+
+
+def test_a_null_game_version_is_skipped_invalid():
+    source = world()
+    source.matches["GOLD_2"] = make_match(match_id="GOLD_2", game_version=None)
+    store = Store(":memory:")
+
+    summary = run(source, store)
+
+    assert store.match_status("GOLD_2") == "skipped_invalid"
+    assert summary.collected["GOLD"] == 2
+    assert summary.short_tiers() == []
+
+
+def test_a_match_marked_failed_by_a_previous_run_is_retried_and_saved_on_the_next_run(tmp_path):
+    path = tmp_path / "matches.sqlite"
+
+    flaky = world(matches_per_player=2)
+    original_match = flaky.match
+
+    def flaky_match(match_id):
+        if match_id == "GOLD_1":
+            raise RiotServerError("outage")
+        return original_match(match_id)
+
+    flaky.match = flaky_match
+
+    store = Store(path)
+    run(flaky, store)
+
+    assert store.matches_per_tier()["GOLD"] == 1
+    assert store.match_status("GOLD_1") == "failed"
+    store.close()
+
+    healthy = world(matches_per_player=2)
+    store = Store(path)
+    summary = run(healthy, store)
+
+    assert store.match_status("GOLD_1") == "done"
+    assert summary.collected == {tier: 2 for tier in TIERS}
+    assert ("match", "GOLD_1") in healthy.calls
+    assert ("match", "GOLD_2") not in healthy.calls
+    store.close()

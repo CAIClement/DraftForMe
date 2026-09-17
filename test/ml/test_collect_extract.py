@@ -81,6 +81,14 @@ def test_rejects_a_malformed_payload():
         extract_match(raw, seed_tier="GOLD")
 
 
+def test_rejects_a_payload_with_a_null_participant():
+    raw = make_match()
+    raw["info"]["participants"][0] = None
+
+    with pytest.raises(InvalidMatch, match="malformed payload"):
+        extract_match(raw, seed_tier="GOLD")
+
+
 def test_patch_of_keeps_major_and_minor():
     assert patch_of("16.18.712.1234") == "16.18"
     assert patch_of("16.3.1") == "16.3"

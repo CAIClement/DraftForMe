@@ -155,6 +155,19 @@ class Store:
                 (status, match_id),
             )
 
+    def retry_failed_matches(self, max_attempts: int = 3) -> int:
+        """Puts `failed` matches that have not exhausted their attempts back to `pending`.
+
+        Meant to be called at the start of a run, so a match that failed during a network
+        outage in a previous run gets another chance instead of being failed forever.
+        """
+        with self._db:
+            cursor = self._db.execute(
+                "update match_ids set status = 'pending' where status = 'failed' and attempts < ?",
+                (max_attempts,),
+            )
+        return cursor.rowcount
+
     def skip_older_matches(self, seed_puuid: str, after_position: int) -> int:
         with self._db:
             cursor = self._db.execute(

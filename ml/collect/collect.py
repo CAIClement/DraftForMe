@@ -59,6 +59,7 @@ def collect(
     other = store.patches() - {patch}
     if other:
         raise PatchMismatchError(", ".join(sorted(other)))
+    store.retry_failed_matches()
 
     quotas = tier_quotas(target)
     exhausted: set[str] = set()
@@ -123,7 +124,7 @@ def _download_pending(source: MatchSource, store: Store, tier: str, quota: int, 
 
         try:
             match_patch = patch_of((raw.get("info") or {}).get("gameVersion", ""))
-        except ValueError:
+        except (ValueError, AttributeError, TypeError):
             store.mark_match(match_id, "skipped_invalid")
             continue
 
@@ -137,6 +138,13 @@ def _download_pending(source: MatchSource, store: Store, tier: str, quota: int, 
         try:
             row = extract_match(raw, seed_tier=tier)
         except InvalidMatch:
+            store.mark_match(match_id, "skipped_invalid")
+            continue
+
+        if row["match_id"] != match_id:
+            # The payload's own id disagrees with the id it was requested under: saving it
+            # would leave the requested id pending forever (an endless download loop) or
+            # insert a row under the wrong id, so the requested id is skipped instead.
             store.mark_match(match_id, "skipped_invalid")
             continue
 

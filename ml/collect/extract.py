@@ -42,7 +42,7 @@ def extract_match(raw: dict[str, Any], seed_tier: str) -> dict[str, Any]:
         return _build_row(raw, seed_tier)
     except InvalidMatch:
         raise
-    except (KeyError, TypeError, ValueError) as error:
+    except (KeyError, TypeError, ValueError, AttributeError) as error:
         raise InvalidMatch(f"malformed payload: {error!r}") from error
 
 

@@ -95,6 +95,33 @@ def test_skipping_older_matches_only_touches_that_players_later_positions():
     assert store.match_status("B1") == "pending"
 
 
+def test_retry_failed_matches_resets_only_matches_below_the_attempt_limit():
+    store = Store(":memory:")
+    store.add_match_ids(["M1", "M2"], seed_tier="GOLD", seed_puuid="a")
+    store.mark_match("M1", "failed")  # attempts -> 1
+    store.mark_match("M2", "failed")
+    store.mark_match("M2", "failed")
+    store.mark_match("M2", "failed")  # attempts -> 3
+
+    changed = store.retry_failed_matches(max_attempts=3)
+
+    assert changed == 1
+    assert store.match_status("M1") == "pending"
+    assert store.match_status("M2") == "failed"
+
+
+def test_retry_failed_matches_leaves_other_statuses_untouched():
+    store = Store(":memory:")
+    store.add_match_ids(["M1", "M2", "M3"], seed_tier="GOLD", seed_puuid="a")
+    store.mark_match("M1", "not_found")
+    store.mark_match("M2", "skipped_invalid")
+
+    assert store.retry_failed_matches(max_attempts=3) == 0
+    assert store.match_status("M1") == "not_found"
+    assert store.match_status("M2") == "skipped_invalid"
+    assert store.match_status("M3") == "pending"
+
+
 def test_league_cursor_advances_then_exhausts():
     store = Store(":memory:")
 
