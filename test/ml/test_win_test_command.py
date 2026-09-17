@@ -2,6 +2,9 @@ import json
 import sqlite3
 from contextlib import closing
 
+import joblib
+import pytest
+
 from ml.win import test
 from ml.win.baselines import References
 from win_command_fixtures import run_select, world
@@ -132,3 +135,13 @@ def test_test_reports_a_corrupt_saved_report_instead_of_crashing(tmp_path):
     assert "corrompu" in lines[0]
     for line in lines:
         line.encode("cp1252")
+
+
+def test_test_raises_on_a_well_formed_model_file_with_the_wrong_shape(tmp_path):
+    db, seed_sql, artifacts = world(tmp_path)
+    run_select(db, seed_sql, artifacts)
+    model_path = artifacts / "model.joblib"
+    joblib.dump({"not_model": 1}, model_path)
+
+    with pytest.raises(KeyError):
+        run_test(artifacts, seed_sql)

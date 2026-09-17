@@ -176,10 +176,11 @@ def main(
 
     model_path = artifacts / MODEL_FILE
     try:
-        model = joblib.load(model_path)["model"]
+        loaded = joblib.load(model_path)
     except Exception as error:  # joblib and pickle raise many exception types on a corrupt file
         out(f"{model_path} est illisible ({error}). Relance python -m ml.win.select --db <base>.")
         return 5
+    model = loaded["model"]  # a KeyError here is a real defect, not corruption
 
     references = References(engine_data).fit(train.drafts, train.labels)
     report = {
