@@ -1,10 +1,21 @@
-"""Command line: python -m ml.collect.run --target 30000 [--patch 16.18] [--seed 42]"""
+"""Command line: python -m ml.collect.run --target 30000 [--patch 16.18] [--seed 42]
+
+Exit codes:
+  0   finished
+  2   missing key or invalid arguments
+  3   key expired or access refused
+  4   persistent Riot server error
+  5   patch mismatch or patch detection failed
+  6   SQLite error
+  130 interrupted
+"""
 
 from __future__ import annotations
 
 import argparse
 import os
 import random
+import sqlite3
 import sys
 from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
@@ -12,9 +23,10 @@ from typing import Any
 
 import httpx
 
-from ml.collect.collect import collect
+from ml.collect.collect import PatchMismatchError, collect
 from ml.collect.extract import patch_of
 from ml.collect.riot_client import KeyExpiredError, RiotClient, RiotServerError
+from ml.collect.sampling import TIERS
 from ml.collect.store import Store
 from ml.paths import MATCHES_DB_PATH
 
@@ -28,7 +40,7 @@ MISSING_KEY_MESSAGE = (
 )
 
 EXPIRED_KEY_MESSAGE = (
-    "Clé Riot expirée ou invalide.\n"
+    "Clé Riot expirée ou invalide, ou accès refusé à cet appel.\n"
     "Régénère-la sur https://developer.riotgames.com, redéfinis RIOT_API_KEY et relance :\n"
     "la collecte reprendra là où elle s'est arrêtée."
 )
@@ -43,21 +55,56 @@ SERVER_ERROR_MESSAGE = (
     "Rien n'est perdu : relance la même commande plus tard pour reprendre."
 )
 
+PATCH_MISMATCH_MESSAGE = (
+    "La base contient déjà des parties du patch {stored} (patch visé : {patch}).\n"
+    "Pour terminer cette collecte, relance avec --patch {stored}.\n"
+    "Pour collecter le patch {patch}, utilise une autre base, par exemple --db matches-{patch}.sqlite"
+)
+
+DETECTION_FAILED_MESSAGE = (
+    "Impossible de détecter le patch via Data Dragon.\n"
+    "Vérifie ta connexion et relance, ou précise le patch avec --patch 16.18."
+)
+
+DB_ERROR_MESSAGE = (
+    "Erreur de la base SQLite : {error}\n"
+    "Rien n'est perdu : relance la même commande. Si la base est dans un dossier synchronisé (OneDrive), "
+    "utilise --db vers un dossier hors OneDrive."
+)
+
 
 def detect_patch(fetch_json: Callable[[str], Any] | None = None) -> str:
     """Current patch from the newest Data Dragon version, which needs no key."""
-    fetch = fetch_json or (lambda url: httpx.get(url, timeout=30.0).json())
+
+    def _default_fetch(url: str) -> Any:
+        response = httpx.get(url, timeout=30.0)
+        response.raise_for_status()
+        return response.json()
+
+    fetch = fetch_json or _default_fetch
     versions = fetch(DDRAGON_VERSIONS_URL)
     return patch_of(str(versions[0]))
+
+
+def _patch_type(value: str) -> str:
+    try:
+        return patch_of(value)
+    except ValueError:
+        raise argparse.ArgumentTypeError(
+            f"patch invalide : {value!r} (attendu major.minor, par exemple 16.18)"
+        )
 
 
 def parse_args(argv: Sequence[str] | None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Collecte des parties classées EUW via l'API Riot.")
     parser.add_argument("--target", type=int, default=30000, help="nombre total de parties visé")
-    parser.add_argument("--patch", default=None, help="patch visé, major.minor (détecté si absent)")
+    parser.add_argument("--patch", type=_patch_type, default=None, help="patch visé, major.minor (détecté si absent)")
     parser.add_argument("--seed", type=int, default=42, help="graine du tirage des joueurs")
     parser.add_argument("--db", default=str(MATCHES_DB_PATH), help="chemin de la base SQLite")
-    return parser.parse_args(argv)
+    args = parser.parse_args(argv)
+    if args.target < len(TIERS):
+        parser.error(f"--target doit valoir au moins {len(TIERS)} (une partie par rang)")
+    return args
 
 
 def main(
@@ -75,26 +122,60 @@ def main(
         out(MISSING_KEY_MESSAGE)
         return 2
 
-    patch = args.patch or patch_detector()
-    out(f"Patch visé : {patch}")
-
-    Path(args.db).parent.mkdir(parents=True, exist_ok=True)
-    client = client_factory(api_key)
-    store = Store(args.db)
     try:
-        summary = collect(client, store, target=args.target, patch=patch, rng=random.Random(args.seed), log=out)
-    except KeyExpiredError:
-        out(EXPIRED_KEY_MESSAGE)
-        return 3
-    except RiotServerError:
-        out(SERVER_ERROR_MESSAGE)
-        return 4
+        return _run(args, api_key, client_factory, patch_detector, out)
     except KeyboardInterrupt:
         out(INTERRUPTED_MESSAGE)
         return 130
+
+
+def _run(
+    args: argparse.Namespace,
+    api_key: str,
+    client_factory: Callable[[str], Any],
+    patch_detector: Callable[[], str],
+    out: Callable[[str], None],
+) -> int:
+    try:
+        patch = args.patch or patch_detector()
+    except (httpx.HTTPError, ValueError, LookupError):
+        out(DETECTION_FAILED_MESSAGE)
+        return 5
+
+    out(f"Patch visé : {patch}")
+
+    Path(args.db).parent.mkdir(parents=True, exist_ok=True)
+
+    try:
+        store = Store(args.db)
+    except sqlite3.OperationalError as error:
+        out(DB_ERROR_MESSAGE.format(error=error))
+        return 6
+
+    try:
+        client = client_factory(api_key)
+        try:
+            summary = collect(
+                client, store, target=args.target, patch=patch, rng=random.Random(args.seed), log=out
+            )
+        finally:
+            client.close()
+    except KeyExpiredError as error:
+        out(EXPIRED_KEY_MESSAGE)
+        out(f"Détail : {error}")
+        return 3
+    except RiotServerError as error:
+        out(SERVER_ERROR_MESSAGE)
+        out(f"Détail : {error}")
+        return 4
+    except PatchMismatchError as error:
+        out(PATCH_MISMATCH_MESSAGE.format(stored=str(error), patch=patch))
+        return 5
+    except sqlite3.OperationalError as error:
+        out(DB_ERROR_MESSAGE.format(error=error))
+        return 6
     finally:
         store.close()
-        client.close()
 
     out("Bilan :")
     for tier, quota in summary.quotas.items():
