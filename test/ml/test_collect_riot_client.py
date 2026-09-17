@@ -74,8 +74,43 @@ def test_server_errors_retry_with_backoff_then_give_up():
     with pytest.raises(RiotServerError):
         client.match("EUW1_1")
 
-    assert sleeps == [2.0, 4.0, 8.0]
-    assert len(calls) == 4
+    assert sleeps == [2.0, 4.0, 8.0, 16.0, 32.0, 60.0]
+    assert len(calls) == 7
+
+
+def test_network_errors_retry_with_backoff_then_give_up():
+    calls = []
+
+    def handler(request):
+        calls.append(request)
+        raise httpx.ConnectError("boom", request=request)
+
+    sleeps: list[float] = []
+    client = make_client(handler, sleeps)
+
+    with pytest.raises(RiotServerError) as excinfo:
+        client.match("EUW1_1")
+
+    assert sleeps == [2.0, 4.0, 8.0, 16.0, 32.0, 60.0]
+    assert len(calls) == 7
+    assert "RGAPI-test" not in str(excinfo.value)
+
+
+def test_a_network_error_followed_by_success_returns_the_response():
+    responses = iter([httpx.ConnectError("boom"), httpx.Response(200, json={"ok": True})])
+    sleeps: list[float] = []
+
+    def handler(request):
+        response = next(responses)
+        if isinstance(response, Exception):
+            response.request = request
+            raise response
+        return response
+
+    client = make_client(handler, sleeps)
+
+    assert client.match("EUW1_1") == {"ok": True}
+    assert sleeps == [2.0]
 
 
 def test_routes_league_calls_to_the_platform_and_match_calls_to_the_region():
@@ -144,3 +179,18 @@ def test_resolve_puuid_converts_a_summoner_id_when_puuid_is_absent():
 
     assert client.resolve_puuid({"summonerId": "s-1"}) == "converted"
     assert paths == ["/lol/summoner/v4/summoners/s-1"]
+
+
+def test_resolve_puuid_rejects_an_entry_without_any_identifier():
+    calls = []
+
+    def handler(request):
+        calls.append(request)
+        return httpx.Response(200, json={})
+
+    client = make_client(handler, [])
+
+    with pytest.raises(NotFoundError):
+        client.resolve_puuid({})
+
+    assert calls == []

@@ -19,7 +19,7 @@ PLATFORM_HOST = "euw1.api.riotgames.com"
 REGIONAL_HOST = "europe.api.riotgames.com"
 RANKED_SOLO = "RANKED_SOLO_5x5"
 RANKED_SOLO_QUEUE_ID = 420
-SERVER_ERROR_BACKOFF = (2.0, 4.0, 8.0)
+SERVER_ERROR_BACKOFF = (2.0, 4.0, 8.0, 16.0, 32.0, 60.0)
 APEX_LEAGUE_PATHS = {
     "MASTER": "masterleagues",
     "GRANDMASTER": "grandmasterleagues",
@@ -97,8 +97,14 @@ class RiotClient:
         server_errors = 0
         while True:
             self._limiter.acquire(host)
-            response = self._http.get(f"https://{host}{path}", params=params)
-            status = response.status_code
+            try:
+                response = self._http.get(f"https://{host}{path}", params=params)
+            except httpx.TransportError as error:
+                response = None
+                network_error = error
+            else:
+                network_error = None
+            status = None if response is None else response.status_code
 
             if status in (401, 403):
                 raise KeyExpiredError(f"{status} on {path}")
@@ -107,8 +113,10 @@ class RiotClient:
             if status == 429:
                 self._sleep(float(response.headers.get("Retry-After", "10")))
                 continue
-            if status >= 500:
+            if network_error is not None or status >= 500:
                 if server_errors >= len(SERVER_ERROR_BACKOFF):
+                    if network_error is not None:
+                        raise RiotServerError(f"network error on {path}") from network_error
                     raise RiotServerError(f"{status} on {path}")
                 self._sleep(SERVER_ERROR_BACKOFF[server_errors])
                 server_errors += 1
@@ -133,7 +141,10 @@ class RiotClient:
         puuid = entry.get("puuid")
         if puuid:
             return str(puuid)
-        summoner = self.get(PLATFORM_HOST, f"/lol/summoner/v4/summoners/{entry['summonerId']}")
+        summoner_id = entry.get("summonerId")
+        if not summoner_id:
+            raise NotFoundError("league entry without puuid or summonerId")
+        summoner = self.get(PLATFORM_HOST, f"/lol/summoner/v4/summoners/{summoner_id}")
         return str(summoner["puuid"])
 
     def match_ids(self, puuid: str, count: int = 100) -> list[str]:
