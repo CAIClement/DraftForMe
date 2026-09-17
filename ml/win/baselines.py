@@ -51,6 +51,8 @@ class EngineData:
     meta_by_role: dict[str, dict[str, float]]
     # role -> {(champion, countered_by)}
     relations_by_role: dict[str, set[tuple[str, str]]]
+    # role -> champion slug -> public win rate (percentage, as parsed from champion_stats)
+    win_rate_by_role: dict[str, dict[str, float]]
 
 
 def clamp(value: float, low: float = 0.0, high: float = 100.0) -> float:
@@ -101,13 +103,15 @@ def load_engine_data(seed_path: Path) -> EngineData:
         raise SeedDataError(f"{seed_path} ne contient ni champions ni statistiques")
 
     meta_by_role = {}
+    win_rate_by_role = {}
     for role, rows in win_rates.items():
         # The site orders a role's statistics by win rate and ranks by position. Ties are broken
         # by slug here to keep the port reproducible; the site's own order on ties is undefined,
         # which can shift a tied champion's meta score by about one rank step.
         ordered = sorted(rows, key=lambda row: (-row[0], row[1]))
         meta_by_role[role] = {slug: meta_score(rank, len(ordered)) for rank, (_, slug) in enumerate(ordered, start=1)}
-    return EngineData(slug_by_key, meta_by_role, relations_by_role)
+        win_rate_by_role[role] = {slug: rate for rate, slug in rows}
+    return EngineData(slug_by_key, meta_by_role, relations_by_role, win_rate_by_role)
 
 
 def champion_total(champion: str | None, role: str, enemy_picks: Sequence[str | None], data: EngineData) -> float:
@@ -144,6 +148,54 @@ def champions_missing_from_engine(drafts: np.ndarray, data: EngineData) -> int:
                 if data.slug_by_key.get(int(key)) not in data.meta_by_role.get(role, {}):
                     missing.add((role, int(key)))
     return len(missing)
+
+
+# --- champion priors from public statistics -----------------------------------------
+
+
+def win_rate_log_odds(win_rate_percentage: float) -> float:
+    rate = win_rate_percentage / 100.0
+    return math.log(rate / (1 - rate))
+
+
+class ChampionPrior:
+    """The public win rates every model receives, as six antisymmetric log-odds features per draft.
+
+    Built once from `EngineData` (the same `champion_stats` rows the rule engine reads), so every
+    candidate model can be handed the same evidence from millions of games.
+    """
+
+    def __init__(self, data: EngineData) -> None:
+        self.data = data
+
+    def log_odds(self, champion_key: int, role: str) -> float:
+        """Log-odds of the champion's public win rate in `role`.
+
+        Falls back to the mean log-odds across the roles the statistics do rank the champion in
+        when `role` is not one of them, then to neutral (0.0) for a champion the statistics never
+        rank, an unmapped key, or a hidden pick (`champion_key` 0).
+        """
+        if not champion_key:
+            return 0.0
+        slug = self.data.slug_by_key.get(int(champion_key))
+        if slug is None:
+            return 0.0
+        role_rates = self.data.win_rate_by_role.get(role, {})
+        if slug in role_rates:
+            return win_rate_log_odds(role_rates[slug])
+        ranked = [win_rate_log_odds(rates[slug]) for rates in self.data.win_rate_by_role.values() if slug in rates]
+        return float(np.mean(ranked)) if ranked else 0.0
+
+    def features(self, drafts: np.ndarray) -> np.ndarray:
+        """Per draft: blue minus red log-odds for each of the five roles, then their sum."""
+        result = np.zeros((len(drafts), 6), dtype=np.float64)
+        for row, draft in enumerate(drafts):
+            for role_index, role in enumerate(ROLES):
+                blue = self.log_odds(int(draft[role_index]), role)
+                red = self.log_odds(int(draft[5 + role_index]), role)
+                result[row, role_index] = blue - red
+            result[row, 5] = result[row, :5].sum()
+        return result
 
 
 # --- champion win rates ------------------------------------------------------------
