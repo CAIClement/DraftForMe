@@ -30,12 +30,13 @@ class DatasetRejected(RuntimeError):
 
 @dataclass(frozen=True)
 class Dataset:
-    """Drafts as champion ids in `PICK_COLUMNS` order (0 means hidden), with outcome and seed tier."""
+    """Drafts as champion ids in `PICK_COLUMNS` order (0 means hidden), with outcome, seed tier and seed player."""
 
     match_ids: np.ndarray
     drafts: np.ndarray
     labels: np.ndarray
     tiers: np.ndarray
+    groups: np.ndarray
 
     def __len__(self) -> int:
         return len(self.labels)
@@ -81,6 +82,7 @@ def to_dataset(frame: pd.DataFrame) -> Dataset:
         drafts=frame[list(PICK_COLUMNS)].to_numpy(dtype=np.int64),
         labels=frame["blue_win"].to_numpy(dtype=np.int64),
         tiers=frame["seed_tier"].to_numpy(),
+        groups=frame["seed_puuid"].to_numpy(),
     )
 
 

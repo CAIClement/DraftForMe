@@ -38,6 +38,7 @@ def test_loads_every_match_with_its_draft_outcome_and_seed_player(tmp_path):
     order = np.argsort([int(match_id.split("_")[1]) for match_id in dataset.match_ids])
     assert (dataset.drafts[order] == drafts).all()
     assert (dataset.labels[order] == labels).all()
+    assert (dataset.groups == frame["seed_puuid"].to_numpy()).all()
     assert set(frame["seed_puuid"]) == {f"player-{index}" for index in range(400)}
 
 
