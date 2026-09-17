@@ -50,3 +50,31 @@ def test_select_exit_codes_for_a_missing_database_an_unusable_one_and_missing_en
 
     assert run_select(db, tmp_path / "absent.sql", artifacts)[0] == 4
     assert not (artifacts / "model.joblib").exists()
+
+
+def test_select_records_the_split_sizes_in_the_validation_report(tmp_path):
+    count = 1500
+    db, seed_sql, artifacts = world(tmp_path, count=count)
+
+    code, _ = run_select(db, seed_sql, artifacts)
+
+    assert code == 0
+    split = json.loads((artifacts / "split.json").read_text(encoding="utf-8"))
+    report = json.loads((artifacts / "validation_report.json").read_text(encoding="utf-8"))
+    assert report["splits"] == {
+        "train": len(split["train"]),
+        "validation": len(split["validation"]),
+        "test": len(split["test"]),
+    }
+    assert sum(report["splits"].values()) == count
+
+
+def test_select_refuses_an_unusable_artifacts_path_without_a_traceback(tmp_path):
+    db, seed_sql, artifacts = world(tmp_path)
+    artifacts.parent.mkdir(parents=True, exist_ok=True)
+    artifacts.write_text("not a directory", encoding="utf-8")
+
+    code, lines = run_select(db, seed_sql, artifacts)
+
+    assert code == 2
+    assert any("Impossible de créer le dossier" in line for line in lines)

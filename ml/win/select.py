@@ -67,6 +67,12 @@ def main(
         return 5
 
     try:
+        artifacts.mkdir(parents=True, exist_ok=True)
+    except OSError as error:
+        out(f"Impossible de créer le dossier {artifacts} : {error}.")
+        return 2
+
+    try:
         frame = load_matches(args.db)
     except MissingDatabaseError:
         out(f"Base introuvable : {args.db}")
@@ -106,6 +112,7 @@ def main(
     report = {
         "patch": patch,
         "seed": args.seed,
+        "splits": {"train": len(train), "validation": len(validation), "test": len(split.test)},
         "chosen": best.name,
         "candidates": rows,
         "references": reference_rows,
