@@ -1,9 +1,10 @@
 import json
 
+import joblib
 import numpy as np
 
 from ml.win.baselines import References
-from ml.win.models import BoostingDraftModel
+from ml.win.models import BoostingDraftModel, LogisticDraftModel
 from win_command_fixtures import run_select, small_candidates, world
 from win_fixtures import neutral_prior, random_drafts, write_database
 
@@ -22,11 +23,28 @@ def test_select_saves_the_split_the_model_its_weights_and_a_validation_report(tm
     assert [row["model"] for row in report["candidates"]] == [
         model.name for model in small_candidates(42, neutral_prior())
     ]
-    assert {row["model"] for row in report["references"]} == {References.ENGINE, References.WIN_RATES}
+    assert {row["model"] for row in report["references"]} == {
+        References.ENGINE,
+        References.WIN_RATES,
+        References.PRIORS_ONLY,
+    }
     assert report["chosen"] in {row["model"] for row in report["candidates"]}
     assert any(line.startswith("Modèle retenu") for line in lines)
     for line in lines:
         line.encode("cp1252")
+
+
+def test_select_saves_the_priors_only_reference_model_alongside_the_chosen_one(tmp_path):
+    db, seed_sql, artifacts = world(tmp_path)
+
+    code, _ = run_select(db, seed_sql, artifacts)
+
+    assert code == 0
+    saved = joblib.load(artifacts / "model.joblib")
+    assert "priors_reference" in saved
+    priors_reference = saved["priors_reference"]
+    assert isinstance(priors_reference, LogisticDraftModel)
+    assert priors_reference.stage == 0
 
 
 def test_select_removes_stale_weights_when_boosting_is_chosen(tmp_path):

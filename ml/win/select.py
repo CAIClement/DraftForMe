@@ -34,7 +34,7 @@ from ml.win.data import (
     write_split,
 )
 from ml.win.metrics import summary
-from ml.win.models import DraftModel, LogisticDraftModel, candidate_models, select_model
+from ml.win.models import LOGISTIC_C_GRID, DraftModel, LogisticDraftModel, candidate_models, select_model
 
 SPLIT_FILE = "split.json"
 MODEL_FILE = "model.joblib"
@@ -106,6 +106,24 @@ def main(
         {"model": name, "kind": "reference", **summary(validation.labels, probabilities)}
         for name, probabilities in references.predict(validation.drafts).items()
     ]
+
+    # A third reference: public statistics alone, with the model's own off-role fallback. Fitting
+    # it the same way as any other candidate (lowest validation log loss over the C grid) means a
+    # win over the engine cannot just be that fallback beating the engine's flat neutral value.
+    priors_reference, _ = select_model(
+        train,
+        validation,
+        [LogisticDraftModel(0, c, args.seed, prior) for c in LOGISTIC_C_GRID],
+        log=lambda _line: None,
+    )
+    reference_rows.append(
+        {
+            "model": References.PRIORS_ONLY,
+            "kind": "reference",
+            **summary(validation.labels, priors_reference.predict(validation.drafts, validation.tiers)),
+        }
+    )
+
     out("Références :")
     for row in reference_rows:
         out(f"  {row['model']} : log loss {row['log_loss']:.4f}")
@@ -120,7 +138,9 @@ def main(
         "missing_from_engine": champions_missing_from_engine(train.drafts, engine_data),
     }
     (artifacts / VALIDATION_REPORT_FILE).write_text(json.dumps(report, indent=1, ensure_ascii=False), encoding="utf-8")
-    joblib.dump({"model": best, "patch": patch, "seed": args.seed}, artifacts / MODEL_FILE)
+    joblib.dump(
+        {"model": best, "patch": patch, "seed": args.seed, "priors_reference": priors_reference}, artifacts / MODEL_FILE
+    )
 
     weights_path = artifacts / WEIGHTS_FILE
     if isinstance(best, LogisticDraftModel):

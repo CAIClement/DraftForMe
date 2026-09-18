@@ -290,6 +290,10 @@ class References:
 
     ENGINE = "moteur du site"
     WIN_RATES = "winrates des champions"
+    # A third reference, fitted and predicted separately in ml.win.select/test: a priors-only
+    # logistic model (stage 0), using this same off-role fallback. Named here so both commands
+    # and their tests share one spelling.
+    PRIORS_ONLY = "statistiques publiques seules"
 
     def __init__(self, engine_data: EngineData) -> None:
         self.engine_data = engine_data

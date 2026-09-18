@@ -80,14 +80,23 @@ def print_report(report: dict[str, Any], out: Callable[[str], None]) -> None:
             f"(IC 95 % de {by_match['low']:+.4f} à {by_match['high']:+.4f})"
         )
     if report["beats_references"]:
-        out("Verdict : le modèle bat les deux références.")
+        out("Verdict : le modèle bat les trois références.")
     else:
-        out("Verdict : le modèle ne bat pas les deux références.")
+        out("Verdict : le modèle ne bat pas les trois références.")
 
 
-def evaluate(model: Any, references: References, train: Any, test: Any, seed: int) -> dict[str, Any]:
+def reference_predictions(references: References, priors_reference: Any, drafts: np.ndarray, tiers: np.ndarray) -> dict[str, np.ndarray]:
+    """The engine and win-rate references, plus the priors-only reference model's own predictions."""
+    predictions = dict(references.predict(drafts))
+    predictions[References.PRIORS_ONLY] = priors_reference.predict(drafts, tiers)
+    return predictions
+
+
+def evaluate(
+    model: Any, references: References, priors_reference: Any, train: Any, test: Any, seed: int
+) -> dict[str, Any]:
     model_probabilities = model.predict(test.drafts, test.tiers)
-    reference_probabilities = references.predict(test.drafts)
+    reference_probabilities = reference_predictions(references, priors_reference, test.drafts, test.tiers)
 
     by_tier_group = {}
     groups = np.array([TIER_GROUPS[tier] for tier in test.tiers])
@@ -102,7 +111,7 @@ def evaluate(model: Any, references: References, train: Any, test: Any, seed: in
     for known in PARTIAL_KNOWN_PICKS:
         hidden = hide_picks(test.drafts, [PICKS - known] * len(test), rng)
         partial_drafts[str(known)] = {"model": summary(test.labels, model.predict(hidden, test.tiers))}
-        for name, probabilities in references.predict(hidden).items():
+        for name, probabilities in reference_predictions(references, priors_reference, hidden, test.tiers).items():
             partial_drafts[str(known)][name] = summary(test.labels, probabilities)
 
     comparisons_by_match = {
@@ -181,6 +190,13 @@ def main(
         out(f"{model_path} est illisible ({error}). Relance python -m ml.win.select --db <base>.")
         return 5
     model = loaded["model"]  # a KeyError here is a real defect, not corruption
+    if "priors_reference" not in loaded:
+        out(
+            f"{model_path} ne contient pas la référence statistiques publiques seules "
+            "(fichier produit avant son ajout). Relance python -m ml.win.select --db <base>."
+        )
+        return 5
+    priors_reference = loaded["priors_reference"]
 
     references = References(engine_data).fit(train.drafts, train.labels)
     report = {
@@ -188,7 +204,7 @@ def main(
         "patch": meta["patch"],
         "seed": meta["seed"],
         "train_matches": len(train),
-        **evaluate(model, references, train, test, meta["seed"]),
+        **evaluate(model, references, priors_reference, train, test, meta["seed"]),
     }
     report_path.write_text(json.dumps(report, indent=1, ensure_ascii=False), encoding="utf-8")
 
