@@ -129,6 +129,24 @@ def test_boosting_model_learns_a_dominant_champion():
     assert summary(validation.labels, probabilities)["log_loss"] < constant["log_loss"] - 0.02
 
 
+def test_boosting_prior_clearly_beats_no_prior_when_matches_follow_public_rates_only(tmp_path):
+    """The boosting analogue of the logistic prior-ablation test: guards `BoostingDraftModel._matrix`
+    against silently dropping `self.prior.features(drafts)` from its design matrix."""
+    engine = prior_engine_data(tmp_path)
+    prior = ChampionPrior(engine)
+    drafts, labels = prior_world(prior, count=300, seed=21)
+    train, validation = dataset(drafts[:150], labels[:150]), dataset(drafts[150:], labels[150:])
+    params = {"learning_rate": 0.1, "max_leaf_nodes": 15, "l2_regularization": 1.0}
+
+    with_prior = BoostingDraftModel(params, seed=0, prior=prior).fit(train)
+    without_prior = BoostingDraftModel(params, seed=0, prior=neutral_prior()).fit(train)
+
+    loss_with = summary(validation.labels, with_prior.predict(validation.drafts, validation.tiers))["log_loss"]
+    loss_without = summary(validation.labels, without_prior.predict(validation.drafts, validation.tiers))["log_loss"]
+
+    assert loss_with < loss_without - 0.02
+
+
 def test_select_model_keeps_the_lowest_validation_log_loss_and_reports_every_candidate():
     drafts, labels = synergy_world(5000, seed=5)
     train, validation = dataset(drafts[:4000], labels[:4000]), dataset(drafts[4000:], labels[4000:])
