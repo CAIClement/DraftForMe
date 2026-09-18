@@ -92,7 +92,18 @@ class LogisticDraftModel:
             "c": self.c,
             "intercept": float(self.model.intercept_[0]),
             "features": features,
+            "prior_table": self._prior_table(),
         }
+
+    def _prior_table(self) -> list[dict[str, Any]]:
+        """Every champion key the prior knows, with the log-odds it uses in each role (its own
+        off-role fallback already applied), so project 3 can recompute the prior features without
+        `ChampionPrior` or `supabase/seed.sql`."""
+        return [
+            {"champion": key, "role": role, "log_odds": self.prior.log_odds(key, role)}
+            for key in sorted(self.prior.data.slug_by_key)
+            for role in ROLES
+        ]
 
     def top_weights(self, count: int = 10) -> list[dict[str, Any]]:
         features = self.weights()["features"]

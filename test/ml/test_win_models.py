@@ -1,10 +1,11 @@
 import json
+import math
 
 import numpy as np
 
 from ml.win.baselines import ChampionPrior, References, load_engine_data
 from ml.win.data import ROLES, Dataset
-from ml.win.encoding import hide_picks
+from ml.win.encoding import draft_terms, hide_picks
 from ml.win.metrics import summary
 from ml.win.models import AGGREGATE_FOLDS, BoostingDraftModel, LogisticDraftModel, candidate_models, select_model
 from win_fixtures import neutral_prior, random_drafts, write_seed_sql
@@ -104,6 +105,51 @@ def test_weights_export_names_the_six_prior_features():
     for role in ROLES:
         assert ["prior", role] in keys
     assert ["prior", "total"] in keys
+
+
+def manual_predict(weights, draft, tier):
+    """Recomputes a probability from an exported `weights()` dict alone: no scikit-learn, no
+    `ChampionPrior`. `draft_terms` is the pure key-generation logic a non-Python consumer would
+    reimplement too; the point of the test is that the *numbers* (feature weights and the
+    per-champion prior log-odds) come entirely from the JSON.
+    """
+    feature_lookup = {tuple(feature["key"]): feature["weight"] for feature in weights["features"]}
+    prior_lookup = {(row["champion"], row["role"]): row["log_odds"] for row in weights["prior_table"]}
+
+    total = weights["intercept"]
+    for key, sign in draft_terms(list(draft), tier, weights["stage"]):
+        weight = feature_lookup.get(key)
+        if weight is not None:
+            total += sign * weight
+
+    role_diffs = []
+    for role_index, role in enumerate(ROLES):
+        blue, red = int(draft[role_index]), int(draft[5 + role_index])
+        blue_log_odds = prior_lookup.get((blue, role), 0.0) if blue else 0.0
+        red_log_odds = prior_lookup.get((red, role), 0.0) if red else 0.0
+        diff = blue_log_odds - red_log_odds
+        role_diffs.append(diff)
+        total += diff * feature_lookup[("prior", role)]
+    total += sum(role_diffs) * feature_lookup[("prior", "total")]
+
+    return 1 / (1 + math.exp(-total))
+
+
+def test_weights_export_lets_you_recompute_predictions_by_lookups_alone(tmp_path):
+    engine = prior_engine_data(tmp_path)
+    prior = ChampionPrior(engine)
+    drafts, labels = prior_world(prior, count=600, seed=40)
+    model = LogisticDraftModel(2, 1.0, seed=0, prior=prior).fit(dataset(drafts, labels))
+    weights = json.loads(json.dumps(model.weights()))
+
+    sample = drafts[:5].copy()
+    tiers = np.array(["GOLD"] * 5)
+    partial = hide_picks(sample, [4, 0, 6, 2, 8], np.random.default_rng(0))
+
+    expected = model.predict(partial, tiers)
+    manual = np.array([manual_predict(weights, draft, tier) for draft, tier in zip(partial, tiers)])
+
+    assert np.allclose(manual, expected, atol=1e-9)
 
 
 def test_logistic_model_is_deterministic_for_a_seed():
