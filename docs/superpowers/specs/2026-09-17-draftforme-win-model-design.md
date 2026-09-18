@@ -79,7 +79,7 @@ Per draft this is six numbers, all antisymmetric like the rest of the encoding:
 
 A champion the statistics do not rank in the role it was played falls back to its mean across the roles they do rank it in, then to neutral (log-odds 0). A hidden pick contributes 0.
 
-**Why.** A first real run on 11,124 collected matches showed the rule engine beating the learned model (test log loss 0.6881 against 0.6910, AUC 0.5465 against 0.5206), while the same win rates recomputed from the collected matches were clearly worse (0.7088). The gap was not the rules: it was the evidence behind them. Handing the model those public rates makes the question a fair one, and changes what a win means: not "do public statistics beat the rules", but **"does learning from real drafts add anything on top of public statistics"**. The references are unchanged, so the comparison still answers the project's original question too.
+**Why.** A first real run on 11,124 collected matches showed the rule engine beating the learned model (test log loss 0.6881 against 0.6910, AUC 0.5465 against 0.5206), while the same win rates recomputed from the collected matches were clearly worse (0.7088). The gap was not the rules: it was the evidence behind them. Handing the model those public rates makes the question a fair one, and changes what a win means: not "do public statistics beat the rules", but **"does learning from real drafts add anything on top of public statistics"**. The two original references are unchanged, so the comparison still answers the project's original question too, and a third, public statistics alone, is added so the new question gets its own answer (see References).
 
 ### Logistic regression stages
 
