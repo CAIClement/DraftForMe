@@ -153,8 +153,11 @@ def champions_missing_from_engine(drafts: np.ndarray, data: EngineData) -> int:
 # --- champion priors from public statistics -----------------------------------------
 
 
+MIN_RATE = 1e-4
+
+
 def win_rate_log_odds(win_rate_percentage: float) -> float:
-    rate = win_rate_percentage / 100.0
+    rate = min(max(win_rate_percentage / 100.0, MIN_RATE), 1 - MIN_RATE)
     return math.log(rate / (1 - rate))
 
 
@@ -167,6 +170,7 @@ class ChampionPrior:
 
     def __init__(self, data: EngineData) -> None:
         self.data = data
+        self._cache: dict[tuple, np.ndarray] = {}
 
     def log_odds(self, champion_key: int, role: str) -> float:
         """Log-odds of the champion's public win rate in `role`.
@@ -187,7 +191,20 @@ class ChampionPrior:
         return float(np.mean(ranked)) if ranked else 0.0
 
     def features(self, drafts: np.ndarray) -> np.ndarray:
-        """Per draft: blue minus red log-odds for each of the five roles, then their sum."""
+        """Per draft: blue minus red log-odds for each of the five roles, then their sum.
+
+        Candidate models are fit repeatedly on byte-identical masked drafts (every stage and C
+        value shares the same seed), so the result is cached by the array's shape and bytes. The
+        cache returns a copy: callers must not be able to mutate what is stored.
+        """
+        key = (drafts.shape, drafts.dtype.str, drafts.tobytes())
+        cached = self._cache.get(key)
+        if cached is None:
+            cached = self._compute_features(drafts)
+            self._cache[key] = cached
+        return cached.copy()
+
+    def _compute_features(self, drafts: np.ndarray) -> np.ndarray:
         result = np.zeros((len(drafts), 6), dtype=np.float64)
         for row, draft in enumerate(drafts):
             for role_index, role in enumerate(ROLES):

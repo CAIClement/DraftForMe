@@ -178,6 +178,14 @@ def test_the_win_rate_reference_learns_a_dominant_champion(tmp_path):
 # --- champion priors from public statistics -----------------------------------------
 
 
+def test_win_rate_log_odds_clips_extreme_rates_to_stay_finite():
+    low = win_rate_log_odds(0.0)
+    high = win_rate_log_odds(100.0)
+
+    assert math.isfinite(low) and math.isfinite(high)
+    assert low < 0 < high
+
+
 def prior_fixture(tmp_path):
     # mid: ahri ranked at 60 %, zed at 40 %. top: only garen, at 55 %. jungle/adc/support unranked.
     seed = write_seed_sql(
@@ -227,3 +235,37 @@ def test_prior_features_treat_a_hidden_or_unknown_pick_as_zero(tmp_path):
     assert features[0, 0] == pytest.approx(win_rate_log_odds(60.0))
     assert features[0, 1:5].sum() == 0
     assert features[1] == pytest.approx([0.0] * 6)
+
+
+def test_features_are_cached_and_computed_once_per_distinct_input(tmp_path, monkeypatch):
+    prior = prior_fixture(tmp_path)
+    calls = []
+    original = ChampionPrior._compute_features
+
+    def counting(self, drafts):
+        calls.append(drafts.shape)
+        return original(self, drafts)
+
+    monkeypatch.setattr(ChampionPrior, "_compute_features", counting)
+
+    drafts_a = np.array([[103, 0, 0, 61, 0, 238, 0, 0, 0, 0]])
+    drafts_b = drafts_a.copy()  # same content, different array object
+    drafts_c = np.array([[86, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
+
+    for _ in range(5):
+        prior.features(drafts_a)
+    prior.features(drafts_b)
+    prior.features(drafts_c)
+
+    assert len(calls) == 2  # drafts_a/drafts_b share one computation, drafts_c gets its own
+
+
+def test_features_cache_returns_a_copy_callers_cannot_corrupt(tmp_path):
+    prior = prior_fixture(tmp_path)
+    drafts = np.array([[103, 0, 0, 61, 0, 238, 0, 0, 0, 0]])
+
+    first = prior.features(drafts)
+    first[0, 0] = 12345.0
+    second = prior.features(drafts)
+
+    assert second[0, 0] != 12345.0
