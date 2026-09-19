@@ -3,9 +3,9 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 const VARIANTS = {
-  primary: "bg-ink text-white shadow-sm hover:bg-stone-800",
+  primary: "bg-accent text-on-accent shadow-sm hover:bg-accent-pale",
   secondary: "border border-rule bg-surface text-ink hover:border-ink-faint hover:bg-surface-sunk",
-  inverse: "bg-white text-ink hover:bg-stone-100"
+  inverse: "bg-band-ink text-band hover:bg-accent-pale"
 } as const;
 
 const SIZES = {

@@ -44,8 +44,8 @@ export function TrustBar({
 function Tile({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <dt className="mb-1 text-xs text-stone-400">{label}</dt>
-      <dd className="text-xl font-semibold tabular-nums tracking-tight text-white">{value}</dd>
+      <dt className="mb-1 text-xs text-band-muted">{label}</dt>
+      <dd className="text-xl font-semibold tabular-nums tracking-tight text-band-ink">{value}</dd>
     </div>
   );
 }

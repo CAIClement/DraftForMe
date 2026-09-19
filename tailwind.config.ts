@@ -17,7 +17,13 @@ const config: Config = {
         "accent-wash": "var(--accent-wash)",
         "accent-deep": "var(--accent-deep)",
         "accent-pale": "var(--accent-pale)",
-        "paper-deep": "var(--paper-deep)"
+        "paper-deep": "var(--paper-deep)",
+        "on-accent": "var(--on-accent)",
+        spark: "var(--spark)",
+        band: "var(--band)",
+        "band-ink": "var(--band-ink)",
+        "band-muted": "var(--band-muted)",
+        "band-rule": "var(--band-rule)"
       }
     }
   },

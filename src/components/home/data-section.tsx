@@ -21,20 +21,20 @@ export function DataSection({
   updatedAt: string | null;
 }) {
   return (
-    <section aria-labelledby="data-title" className="bg-ink px-4 py-20 text-stone-100 sm:px-6 sm:py-28">
+    <section aria-labelledby="data-title" className="bg-band px-4 py-20 text-band-ink sm:px-6 sm:py-28">
       <div className="mx-auto grid max-w-6xl items-center gap-12 lg:grid-cols-2 lg:gap-20">
         <div>
           <Eyebrow tone="inverse">Données</Eyebrow>
           <SectionTitle id="data-title" lead="Des chiffres réels," follow="rien d'estimé." tone="inverse" />
-          <p className="max-w-[52ch] text-base leading-relaxed text-stone-300">
+          <p className="max-w-[52ch] text-base leading-relaxed text-band-muted">
             Chaque nombre affiché provient de la base : taux de victoire, volume de parties, relations de counter.
             Lorsqu'une donnée manque, elle est retirée de l'écran plutôt que remplacée par une valeur plausible.
           </p>
           <ul className="mt-8 grid gap-6 sm:grid-cols-3">
             {POINTS.map((point) => (
-              <li key={point.title} className="border-t border-white/15 pt-4">
-                <strong className="block text-sm font-semibold text-white">{point.title}</strong>
-                <span className="text-sm text-stone-400">{point.body}</span>
+              <li key={point.title} className="border-t border-band-rule pt-4">
+                <strong className="block text-sm font-semibold text-band-ink">{point.title}</strong>
+                <span className="text-sm text-band-muted">{point.body}</span>
               </li>
             ))}
           </ul>
@@ -42,7 +42,7 @@ export function DataSection({
 
         {/* Only rendered when the index was readable; its tiles are real or absent. */}
         {rankedChampions !== null && (
-          <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-6 sm:p-8">
+          <div className="rounded-2xl border border-band-rule bg-surface/40 p-6 sm:p-8">
             <TrustBar
               appearances={appearances}
               rankedChampions={rankedChampions}

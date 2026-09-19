@@ -31,7 +31,7 @@ export function SectionTitle({
     >
       {lead}
       {follow && (
-        <span className={`block ${tone === "default" ? "text-ink-faint" : "text-stone-400"}`}>{follow}</span>
+        <span className={`block ${tone === "default" ? "text-ink-faint" : "text-band-muted"}`}>{follow}</span>
       )}
     </h2>
   );

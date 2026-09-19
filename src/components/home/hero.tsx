@@ -57,7 +57,7 @@ export function Hero({
           </ul>
         </div>
 
-        <div className="rounded-2xl border border-rule bg-surface p-3 shadow-[0_1px_2px_rgb(28_25_23/0.04),0_12px_32px_-12px_rgb(28_25_23/0.12)] sm:p-4">
+        <div className="rounded-2xl border border-rule bg-surface p-3 shadow-[0_1px_2px_var(--shadow),0_12px_32px_-12px_var(--shadow)] sm:p-4">
           <div className="mb-3 flex items-center justify-between gap-3 px-1">
             <span className="text-xs font-medium text-ink-muted">{caption ? `Exemple réel · ${caption}` : "Exemple"}</span>
             <span className="rounded-full border border-rule px-2 py-0.5 text-[11px] text-ink-faint">Lecture seule</span>

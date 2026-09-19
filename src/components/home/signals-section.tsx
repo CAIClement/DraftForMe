@@ -50,7 +50,7 @@ export function SignalsSection({ top }: { top: Recommendation | undefined }) {
 
         {/* The weights below are the example's real ones, straight from the engine. */}
         {top && (
-          <div className="rounded-2xl border border-rule bg-surface p-6 shadow-[0_12px_32px_-16px_rgb(28_25_23/0.12)] sm:p-8">
+          <div className="rounded-2xl border border-rule bg-surface p-6 shadow-[0_12px_32px_-16px_var(--shadow)] sm:p-8">
             <div className="mb-6 flex items-center gap-3">
               <ChampionAvatar name={top.championName} imageUrl={top.championImageUrl} size={44} />
               <span>
