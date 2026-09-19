@@ -17,7 +17,7 @@ export function RoleSelector({ role, onChange }: { role: string; onChange: (role
           onClick={() => onChange(entry.id)}
           className={
             entry.id === role
-              ? "flex-1 rounded-lg border border-accent bg-accent py-2 text-xs font-semibold text-white"
+              ? "flex-1 rounded-lg border border-accent bg-accent py-2 text-xs font-semibold text-on-accent"
               : "flex-1 rounded-lg border border-rule py-2 text-xs font-semibold text-ink-muted hover:border-ink-faint"
           }
         >

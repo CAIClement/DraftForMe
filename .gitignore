@@ -18,4 +18,5 @@ ml/artifacts/matches*.sqlite
 ml/artifacts/matches*.sqlite-journal
 ml/artifacts/matches*.sqlite-wal
 ml/artifacts/matches*.sqlite-shm
-ml/artifacts/win/
+ml/artifacts/win*/
+.vercel

@@ -3,30 +3,73 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: light;
+  color-scheme: dark;
 
-  --paper: #f7f4ef;
-  --surface: #ffffff;
-  --surface-sunk: #f2efe9;
-  --ink: #14171a;
-  --ink-muted: #5e574c;
-  --ink-faint: #8a8378;
-  --rule: #e0dbd2;
-  --rule-soft: #efece6;
-  --accent: #0f766e;
-  --accent-wash: #f2faf8;
+  /*
+   * Hextech: League's deep navy grounds with gold as the accent and a cyan
+   * spark for focus. Ink is a warm parchment white; every text colour clears
+   * 4.5:1 on every ground below. Gold carries the primary actions, with navy
+   * text on it (`on-accent`).
+   */
+  --paper: #0a1428;
+  --paper-deep: #0d1a31;
+  --surface: #111e38;
+  --surface-sunk: #0c172d;
+  --ink: #f0e6d2;
+  --ink-muted: #c4bdac;
+  --ink-faint: #8e8a7f;
+  --rule: #25375a;
+  --rule-soft: #1a2946;
+  --accent: #c8aa6e;
+  --accent-deep: #a88a4e;
+  --accent-pale: #e8d5a8;
+  --accent-wash: #1c2338;
+  --on-accent: #0a1428;
+  --spark: #0ac8b9;
+
+  /* The data band: a darker strip that sets the numbers apart from the page. */
+  --band: #050c1a;
+  --band-ink: #f0e6d2;
+  --band-muted: #a09b8c;
+  --band-rule: rgb(200 170 110 / 0.2);
+
+  --shadow: rgb(0 0 0 / 0.45);
 }
 
 body {
-  min-height: 100vh;
+  min-height: 100dvh;
   margin: 0;
   background: var(--paper);
   color: var(--ink);
-  font-family: var(--font-body, system-ui, sans-serif);
+  font-family: var(--font-geist), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
 button,
 input,
 select {
   font: inherit;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+:focus-visible {
+  outline: 2px solid var(--spark);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
 }
