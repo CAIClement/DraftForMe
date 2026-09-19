@@ -22,7 +22,7 @@ python -m pytest test/ml -q  # every Python test, about two minutes
 | Path | Responsibility |
 |---|---|
 | `src/lib/recommendation/` | The scoring engine (`engine.ts`, `counter.ts`). Pure functions, fully unit-tested |
-| `src/app/page.tsx`, `src/app/api/recommend/route.ts` | Both load `champion_stats` and `counter_relations` and call the engine; keep their queries identical |
+| `src/lib/draft/load-example.ts`, `src/app/api/recommend/route.ts` | The home page's example and the API both load `champion_stats` and `counter_relations` and call the engine; keep their queries identical |
 | `src/components/home/`, `src/components/draft/`, `src/components/ui/` | Home page sections, the draft tool, shared primitives |
 | `src/app/globals.css` | The design tokens (colour palette) as CSS variables, mapped in `tailwind.config.ts` |
 | `supabase/migrations/` | Schema, applied in order |
