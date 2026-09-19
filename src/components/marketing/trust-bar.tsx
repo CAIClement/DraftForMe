@@ -29,35 +29,23 @@ export function TrustBar({
   updatedAt: string | null;
 }) {
   return (
-    <div className="mt-5 flex gap-7 rounded-xl bg-ink px-4 py-3.5 text-[#cdd6d3]">
-      {appearances !== null && (
-        <div>
-          <span className="block text-[9.5px] uppercase tracking-widest text-[#7d8a86]">Apparitions analysées</span>
-          <b className="text-base font-bold tracking-tight text-white">{number.format(appearances)}</b>
-        </div>
-      )}
-      {rankedChampions !== null && (
-        <div>
-          <span className="block text-[9.5px] uppercase tracking-widest text-[#7d8a86]">Paires champion / rôle</span>
-          <b className="text-base font-bold tracking-tight text-white">{rankedChampions}</b>
-        </div>
-      )}
-      {patch !== null && (
-        <div>
-          <span className="block text-[9.5px] uppercase tracking-widest text-[#7d8a86]">Patch</span>
-          <b className="text-base font-bold tracking-tight text-white">{patch}</b>
-        </div>
-      )}
-      <div>
-        <span className="block text-[9.5px] uppercase tracking-widest text-[#7d8a86]">Région / élo</span>
-        <b className="text-base font-bold tracking-tight text-white">{context}</b>
-      </div>
-      {updatedAt !== null && (
-        <div>
-          <span className="block text-[9.5px] uppercase tracking-widest text-[#7d8a86]">À jour au</span>
-          <b className="text-base font-bold tracking-tight text-white">{date.format(new Date(updatedAt))}</b>
-        </div>
-      )}
+    <dl className="grid grid-cols-2 gap-x-6 gap-y-5">
+      {appearances !== null && <Tile label="Apparitions analysées" value={number.format(appearances)} />}
+      {rankedChampions !== null && <Tile label="Paires champion / rôle" value={String(rankedChampions)} />}
+      {patch !== null && <Tile label="Patch" value={patch} />}
+      <Tile label="Région / élo" value={context} />
+      {updatedAt !== null && <Tile label="À jour au" value={date.format(new Date(updatedAt))} />}
+    </dl>
+  );
+}
+
+// Laid out for the landing page's dark data band: the value inherits the text
+// colour of the panel it sits in.
+function Tile({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <dt className="mb-1 text-xs text-stone-400">{label}</dt>
+      <dd className="text-xl font-semibold tabular-nums tracking-tight text-white">{value}</dd>
     </div>
   );
 }

@@ -14,7 +14,10 @@ const config: Config = {
         rule: "var(--rule)",
         "rule-soft": "var(--rule-soft)",
         accent: "var(--accent)",
-        "accent-wash": "var(--accent-wash)"
+        "accent-wash": "var(--accent-wash)",
+        "accent-deep": "var(--accent-deep)",
+        "accent-pale": "var(--accent-pale)",
+        "paper-deep": "var(--paper-deep)"
       }
     }
   },

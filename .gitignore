@@ -14,3 +14,4 @@ __pycache__/
 .venv-ml/
 ml/artifacts/training_dataset.csv
 .scratch/
+.vercel
