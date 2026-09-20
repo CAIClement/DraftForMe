@@ -3,8 +3,9 @@ import { Hero } from "@/components/marketing/hero";
 import { SiteFooter } from "@/components/marketing/site-footer";
 import { SiteHeader } from "@/components/marketing/site-header";
 import { TrustBar } from "@/components/marketing/trust-bar";
-import { DraftTool } from "@/components/draft/draft-tool";
+import { DraftBoard } from "@/components/draft/draft-board";
 import { mapCounterRelationRows, mapStatsRowsToChampionStats } from "@/lib/data/normalize";
+import { createDraftState } from "@/lib/draft/draft-state";
 import { DEFAULT_EXAMPLE } from "@/lib/draft/default-example";
 import { recommendChampions } from "@/lib/recommendation/engine";
 import type { Recommendation } from "@/lib/recommendation/types";
@@ -108,7 +109,7 @@ async function loadExample() {
     bannedChampionIds: [],
     alreadyPickedChampionIds: DEFAULT_EXAMPLE.enemyPicks.map((pick) => pick.championId),
     priority: 50,
-    topN: 3,
+    topN: 4,
     counterRelations: mapCounterRelationRows((relationRows ?? []) as unknown as RelationRow[]),
     // The dossier names enemy picks, which need not be ranked in the
     // candidate's own role. Without the full table the engine falls back to the
@@ -194,22 +195,30 @@ export default async function HomePage() {
     <main>
       <SiteHeader context={headerContext} />
 
-      <div className="mx-auto max-w-5xl px-6 py-7">
+      <div className="mx-auto max-w-5xl px-6 pt-7">
         <Hero />
+      </div>
 
-        {example.recommendations.length === 0 ? (
-          <p className="rounded-xl border border-rule bg-surface p-6 text-center text-sm text-ink-muted">
-            Les données de draft ne sont pas disponibles pour le moment. Réessayez dans un instant.
-          </p>
-        ) : (
-          <DraftTool
-            champions={example.champions}
-            initialRole={DEFAULT_EXAMPLE.role}
-            initialEnemyPicks={DEFAULT_EXAMPLE.enemyPicks.map((pick) => pick.championId)}
-            initialRecommendations={example.recommendations}
-          />
-        )}
+      <div data-surface="draft" className="w-full bg-paper py-7">
+        <div className="mx-auto max-w-5xl px-6">
+          {example.recommendations.length === 0 ? (
+            <p className="rounded-xl border border-rule bg-surface p-6 text-center text-sm text-ink-muted">
+              Les données de draft ne sont pas disponibles pour le moment. Réessayez dans un instant.
+            </p>
+          ) : (
+            <DraftBoard
+              champions={example.champions}
+              initialDraft={createDraftState({
+                yourRole: DEFAULT_EXAMPLE.role,
+                enemyPicks: DEFAULT_EXAMPLE.enemyPicks
+              })}
+              initialRecommendations={example.recommendations}
+            />
+          )}
+        </div>
+      </div>
 
+      <div className="mx-auto max-w-5xl px-6 pb-7">
         <Explainer />
         {example.rankedChampions !== null && (
           <TrustBar
