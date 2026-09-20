@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { recommendChampions } from "./engine";
-import type { ChampionStats, CounterRelation, PlayerPoolEntry } from "./types";
+import type { ChampionStats, CounterRelation, EnemyPick, PlayerPoolEntry } from "./types";
 
 const stats: ChampionStats[] = [
   {
@@ -141,7 +141,7 @@ const counterStats: ChampionStats[] = [
 ];
 
 describe("counter relations in recommendations", () => {
-  function run(enemyPicks: string[]) {
+  function run(enemyPicks: EnemyPick[]) {
     return recommendChampions({
       stats: counterStats,
       playerPool: [],
@@ -183,7 +183,7 @@ describe("counter relations in recommendations", () => {
   });
 
   it("marks the counter factor unavailable when no relation is known", () => {
-    const result = run(["orianna"]);
+    const result = run([{ championId: "orianna", role: "mid" }]);
     const ahri = result.find((entry) => entry.championId === "ahri");
     const counter = ahri?.explanation.factors.find((factor) => factor.key === "counter");
 
@@ -191,7 +191,7 @@ describe("counter relations in recommendations", () => {
   });
 
   it("ranks a champion that counters the enemy above one the enemy counters", () => {
-    const result = run(["zed"]);
+    const result = run([{ championId: "zed", role: "mid" }]);
     const orianna = result.findIndex((entry) => entry.championId === "orianna");
     const ahri = result.findIndex((entry) => entry.championId === "ahri");
 
@@ -202,7 +202,7 @@ describe("counter relations in recommendations", () => {
   });
 
   it("gives the countering champion a counter score above neutral", () => {
-    const result = run(["zed"]);
+    const result = run([{ championId: "zed", role: "mid" }]);
     const orianna = result.find((entry) => entry.championId === "orianna");
 
     expect(orianna?.counterScore).toBeGreaterThan(50);
@@ -215,7 +215,7 @@ describe("counter relations in recommendations", () => {
     const result = recommendChampions({
       stats: counterStats,
       playerPool: [],
-      enemyPicks: ["kassadin"],
+      enemyPicks: [{ championId: "kassadin", role: "mid" }],
       bannedChampionIds: [],
       alreadyPickedChampionIds: [],
       priority: 50,
@@ -231,7 +231,7 @@ describe("counter relations in recommendations", () => {
   });
 
   it("falls back to the candidates' own names when no champion table is supplied", () => {
-    const result = run(["zed"]);
+    const result = run([{ championId: "zed", role: "mid" }]);
     const orianna = result.find((entry) => entry.championId === "orianna");
     const counter = orianna?.explanation.factors.find((factor) => factor.key === "counter");
 
@@ -239,7 +239,7 @@ describe("counter relations in recommendations", () => {
   });
 
   it("names the countered champion in the factor detail, not its id", () => {
-    const result = run(["zed"]);
+    const result = run([{ championId: "zed", role: "mid" }]);
     const orianna = result.find((entry) => entry.championId === "orianna");
     const counter = orianna?.explanation.factors.find((factor) => factor.key === "counter");
 
@@ -254,7 +254,7 @@ describe("counter relations in recommendations", () => {
   });
 
   it("says the matchup could not be assessed when enemies are known but unmatched", () => {
-    const result = run(["orianna"]);
+    const result = run([{ championId: "orianna", role: "mid" }]);
     const ahri = result.find((entry) => entry.championId === "ahri");
     const counter = ahri?.explanation.factors.find((factor) => factor.key === "counter");
 
@@ -264,7 +264,7 @@ describe("counter relations in recommendations", () => {
   });
 
   it("warns when no counter relation covers the enemy picks", () => {
-    const result = run(["orianna"]);
+    const result = run([{ championId: "orianna", role: "mid" }]);
     const ahri = result.find((entry) => entry.championId === "ahri");
 
     expect(ahri?.explanation.warnings).toContain(
@@ -279,7 +279,7 @@ describe("counter relations in recommendations", () => {
     const result = recommendChampions({
       stats: counterStats,
       playerPool: [],
-      enemyPicks: ["zed"],
+      enemyPicks: [{ championId: "zed", role: "mid" }],
       bannedChampionIds: [],
       alreadyPickedChampionIds: [],
       priority: 50,
@@ -300,12 +300,65 @@ describe("counter relations in recommendations", () => {
   // when one of those arrays is non-empty, but that invariant lives in another
   // module — this pins it from the consumer's side.
   it("never produces an empty detail for a factor it marks available", () => {
-    for (const enemyPicks of [[], ["zed"], ["orianna"], ["zed", "orianna"], ["unknown"]]) {
+    const cases: EnemyPick[][] = [
+      [],
+      [{ championId: "zed", role: "mid" }],
+      [{ championId: "orianna", role: "mid" }],
+      [
+        { championId: "zed", role: "mid" },
+        { championId: "orianna", role: "mid" }
+      ],
+      [{ championId: "unknown", role: "mid" }]
+    ];
+
+    for (const enemyPicks of cases) {
+      const label = enemyPicks.map((pick) => pick.championId).join(", ");
+
       for (const recommendation of run(enemyPicks)) {
         const counter = recommendation.explanation.factors.find((factor) => factor.key === "counter");
 
-        expect(counter?.detail, `${recommendation.championId} vs [${enemyPicks}]`).not.toBe("");
+        expect(counter?.detail, `${recommendation.championId} vs [${label}]`).not.toBe("");
       }
     }
+  });
+
+  it("names the direct opponent first in the matchup detail", () => {
+    const [top] = recommendChampions({
+      stats: counterStats,
+      playerPool: [],
+      enemyPicks: [
+        { championId: "ahri", role: "top" },
+        { championId: "zed", role: "mid" }
+      ],
+      bannedChampionIds: [],
+      alreadyPickedChampionIds: [],
+      priority: 50,
+      topN: 1,
+      counterRelations: relations,
+      draftingRole: "mid"
+    });
+
+    const counter = top.explanation.factors.find((factor) => factor.key === "counter");
+
+    expect(counter?.detail).toMatch(/zed/i);
+    expect(counter?.detail).toContain("compte double");
+  });
+
+  it("says nothing about doubling when no enemy stands on the drafted lane", () => {
+    const [top] = recommendChampions({
+      stats: counterStats,
+      playerPool: [],
+      enemyPicks: [{ championId: "zed", role: "top" }],
+      bannedChampionIds: [],
+      alreadyPickedChampionIds: [],
+      priority: 50,
+      topN: 1,
+      counterRelations: relations,
+      draftingRole: "mid"
+    });
+
+    const counter = top.explanation.factors.find((factor) => factor.key === "counter");
+
+    expect(counter?.detail).not.toContain("compte double");
   });
 });

@@ -77,11 +77,30 @@ function buildSummary(meta: number, player: number, counter: number, hasEnemy: b
 // Champion display names, not ids: this string is rendered verbatim in the
 // dossier, and `beats`/`losesTo` never reach `Recommendation`, so the surface
 // layer has no way to recover a name we drop here.
-function counterDetail(counter: CounterVerdict, names: Map<string, string>): string {
+//
+// The direct opponent leads the sentence, because it is the matchup the board
+// puts under the player's nose -- and because it is the one that was weighted.
+function counterDetail(
+  counter: CounterVerdict,
+  names: Map<string, string>,
+  directOpponentId: string | null
+): string {
   const label = (championId: string) => names.get(championId) ?? championId;
+  const first = (ids: string[]) =>
+    directOpponentId !== null && ids.includes(directOpponentId)
+      ? [directOpponentId, ...ids.filter((id) => id !== directOpponentId)]
+      : ids;
+
   const parts: string[] = [];
-  if (counter.beats.length > 0) parts.push(`Prend l'avantage sur ${counter.beats.map(label).join(", ")}.`);
-  if (counter.losesTo.length > 0) parts.push(`En difficulté contre ${counter.losesTo.map(label).join(", ")}.`);
+  if (counter.beats.length > 0) parts.push(`Prend l'avantage sur ${first(counter.beats).map(label).join(", ")}.`);
+  if (counter.losesTo.length > 0) parts.push(`En difficulté contre ${first(counter.losesTo).map(label).join(", ")}.`);
+
+  // The factor of two is a modelling choice, not something the data measured.
+  // It is stated wherever its effect is visible.
+  if (directOpponentId !== null) {
+    parts.push(`${label(directOpponentId)}, votre adversaire direct, compte double dans ce calcul.`);
+  }
+
   return parts.join(" ");
 }
 
@@ -90,6 +109,10 @@ export function recommendChampions(input: RecommendInput): Recommendation[] {
   const picked = new Set(input.alreadyPickedChampionIds);
   const relations = input.counterRelations ?? [];
   const hasEnemy = input.enemyPicks.length > 0;
+  const directOpponentId =
+    input.draftingRole === undefined
+      ? null
+      : (input.enemyPicks.find((pick) => pick.role === input.draftingRole)?.championId ?? null);
   const hasPool = input.playerPool.some((entry) => (entry.games ?? 0) >= MIN_GAMES_FOR_POOL);
   const weights = computeWeights(input.priority, hasEnemy, hasPool);
 
@@ -122,7 +145,8 @@ export function recommendChampions(input: RecommendInput): Recommendation[] {
       const counter = scoreCounter(
         champion.championId,
         input.enemyPicks,
-        relationsByRole.get(champion.role) ?? []
+        relationsByRole.get(champion.role) ?? [],
+        input.draftingRole
       );
       const total = meta * weights.meta + player * weights.player + counter.score * weights.counter;
       const warnings: string[] = [];
@@ -180,7 +204,7 @@ export function recommendChampions(input: RecommendInput): Recommendation[] {
               // picked yet and when enemies are known but no relation covers
               // them; one wording cannot honestly serve both.
               detail: counter.available
-                ? counterDetail(counter, names)
+                ? counterDetail(counter, names, directOpponentId)
                 : hasEnemy
                   ? "Le matchup n'a pas pu être évalué : aucun counter connu pour ces picks adverses."
                   : "Ajoutez un pick adverse pour évaluer le matchup.",
