@@ -159,7 +159,11 @@ export function DraftBoard({
               : (byId.get(championId) ?? { id: championId, name: championId });
 
           return (
-            <div key={role} className="relative">
+            <div
+              key={role}
+              className="relative slot-rise"
+              style={{ animationDelay: `${ROLES.indexOf(role) * 40}ms` }}
+            >
               <DraftSlot
                 side={side}
                 role={role}
@@ -196,7 +200,11 @@ export function DraftBoard({
       <div className="grid gap-4 sm:grid-cols-[186px_1fr_186px]">
         {column("ally")}
 
-        <section role="group" aria-label="Carte de la Faille" className="relative">
+        <section
+          role="group"
+          aria-label="Carte de la Faille"
+          className={`relative ${isLoading ? "board-sweep opacity-80 saturate-[0.6] transition-[opacity,filter]" : ""}`}
+        >
           <RiftMap
             state={draft}
             champions={champions}

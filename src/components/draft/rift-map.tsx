@@ -84,20 +84,29 @@ export function RiftMap({
           const pinName = isYourLane ? (recommended?.championName ?? null) : (champion?.name ?? championId);
           const pinImage = isYourLane ? recommended?.championImageUrl : champion?.imageUrl;
 
-          const ring = isYourLane
-            ? "ring-2 ring-accent"
+          // Your own lane's occupant is the recommendation, not a stored pick
+          // (`championId` here is always null for it -- see draftReducer's
+          // "place" case). Keying on `championId` alone would replay the
+          // landing animation for every manually-placed pick but never for a
+          // changed recommendation, which is the occupant that changes most
+          // often on this anchor.
+          const occupantId = isYourLane ? (recommended?.championId ?? null) : championId;
+
+          const ringColorClass = isYourLane
+            ? "ring-accent"
             : side === "ally"
-              ? "ring-2 ring-team-ally"
-              : "ring-2 ring-team-enemy";
+              ? "ring-team-ally"
+              : "ring-team-enemy";
+          const ring = `ring-2 ${ringColorClass}`;
 
           return (
             <button
-              key={`${side}-${role}`}
+              key={`${side}-${role}-${occupantId ?? "empty"}`}
               type="button"
               onClick={() => onSlotClick(side, role)}
               aria-label={anchorLabel(side, role, champion?.name ?? championId, isYourLane, recommended?.championName ?? null)}
               style={{ left: `${position.x}%`, top: `${position.y}%` }}
-              className={`absolute -translate-x-1/2 -translate-y-1/2 rounded-full ${
+              className={`pin-drop absolute -translate-x-1/2 -translate-y-1/2 rounded-full ${
                 pinName === null
                   ? // `bg-paper/70` would be silently inert: this project's colour tokens are
                     // bare `var(--x)` with no `<alpha-value>` channel, so Tailwind emits no
@@ -112,7 +121,19 @@ export function RiftMap({
                   +
                 </span>
               ) : (
-                <ChampionAvatar name={pinName} imageUrl={pinImage} size={isYourLane ? 40 : 32} />
+                <>
+                  {/* The button is already `position: absolute` -- any positioned
+                      element (not just `relative` ones) establishes the containing
+                      block its own absolutely-positioned children measure against,
+                      so this ring needs nothing extra from the button to centre
+                      itself. It mirrors the button's own left/top + -translate-1/2
+                      centring trick against the button's box instead of the map's. */}
+                  <span
+                    aria-hidden="true"
+                    className={`pin-ping absolute left-1/2 top-1/2 h-full w-full rounded-full ring-2 ${ringColorClass}`}
+                  />
+                  <ChampionAvatar name={pinName} imageUrl={pinImage} size={isYourLane ? 40 : 32} />
+                </>
               )}
             </button>
           );
