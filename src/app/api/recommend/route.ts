@@ -75,12 +75,18 @@ export async function POST(request: Request) {
   const stats = mapStatsRowsToChampionStats((statsRows ?? []) as unknown as StatsRow[]);
   const playerPool = mapPoolRowsToPlayerPool((poolRows ?? []) as unknown as PoolRow[]);
 
+  // The column behind `enemy_picks` is `text[]`, and the insert below is cast
+  // `as never`, so a shape mistake here would compile and only fail against
+  // the live database. Extract once, use for both.
+  const enemyChampionIds = parsed.data.enemyPicks.map((pick) => pick.championId);
+
   const recommendations = recommendChampions({
     stats,
     playerPool,
     enemyPicks: parsed.data.enemyPicks,
+    draftingRole: parsed.data.role,
     bannedChampionIds: parsed.data.bans,
-    alreadyPickedChampionIds: parsed.data.enemyPicks,
+    alreadyPickedChampionIds: [...parsed.data.allyPicks, ...enemyChampionIds],
     priority: parsed.data.priority,
     topN: parsed.data.topN,
     counterRelations: mapCounterRelationRows((relationRows ?? []) as unknown as CounterRelationRowType[]),
@@ -96,7 +102,7 @@ export async function POST(request: Request) {
       role: parsed.data.role,
       region: parsed.data.region,
       tier: parsed.data.tier,
-      enemy_picks: parsed.data.enemyPicks,
+      enemy_picks: enemyChampionIds,
       bans: parsed.data.bans
     } as never);
   }

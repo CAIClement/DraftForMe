@@ -20,12 +20,39 @@ describe("recommendationRequestSchema", () => {
       role: "mid",
       region: "euw",
       tier: "emerald_plus",
-      enemyPicks: ["zed"],
+      enemyPicks: [{ championId: "zed", role: "mid" }],
+      allyPicks: ["malphite"],
       bans: [],
       priority: 50
     });
 
     expect(parsed.role).toBe("mid");
+    expect(parsed.enemyPicks[0].role).toBe("mid");
+    expect(parsed.allyPicks).toEqual(["malphite"]);
+  });
+
+  it("defaults allyPicks to empty so an older client still parses", () => {
+    const parsed = recommendationRequestSchema.parse({
+      role: "mid",
+      region: "euw",
+      tier: "emerald_plus",
+      enemyPicks: [],
+      bans: []
+    });
+
+    expect(parsed.allyPicks).toEqual([]);
+  });
+
+  it("rejects an enemy pick on a lane that does not exist", () => {
+    expect(() =>
+      recommendationRequestSchema.parse({
+        role: "mid",
+        region: "euw",
+        tier: "emerald_plus",
+        enemyPicks: [{ championId: "zed", role: "botlane" }],
+        bans: []
+      })
+    ).toThrow();
   });
 
   it("rejects an invalid priority", () => {
@@ -70,7 +97,14 @@ describe("POST /api/recommend", () => {
     const { POST } = await import("./route");
     const request = new Request("http://localhost/api/recommend", {
       method: "POST",
-      body: JSON.stringify({ role: "mid", region: "euw", tier: "emerald_plus", enemyPicks: ["zed"], bans: [] })
+      body: JSON.stringify({
+        role: "mid",
+        region: "euw",
+        tier: "emerald_plus",
+        enemyPicks: [{ championId: "zed", role: "mid" }],
+        allyPicks: ["malphite"],
+        bans: []
+      })
     });
 
     await POST(request);
@@ -80,5 +114,8 @@ describe("POST /api/recommend", () => {
     expect(input.counterRelations).toEqual([
       { championId: "zed", counteredByChampionId: "galio", role: "mid" }
     ]);
+    // Allies are excluded from the candidates and nothing else.
+    expect(input.alreadyPickedChampionIds.sort()).toEqual(["malphite", "zed"]);
+    expect(input.draftingRole).toBe("mid");
   });
 });
