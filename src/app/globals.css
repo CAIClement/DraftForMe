@@ -15,6 +15,46 @@
   --rule-soft: #efece6;
   --accent: #0f766e;
   --accent-wash: #f2faf8;
+  --team-ally: #1d4ed8;
+  --team-enemy: #b91c1c;
+
+  --motion-fast: 140ms;
+  --motion: 240ms;
+  --motion-slow: 380ms;
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-overshoot: cubic-bezier(0.22, 1.4, 0.4, 1);
+}
+
+/* The draft board redeclares the same token names rather than introducing a
+   parallel palette, so Verdict, FactorBars and Alternatives invert without a
+   single class being touched. */
+[data-surface="draft"] {
+  --paper: #0c1013;
+  --surface: #141c22;
+  --surface-sunk: #0f161b;
+  --ink: #f3f0ea;
+  --ink-muted: #aab3ba;
+  --ink-faint: #7d8993;
+  --rule: #232c33;
+  --rule-soft: #1b232a;
+  --accent: #e3c179;
+  --accent-wash: rgba(200, 167, 90, 0.14);
+  --team-ally: #2f6fd0;
+  --team-enemy: #c0392b;
+
+  /* `body` below resolves `var(--ink)` once, against :root. Descendants
+     inherit that computed near-black; they do not re-resolve the variable.
+     Every element in here with no text colour class -- the champion name in
+     Verdict, the fact values, the alternative names -- would render dark on
+     dark. Re-resolving it here fixes all of them at once. */
+  color: var(--ink);
+
+  /* Governs UA-drawn control chrome: the priority slider's empty track, the
+     picker input's placeholder and clear affordance, scrollbars, focus rings.
+     Without it they stay light against the dark board. */
+  color-scheme: dark;
+
+  background: var(--paper);
 }
 
 body {
@@ -29,4 +69,14 @@ button,
 input,
 select {
   font: inherit;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-surface="draft"] *,
+  [data-surface="draft"] *::before,
+  [data-surface="draft"] *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+  }
 }

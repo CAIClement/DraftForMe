@@ -14,7 +14,9 @@ const config: Config = {
         rule: "var(--rule)",
         "rule-soft": "var(--rule-soft)",
         accent: "var(--accent)",
-        "accent-wash": "var(--accent-wash)"
+        "accent-wash": "var(--accent-wash)",
+        "team-ally": "var(--team-ally)",
+        "team-enemy": "var(--team-enemy)"
       }
     }
   },
