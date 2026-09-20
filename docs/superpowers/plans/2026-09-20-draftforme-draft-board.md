@@ -2897,3 +2897,21 @@ Do not open a pull request or push. Report what passed and what did not.
 **Naming consistency.** `createDraftState`, `draftReducer`, `excludedChampionIds`, `enemyPicksWithRoles`, `allyPickIds`, `directOpponent` are defined in Task 2 and used under those exact names in Tasks 5, 11 and 12. `EnemyPick` and `draftingRole` are introduced in Task 3 and used unchanged in 4, 5 and 6. `anchorLabel`'s strings in Task 8 are the ones the Task 11 tests query by.
 
 **One deliberate ordering wrinkle.** Task 2 ships a reducer that imports `EnemyPick`, a type Task 3 creates. Its own tests pass, but `npm run typecheck` does not go green until Task 3. This is called out in Task 2 Step 4. The alternative — defining the type twice and reconciling later — is worse.
+
+---
+
+## Deviations, recorded during execution
+
+Written as the plan was carried out, so the next reader sees where the map and the territory parted.
+
+**Before Task 3 — a stray worktree was failing the suite.** A leftover agent worktree under `.claude/` carries its own `node_modules`, so a bare `vitest run` collected a second copy of this suite against a second copy of React and failed five files on duplicate hooks. Nothing to do with the working tree, but every "run the whole suite" step in this plan would have tripped over it. `vitest.config.ts` now excludes `**/.claude/**` (commit `a9a6225`).
+
+**Task 4 — the plan's own test was wrong.** It asserted `toMatch(/zed/)`, but `counterDetail` renders the *display name*, "Zed". A case-sensitive match could never pass against a correct implementation. Changed to `/zed/i`. The implementer flagged it instead of bending the engine to fit a broken expectation, which is the right instinct.
+
+**Task 4 — the "first" test did not test "first".** Review neutralised `first()` into an identity function and the test stayed green: with that fixture the winning candidate's `beats` had a single element, so there was nothing to reorder. Replaced with a fixture where the direct opponent is pushed onto `beats` *second*, targeting the candidate by id rather than destructuring the top result, so the assertion no longer rides on the fixture's overall ranking. Verified to fail when the reordering is removed.
+
+**Task 4 — the disclosure sentence could overclaim.** As planned, "X, votre adversaire direct, compte double dans ce calcul." was appended whenever a direct opponent existed. But `counterDetail` runs when *any* enemy has a known relation, so a candidate could name the direct opponent only in that closing sentence, with no clause saying whether that matchup is good, bad, or unmeasured. Never false — the weight really does apply to a zero delta — but it reads as a claim the data does not support, which is the one thing this site does not do. The clause is now gated on the direct opponent actually appearing in that candidate's `beats` or `losesTo`.
+
+**Task 5 — the dangerous line got a test after all.** The plan accepted that the `recommendation_sessions` insert could not be covered, because the Supabase stub returns `user: null`. Review showed covering it was cheap: stub a signed-in user, capture the insert payload, assert `enemy_picks` is `["zed"]`. It fails with a precise diff if the reshaped objects are passed through. Added.
+
+**Noted, not acted on.** `recommendation_sessions` stores enemy champion ids without their lanes, and stores no ally picks at all. That was already true before this work, and changing it is a migration decision rather than a route-reshape one. Anyone later trying to reconstruct a draft from that table should know it is a lossy summary.
