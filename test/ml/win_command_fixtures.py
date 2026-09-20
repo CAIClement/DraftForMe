@@ -11,8 +11,8 @@ from ml.win.models import LogisticDraftModel
 from win_fixtures import random_drafts, write_database, write_seed_sql
 
 
-def small_candidates(seed):
-    return [LogisticDraftModel(1, 1.0, seed), LogisticDraftModel(2, 1.0, seed)]
+def small_candidates(seed, prior):
+    return [LogisticDraftModel(1, 1.0, seed, prior), LogisticDraftModel(2, 1.0, seed, prior)]
 
 
 def world(tmp_path: Path, count: int = 1500) -> tuple[Path, Path, Path]:

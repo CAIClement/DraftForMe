@@ -3,66 +3,56 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: light;
+  color-scheme: dark;
 
-  --paper: #f7f4ef;
-  --surface: #ffffff;
-  --surface-sunk: #f2efe9;
-  --ink: #14171a;
-  --ink-muted: #5e574c;
-  --ink-faint: #8a8378;
-  --rule: #e0dbd2;
-  --rule-soft: #efece6;
-  --accent: #0f766e;
-  --accent-wash: #f2faf8;
-  --team-ally: #1d4ed8;
-  --team-enemy: #b91c1c;
+  /*
+   * Hextech: League's deep navy grounds with gold as the accent and a cyan
+   * spark for focus. Ink is a warm parchment white; every text colour clears
+   * 4.5:1 on every ground below. Gold carries the primary actions, with navy
+   * text on it (`on-accent`).
+   */
+  --paper: #0a1428;
+  --paper-deep: #0d1a31;
+  --surface: #111e38;
+  --surface-sunk: #0c172d;
+  --ink: #f0e6d2;
+  --ink-muted: #c4bdac;
+  --ink-faint: #8e8a7f;
+  --rule: #25375a;
+  --rule-soft: #1a2946;
+  --accent: #c8aa6e;
+  --accent-deep: #a88a4e;
+  --accent-pale: #e8d5a8;
+  --accent-wash: #1c2338;
+  --on-accent: #0a1428;
+  --spark: #0ac8b9;
 
-  --motion-fast: 140ms;
+  /* The data band: a darker strip that sets the numbers apart from the page. */
+  --band: #050c1a;
+  --band-ink: #f0e6d2;
+  --band-muted: #a09b8c;
+  --band-rule: rgb(200 170 110 / 0.2);
+
+  --shadow: rgb(0 0 0 / 0.45);
+
+  /* The two draft sides. Lifted off the stock blue/red so they still read as
+     team colours against the navy ground rather than sinking into it. */
+  --team-ally: #4f9bf5;
+  --team-enemy: #e05a4a;
+
   --motion: 240ms;
   --motion-slow: 380ms;
   --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
   --ease-overshoot: cubic-bezier(0.22, 1.4, 0.4, 1);
 }
 
-/* The draft board redeclares the same token names rather than introducing a
-   parallel palette, so Verdict, FactorBars and Alternatives invert without a
-   single class being touched. */
-[data-surface="draft"] {
-  --paper: #0c1013;
-  --surface: #141c22;
-  --surface-sunk: #0f161b;
-  --ink: #f3f0ea;
-  --ink-muted: #aab3ba;
-  --ink-faint: #7d8993;
-  --rule: #232c33;
-  --rule-soft: #1b232a;
-  --accent: #e3c179;
-  --accent-wash: rgba(200, 167, 90, 0.14);
-  --team-ally: #2f6fd0;
-  --team-enemy: #c0392b;
-
-  /* `body` below resolves `var(--ink)` once, against :root. Descendants
-     inherit that computed near-black; they do not re-resolve the variable.
-     Every element in here with no text colour class -- the champion name in
-     Verdict, the fact values, the alternative names -- would render dark on
-     dark. Re-resolving it here fixes all of them at once. */
-  color: var(--ink);
-
-  /* Governs UA-drawn control chrome: the priority slider's empty track, the
-     picker input's placeholder and clear affordance, scrollbars, focus rings.
-     Without it they stay light against the dark board. */
-  color-scheme: dark;
-
-  background: var(--paper);
-}
-
 body {
-  min-height: 100vh;
+  min-height: 100dvh;
   margin: 0;
   background: var(--paper);
   color: var(--ink);
-  font-family: var(--font-body, system-ui, sans-serif);
+  font-family: var(--font-geist), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
 button,
@@ -71,18 +61,39 @@ select {
   font: inherit;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
+:focus-visible {
+  outline: 2px solid var(--spark);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  [data-surface="draft"] *,
-  [data-surface="draft"] *::before,
-  [data-surface="draft"] *::after {
-    animation-duration: 1ms !important;
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    /* Without this a looping animation keeps cycling, just imperceptibly. The
+       recalculation sweep is the one that loops. */
     animation-iteration-count: 1 !important;
-    transition-duration: 1ms !important;
   }
 }
 
-/* 1 -- a pick lands on its lane. Keyed by champion id at the call site, so it
-   replays whenever the occupant changes and never on an unrelated rerender. */
+/* The draft board's motion. These were scoped to a dark band when the rest of
+   the site was light; the site is dark throughout now, so the band is gone and
+   the board simply inherits the page's tokens. The reduced-motion block above
+   already disables all of it. */
+
+/* A pick lands on its lane. Keyed by occupant at the call site, so it replays
+   when the occupant changes and never on an unrelated rerender. */
 @keyframes pin-drop {
   0% {
     transform: translate(-50%, -50%) scale(2.1);
@@ -109,9 +120,9 @@ select {
   }
 }
 
-/* 5 -- the slots arrive in sequence. `backwards` matters: the resting state is
-   the visible one, so a stylesheet that never loads leaves a readable board
-   rather than a blank one. */
+/* The slots arrive in sequence. `backwards` matters: the resting state is the
+   visible one, so a stylesheet that never loads leaves a readable board rather
+   than a blank one. */
 @keyframes slot-rise {
   from {
     opacity: 0;
@@ -123,7 +134,7 @@ select {
   }
 }
 
-/* 4 -- a sweep instead of a spinner. The stale result stays legible beneath. */
+/* A sweep instead of a spinner. The stale result stays legible beneath. */
 @keyframes board-sweep {
   from {
     transform: translateX(-120%);
@@ -133,25 +144,19 @@ select {
   }
 }
 
-[data-surface="draft"] .pin-drop {
+.pin-drop {
   animation: pin-drop var(--motion) var(--ease-overshoot);
 }
 
-/* The ring's colour comes from the element itself (an explicit
-   `ring-team-ally` / `ring-team-enemy` / `ring-accent` set at the call site),
-   not from `ring-current`: this span has no `color` of its own, so
-   `currentColor` would resolve to whatever the surrounding text colour is
-   rather than the side's colour, and the ping would either be invisible or
-   the wrong hue. */
-[data-surface="draft"] .pin-ping {
+.pin-ping {
   animation: pin-ping var(--motion-slow) var(--ease-out);
 }
 
-[data-surface="draft"] .slot-rise {
+.slot-rise {
   animation: slot-rise var(--motion) var(--ease-out) backwards;
 }
 
-[data-surface="draft"] .board-sweep::after {
+.board-sweep::after {
   content: "";
   position: absolute;
   inset: 0 auto 0 0;
@@ -161,7 +166,6 @@ select {
   pointer-events: none;
 }
 
-/* 2 -- the factor bars slide to their new value rather than jumping. */
-[data-surface="draft"] .factor-bar-fill {
+.factor-bar-fill {
   transition: width var(--motion) var(--ease-out);
 }

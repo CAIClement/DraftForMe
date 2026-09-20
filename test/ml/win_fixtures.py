@@ -9,9 +9,15 @@ from pathlib import Path
 import numpy as np
 
 from ml.collect.store import MATCH_COLUMNS, SCHEMA
+from ml.win.baselines import ChampionPrior, EngineData
 from ml.win.data import PICK_COLUMNS
 
 TIERS = ("IRON", "BRONZE", "SILVER", "GOLD", "PLATINUM", "EMERALD", "DIAMOND", "MASTER", "GRANDMASTER", "CHALLENGER")
+
+
+def neutral_prior() -> ChampionPrior:
+    """A prior with no data at all: every champion is unknown, so its six features are always 0."""
+    return ChampionPrior(EngineData({}, {}, {}, {}))
 
 
 def random_drafts(count: int, rng: np.random.Generator, champions_per_role: int = 6) -> np.ndarray:

@@ -4,24 +4,25 @@ Date: 2026-09-17
 
 ## Summary
 
-Train a win-probability model on the ranked EUW matches collected by project 1, and decide, on matches it has never seen, whether it predicts the winner of a draft better than two references: the rule engine the site runs today, and plain champion win rates.
+Train a win-probability model on the ranked EUW matches collected by project 1, and decide, on matches it has never seen, whether it predicts the winner of a draft better than three references: the rule engine the site runs today, plain champion win rates learned from the training matches, and public statistics alone.
 
-This is project 2 of 3 (see `2026-09-17-draftforme-match-collection-design.md`). It is the decision point: if the model does not beat both references, work stops here and the website is never touched. It produces a model file, a validation report and a one-time test report. It changes nothing on the site.
+This is project 2 of 3 (see `2026-09-17-draftforme-match-collection-design.md`). It is the decision point: if the model does not beat all three references, work stops here and the website is never touched. It produces a model file, a validation report and a one-time test report. It changes nothing on the site.
 
 ## Decisions
 
 | Question | Decision |
 |---|---|
 | What does "better" mean | Predicting the winner of a held-out match from its draft |
-| References to beat | The site's rule engine **and** a champion win-rate baseline |
+| References to beat | The site's rule engine, a champion win-rate baseline learned from the training matches, **and** public statistics alone |
 | Decision rule | Lower test log loss than each reference, with the 95 % bootstrap interval of the difference above zero |
 | Partial drafts | Supported from training onwards; the decision is taken on full drafts |
 | Models | Regularised logistic regression in stages (main candidate) and gradient boosting (comparison), both scikit-learn |
+| Champion priors | Every model reads the public win rates the rule engine uses, so the question becomes what learning from real drafts adds on top of them |
 
 ### Why these choices
 
 - **Winner prediction** is directly measurable on every held-out match. Recommendation-style checks were set aside: recovering the champion a winner picked rewards popular champions rather than winning ones, and the win rate of matches that "followed" a recommendation is confounded by player skill and needs far more matches.
-- **Two references.** Beating only the site engine would mostly show that its OP.GG statistics are from patch 16.3. The win-rate baseline, fitted on the same training matches, makes sure the model adds something beyond fresher numbers.
+- **Three references.** Beating only the site engine would mostly show that its OP.GG statistics are from patch 16.3. The win-rate baseline, fitted on the same training matches, makes sure the model adds something beyond fresher numbers. The third, public statistics alone, closes a fairness gap the other two do not: the model's own prior falls back to a champion's mean log-odds across the roles the statistics do rank it in when it is played off-role, while the site engine's fallback is a flat neutral 55 regardless of role. A win over the engine could then come from that better fallback rather than from anything learned on drafts. Comparing against a priors-only model that uses the exact same fallback removes that confound: if the model cannot beat it, project 3 could simply ship calibrated public statistics and skip training on drafts at all.
 - **A significance interval, not a raw comparison.** Draft-only winner prediction is hard; realistic accuracies sit around 52 to 56 %, so the gaps being measured are of the order of a percent and could be noise.
 - **Logistic regression first.** It is robust with about 30,000 matches for 170 champions across 5 roles, well calibrated (the criterion is log loss), explainable per champion and matchup, and its weights can be exported as JSON and evaluated in a few lines of TypeScript. Project 3 would need no model server.
 
@@ -67,10 +68,24 @@ One feature per champion and role, taking **+1** when that champion plays that r
 - The blue-side advantage is carried by the intercept alone.
 - A hidden pick is simply 0, which is what makes partial drafts possible.
 
+### Champion priors from public statistics
+
+Every model also receives the public win rate of each drafted champion, read from the same `champion_stats` rows in `supabase/seed.sql` that the rule engine uses. Those rates come from millions of games, so they carry far more evidence about a champion's strength than 30,000 matches can hold.
+
+Per draft this is six numbers, all antisymmetric like the rest of the encoding:
+
+- one per role: the log-odds of the blue champion's public win rate minus the log-odds of the red one's;
+- their total.
+
+A champion the statistics do not rank in the role it was played falls back to its mean across the roles they do rank it in, then to neutral (log-odds 0). A hidden pick contributes 0.
+
+**Why.** A first real run on 11,124 collected matches showed the rule engine beating the learned model (test log loss 0.6881 against 0.6910, AUC 0.5465 against 0.5206), while the same win rates recomputed from the collected matches were clearly worse (0.7088). The gap was not the rules: it was the evidence behind them. Handing the model those public rates makes the question a fair one, and changes what a win means: not "do public statistics beat the rules", but **"does learning from real drafts add anything on top of public statistics"**. The two original references are unchanged, so the comparison still answers the project's original question too, and a third, public statistics alone, is added so the new question gets its own answer (see References).
+
 ### Logistic regression stages
 
-Each stage adds features to the previous one:
+Each stage adds features to the previous one, and every stage includes the champion priors above:
 
+0. **Priors only:** no champion columns at all, so this stage measures what the public statistics alone are worth once calibrated. It is the floor every other stage must beat.
 1. **Champions:** the signed champion-by-role features.
 2. **Lane matchups:** one feature per pair of champions facing each other in the same role, +1 when the pair's first champion (by champion id) is blue and -1 when it is red. Kept only for pairs seen at least 5 times in training.
 3. **Synergies:** one feature per same-team pair for bottom + support and jungle + mid, signed by side. Same threshold of 5.
@@ -88,13 +103,13 @@ Training uses every training match once as a full draft, plus 2 copies with 1 to
 
 ### A. Logistic regression (main candidate)
 
-`LogisticRegression` with L2 regularisation. For each stage, the regularisation strength C is chosen on validation log loss from 0.003, 0.01, 0.03, 0.1, 0.3 and 1.0; the best stage is then chosen the same way.
+`LogisticRegression` with L2 regularisation. For each stage, the regularisation strength C is chosen on validation log loss from 0.0003, 0.001, 0.003, 0.01, 0.03, 0.1, 0.3 and 1.0; the best stage is then chosen the same way. The grid reaches below 0.003 because the first real run picked that value, the lowest then available, at every stage.
 
 ### B. Gradient boosting (comparison)
 
 `HistGradientBoostingClassifier` on:
 
-- the stage 1 features;
+- the stage 1 features, champion priors included;
 - per team, the mean smoothed win rate of its champions;
 - per role, the smoothed win-rate difference of the lane matchup.
 
@@ -104,7 +119,7 @@ The decision applies to the better of A and B on validation. If B is chosen, pro
 
 ## References
 
-Neither reference produces a probability, so each one's team score is turned into a probability with a **two-parameter logistic calibration** (slope and intercept) fitted on training. This is what makes log loss comparable.
+The first two references do not produce a probability, so each one's team score is turned into a probability with a **two-parameter logistic calibration** (slope and intercept) fitted on training. This is what makes log loss comparable. The third is itself a logistic model and needs no calibration.
 
 ### 1. The site's rule engine
 
@@ -124,16 +139,20 @@ Tests replay the cases of `engine.test.ts` and `counter.test.ts` against the por
 
 The win rate of each champion in each role over the training matches, smoothed towards 50 % with a prior of 20 games. A team's score is the sum of the log-odds of its known champions' win rates.
 
+### 3. Public statistics alone
+
+A stage-0 logistic model (`LogisticDraftModel(0, c, seed, prior)`): no champion columns, only the same six champion-prior features every other model gets, with the same off-role fallback. Its C is chosen on validation log loss from `LOGISTIC_C_GRID`, the same way a candidate is chosen, and it is fitted on the same training matches as everything else. This is the fairness reference: the model's prior falls back to a champion's mean log-odds across the roles the statistics do rank it in when it is played off-role, while the site engine's fallback is a flat neutral 55 regardless of role. Beating the engine could therefore come from that better fallback alone rather than from anything learned on drafts; beating this reference instead rules that out, since it uses the identical fallback.
+
 ## Metrics and Decision
 
-On the test set, for the chosen model and both references:
+On the test set, for the chosen model and all three references:
 
 - log loss, AUC and accuracy (a predicted probability of exactly 0.5 counts as half a correct guess);
 - for each reference, the log-loss difference (reference minus model) with its **95 % interval from a paired bootstrap of 10,000 resamples** over test matches, fixed seed.
 
 **The deciding interval.** Matches are resampled by whole seed player (a cluster bootstrap), not individually: a seed player contributes many matches that share a tier and a champion, so resampling them independently understates how much the gap over a reference varies. The report carries both `comparisons` (grouped by seed player, which decides) and `comparisons_by_match` (matches resampled independently, kept for information only). The bootstrap uses 10,000 resamples rather than 2,000: at 2,000 the noise on the deciding endpoint was about 3 % of the interval's half-width.
 
-**The model beats the references when both grouped intervals lie entirely above zero.** AUC and accuracy are reported but do not decide.
+**The model beats the references when all three grouped intervals lie entirely above zero.** AUC and accuracy are reported but do not decide.
 
 Reported for information only, never deciding:
 
@@ -151,11 +170,11 @@ A package `ml/win/`, following `ml/collect/`: constants in `ml/paths.py`, tests 
 |---|---|
 | `data.py` | Read-only loading, refusals, grouped and stratified split, split file |
 | `encoding.py` | Signed encoding, matchups, synergies, elo crossing, masking |
-| `baselines.py` | Engine port reading `seed.sql`, win-rate baseline, logistic calibration |
+| `baselines.py` | Engine port reading `seed.sql`, champion priors from the same public win rates, win-rate baseline, logistic calibration |
 | `models.py` | Logistic stages with their grids, gradient boosting with its grid |
 | `metrics.py` | Log loss, AUC, accuracy, paired bootstrap |
-| `select.py` | Command: trains everything, chooses on validation, saves the model and the validation report |
-| `test.py` | Command: evaluates the chosen model and both references on the test set, once |
+| `select.py` | Command: trains everything, chooses on validation, saves the model, the priors-only reference and the validation report |
+| `test.py` | Command: evaluates the chosen model and all three references on the test set, once |
 
 Commands:
 
@@ -171,13 +190,14 @@ python -m ml.win.test [--artifacts <dir>] [--seed-sql <path>]
 In `ml/artifacts/win/`, ignored by git:
 
 - `split.json`: the match ids of each set, the seed, the patch, and the database path that `ml.win.test` reads back.
-- `model.joblib`, plus `model_weights.json` when logistic regression is chosen.
-- `validation_report.json`: every stage, the boosting model and both references on validation, and the sizes of the training, validation and test splits.
+- `model.joblib`: the chosen model under `"model"`, plus the fitted priors-only reference model under `"priors_reference"` so `ml.win.test` can predict with it without rebuilding it; `model_weights.json` when logistic regression is chosen.
+- `model_weights.json`: alongside the feature weights, a `prior_table` listing, for every champion the prior knows, the log-odds it uses in each role (its off-role fallback already applied) — enough for project 3 to recompute the champion-prior features by lookups alone, with no `ChampionPrior` and no `seed.sql`.
+- `validation_report.json`: every stage, the boosting model and all three references on validation, and the sizes of the training, validation and test splits.
 - `test_report.json`: the test report, with its date, the seed, the number of training matches, and the decision.
 
 **The test lock.** If `test_report.json` exists, `ml.win.test` prints the recorded result and recomputes nothing, and `ml.win.select` refuses to choose a new model, since choosing after seeing the test would bias it. The lock is a convention, not something the code can enforce: deleting only `test_report.json` lets `ml.win.select` choose a new model and `ml.win.test` evaluate the same test set again, after its verdict has already been seen. Starting over means deleting the whole `ml/artifacts/win/` directory deliberately, and a second verdict on the same matches is worth less than the first whatever the files say.
 
-**Corrupt artifacts.** A `test_report.json` that cannot be parsed is reported and exits 3, naming the file, rather than crashing. A `model.joblib` that cannot be loaded (or was produced by an incompatible version) is reported and exits 5, telling the person to rerun `ml.win.select`. A well-formed `model.joblib` of the wrong shape (for instance holding something other than the expected dict) is left to raise, since that is a real defect and not a symptom of a corrupt file.
+**Corrupt artifacts.** A `test_report.json` that cannot be parsed is reported and exits 3, naming the file, rather than crashing. A `model.joblib` that cannot be loaded (or was produced by an incompatible version) is reported and exits 5, telling the person to rerun `ml.win.select`. A `model.joblib` saved before the priors-only reference existed (missing the `"priors_reference"` key) gets the same treatment: reported and exits 5, asking to rerun `ml.win.select`, rather than a `KeyError`. A well-formed `model.joblib` of the wrong shape otherwise (for instance holding something other than the expected dict, or missing `"model"` itself) is left to raise, since that is a real defect and not a symptom of a corrupt file.
 
 The outcome is then copied by hand into a `Results` section of this spec.
 
@@ -191,7 +211,7 @@ Command output is in French and never contains characters outside cp1252. Each e
 | 2 | Invalid arguments, a missing database, or, for `ml.win.select`, an `--artifacts` path that cannot be made into a directory |
 | 3 | The database holds more than one patch or fewer than 1,000 matches, or is not a readable collection database, or holds no matches at all, or, for `ml.win.test`, no longer holds the recorded patch or every match of the split, or `test_report.json` exists but cannot be parsed |
 | 4 | `seed.sql` is missing or cannot be parsed |
-| 5 | `ml.win.test` run before `ml.win.select` has produced a model, or `ml.win.select` run after the test set was evaluated, or `model.joblib` cannot be loaded |
+| 5 | `ml.win.test` run before `ml.win.select` has produced a model, or `ml.win.select` run after the test set was evaluated, or `model.joblib` cannot be loaded, or `model.joblib` was saved before the priors-only reference existed |
 
 A champion present at test time but never seen in training contributes 0; their count is reported.
 
@@ -206,9 +226,58 @@ Unit tests in `test/ml/`, without network, on small synthetic datasets:
 - **Metrics:** accuracy does not credit a tied prediction; the calibration table's quantile bins hold similar numbers of matches instead of leaving most of them empty.
 - **Bootstrap:** the interval is correct on a case with a known answer; grouping by seed player widens the interval when the gap over a reference varies by player, and weights groups by their size.
 - **Training weights:** a match's masked copies carry half weight each.
+- **Champion priors:** swapping teams negates them; a hidden pick contributes 0; a champion the statistics do not rank in the role it was played falls back to its mean across ranked roles, then to neutral; on a synthetic world where only the public rates decide the outcome, a logistic model with the priors beats the same model without them, and the boosting model likewise (verified by mutation: dropping the prior from `BoostingDraftModel._matrix` makes that test fail); `win_rate_log_odds` stays finite at an exact 0 % or 100 % win rate; `ChampionPrior.features` is computed once per distinct input and returns a copy the caller cannot use to corrupt the cache.
+- **Priors-only reference:** an end-to-end run of both commands shows all three references in the validation and test reports, and the verdict is computed from all three; a `model.joblib` saved before this reference existed is reported and exits 5 rather than raising `KeyError`; when the chosen model is itself a stage-0 model built the same way, its comparison with this reference is exactly zero and the verdict is negative without crashing.
+- **Weights export:** `model_weights.json`'s `prior_table` lets a probability be recomputed by lookups alone (feature weights, intercept, and the table), matching `predict()` on a few drafts including a partially hidden one.
 - **End to end:** on synthetic matches with a planted synergy, stage 3 recovers it and beats the win-rate baseline.
 - **Test lock:** a second run of `ml.win.test` recomputes nothing, and `ml.win.select` refuses to run once the test has been evaluated.
 - **Corrupt artifacts:** a `test_report.json` that cannot be parsed and a `model.joblib` that cannot be loaded are each reported with a message instead of crashing; a well-formed model file of the wrong shape still raises.
+
+## Results
+
+Run on 2026-09-20, patch 16.18, seed 42. 26,185 collected matches split by seed player into 18,337 training, 3,943 validation and 3,905 test matches. Chosen on validation: **logistic regression, stage 4, C=0.003**.
+
+### Test set (3,905 matches, never seen)
+
+| | log loss | AUC | accuracy |
+|---|---|---|---|
+| model | 0.6911 | 0.5330 | 51.9 % |
+| the site's rule engine | 0.6909 | 0.5332 | 52.8 % |
+| public statistics alone | 0.6911 | 0.5319 | 52.4 % |
+| champion win rates | 0.7026 | 0.5280 | 52.2 % |
+
+Deciding intervals (reference minus model, resampled by whole seed player):
+
+| against | difference | 95 % interval | above zero? |
+|---|---|---|---|
+| the site's rule engine | −0.0003 | [−0.0029, +0.0024] | no |
+| public statistics alone | −0.0000 | [−0.0028, +0.0026] | no |
+| champion win rates | +0.0115 | [+0.0066, +0.0163] | yes |
+
+**Verdict: the model does not beat the three references.** Under `Follow-Up Work`, work stops here and the site is not touched.
+
+### Why
+
+**A baseline already captures it.** The gap to public statistics alone is −0.0000: the 10,422 learned columns add nothing at all to a plain calibration of the public win rates the rule engine already reads. The only reference clearly beaten is champion win rates re-estimated from the 18,337 training matches (+0.0115) — which says that 18,337 matches are far too few to estimate a per-champion, per-role win rate, not that the model learned anything the public numbers lack.
+
+**The validation ranking was noise.** Before the test was spent, paired intervals on validation showed the chosen model was indistinguishable from stage 2 (+0.0003), stage 1 (+0.0005), stage 0 (+0.0006) and the rule engine (+0.0016) — every interval straddling zero. Choosing "stage 4, C=0.003" among 43 candidates was therefore arbitrary, and its +0.0016 validation edge over the engine duly reversed to −0.0003 on the test set. The same reversal had happened on the earlier, smaller run (+0.0030 on validation, −0.0029 on test).
+
+**The model memorises.** On the chosen model, training log loss is 0.6732 (AUC 0.656) against 0.6907 on validation (AUC 0.537). Of its 10,422 columns, 9,640 are interactions — 4,324 lane matchups, 3,252 synergies, 2,064 elo-by-champion terms — and they buy 0.0005 of validation log loss over stage 1 alone. With `MIN_PAIR_COUNT = 5`, most pair columns rest on a handful of matches.
+
+**Per-tier-group results flip between splits**, which confirms they are noise rather than structure: on validation the model looked strongest in `iron-silver` (AUC 0.560) and weakest in `diamond-plus` (0.523); on test it is the reverse, `diamond-plus` 0.557 and `iron-silver` 0.520. Nothing should be read into either.
+
+### Would more matches change the answer?
+
+No, not within reach. The deciding interval narrows as 1/√n, so from the test-set half-width of about 0.0027:
+
+| to establish the model beats | effect to show | factor on n | matches on one patch |
+|---|---|---|---|
+| the site's rule engine | 0.0016 | ×2.9 | ≈ 75,000 |
+| public statistics alone | 0.0006 | ×20 | ≈ 500,000 |
+
+Collecting 26,185 matches took ten days, and a patch lasts two weeks, so 75,000 on a single patch is already out of reach and 500,000 is out by an order of magnitude. Pooling patches would break the one-patch validity this spec rests on (`Data and Split`).
+
+The honest reading is that the outcome of a ranked game is close to unpredictable from its draft alone, and the little that is predictable is already in the public per-champion win rates. Player-level data — the other lead named under `Follow-Up Work` — is a different question this collection cannot answer, since the drafts here carry no information about who plays them beyond the seed player's tier.
 
 ## Follow-Up Work
 

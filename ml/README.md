@@ -79,6 +79,8 @@ Keep the main Next.js app on the expert TypeScript engine until the ML model has
 
 Trains a win-probability model on the ranked matches collected by `ml.collect`, and compares it with the site's rule engine and plain champion win rates. Design: `docs/superpowers/specs/2026-09-17-draftforme-win-model-design.md`.
 
+**This question is settled.** On 2026-09-20 the model was evaluated once on 3,905 held-out patch 16.18 matches and did not beat the three references: it ties the site's rule engine (−0.0003) and ties public statistics alone (−0.0000), beating only champion win rates re-estimated from the training matches (+0.0115). Work on the win model stops there and the site is not touched. The full result, and why more matches would not change it, are in the spec's `Results` section. The commands below are kept for the record; rerunning them cannot produce a new verdict on these matches.
+
 ```powershell
 python -m ml.win.select --db "$env:LOCALAPPDATA\DraftForMe\matches.sqlite"
 python -m ml.win.test

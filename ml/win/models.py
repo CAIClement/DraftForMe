@@ -10,11 +10,12 @@ from collections.abc import Callable, Sequence
 from typing import Any, Protocol
 
 import numpy as np
+from scipy import sparse
 from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.linear_model import LogisticRegression
 
-from ml.win.baselines import RateTables
-from ml.win.data import Dataset
+from ml.win.baselines import ChampionPrior, RateTables
+from ml.win.data import ROLES, Dataset
 from ml.win.encoding import STAGES, DraftEncoder, with_masked_copies
 from ml.win.metrics import summary
 
@@ -22,7 +23,9 @@ MASKED_COPIES = 2
 # Every match then carries the same total weight as its masked copies together, so full drafts are
 # half the objective instead of a third, while partial drafts are still learned.
 MASKED_WEIGHT = 1 / MASKED_COPIES
-LOGISTIC_C_GRID = (0.003, 0.01, 0.03, 0.1, 0.3, 1.0)
+LOGISTIC_C_GRID = (0.0003, 0.001, 0.003, 0.01, 0.03, 0.1, 0.3, 1.0)
+# The six champion-prior feature keys, in the order `ChampionPrior.features` produces its columns.
+PRIOR_FEATURE_KEYS = [("prior", role) for role in ROLES] + [("prior", "total")]
 BOOSTING_GRID = (
     {"learning_rate": 0.05, "max_leaf_nodes": 15, "l2_regularization": 1.0},
     {"learning_rate": 0.1, "max_leaf_nodes": 31, "l2_regularization": 1.0},
@@ -44,11 +47,17 @@ class DraftModel(Protocol):
 class LogisticDraftModel:
     kind = "logistic"
 
-    def __init__(self, stage: int, c: float, seed: int) -> None:
+    def __init__(self, stage: int, c: float, seed: int, prior: ChampionPrior) -> None:
         self.stage = stage
         self.c = c
         self.seed = seed
+        self.prior = prior
         self.name = f"régression logistique, palier {stage}, C={c}"
+
+    def _design(self, drafts: np.ndarray, tiers: np.ndarray) -> sparse.csr_matrix:
+        encoded = self.encoder.transform(drafts, tiers)
+        prior_features = sparse.csr_matrix(self.prior.features(drafts))
+        return sparse.hstack([encoded, prior_features], format="csr")
 
     def fit(self, train: Dataset) -> LogisticDraftModel:
         rng = np.random.default_rng(self.seed)
@@ -59,24 +68,42 @@ class LogisticDraftModel:
             [np.full(len(train), 1.0), np.full(len(drafts) - len(train), MASKED_WEIGHT)]
         )
         self.model = LogisticRegression(C=self.c, max_iter=5000)
-        self.model.fit(self.encoder.transform(drafts, tiers), labels, sample_weight=sample_weight)
+        self.model.fit(self._design(drafts, tiers), labels, sample_weight=sample_weight)
         return self
 
     def predict(self, drafts: np.ndarray, tiers: np.ndarray) -> np.ndarray:
-        return self.model.predict_proba(self.encoder.transform(drafts, tiers))[:, 1]
+        return self.model.predict_proba(self._design(drafts, tiers))[:, 1]
 
     def weights(self) -> dict[str, Any]:
-        """Everything needed to score a draft without scikit-learn: intercept plus one weight per feature key."""
+        """Everything needed to score a draft without scikit-learn: intercept plus one weight per feature key,
+        the champion-by-role features from the encoder followed by the six named prior features."""
         coefficients = self.model.coef_[0]
+        n_encoded = len(self.encoder.columns)
+        features = [
+            {"key": list(key), "weight": float(coefficients[index])}
+            for key, index in sorted(self.encoder.columns.items(), key=lambda item: item[1])
+        ]
+        features += [
+            {"key": list(key), "weight": float(coefficients[n_encoded + offset])}
+            for offset, key in enumerate(PRIOR_FEATURE_KEYS)
+        ]
         return {
             "stage": self.stage,
             "c": self.c,
             "intercept": float(self.model.intercept_[0]),
-            "features": [
-                {"key": list(key), "weight": float(coefficients[index])}
-                for key, index in sorted(self.encoder.columns.items(), key=lambda item: item[1])
-            ],
+            "features": features,
+            "prior_table": self._prior_table(),
         }
+
+    def _prior_table(self) -> list[dict[str, Any]]:
+        """Every champion key the prior knows, with the log-odds it uses in each role (its own
+        off-role fallback already applied), so project 3 can recompute the prior features without
+        `ChampionPrior` or `supabase/seed.sql`."""
+        return [
+            {"champion": key, "role": role, "log_odds": self.prior.log_odds(key, role)}
+            for key in sorted(self.prior.data.slug_by_key)
+            for role in ROLES
+        ]
 
     def top_weights(self, count: int = 10) -> list[dict[str, Any]]:
         features = self.weights()["features"]
@@ -91,9 +118,10 @@ def aggregate_features(tables: RateTables, drafts: np.ndarray) -> np.ndarray:
 class BoostingDraftModel:
     kind = "boosting"
 
-    def __init__(self, params: dict[str, float], seed: int) -> None:
+    def __init__(self, params: dict[str, float], seed: int, prior: ChampionPrior) -> None:
         self.params = params
         self.seed = seed
+        self.prior = prior
         described = ", ".join(f"{key}={value}" for key, value in params.items())
         self.name = f"gradient boosting, {described}"
 
@@ -124,16 +152,20 @@ class BoostingDraftModel:
         return self
 
     def _matrix(self, drafts: np.ndarray, tiers: np.ndarray, aggregates: np.ndarray) -> np.ndarray:
-        return np.hstack([self.encoder.transform(drafts, tiers).toarray(), aggregates]).astype(np.float32)
+        return np.hstack(
+            [self.encoder.transform(drafts, tiers).toarray(), self.prior.features(drafts), aggregates]
+        ).astype(np.float32)
 
     def predict(self, drafts: np.ndarray, tiers: np.ndarray) -> np.ndarray:
         matrix = self._matrix(drafts, tiers, aggregate_features(self.tables, drafts))
         return self.model.predict_proba(matrix)[:, 1]
 
 
-def candidate_models(seed: int) -> list[DraftModel]:
-    logistic: list[DraftModel] = [LogisticDraftModel(stage, c, seed) for stage in STAGES for c in LOGISTIC_C_GRID]
-    boosting: list[DraftModel] = [BoostingDraftModel(params, seed) for params in BOOSTING_GRID]
+def candidate_models(seed: int, prior: ChampionPrior) -> list[DraftModel]:
+    logistic: list[DraftModel] = [
+        LogisticDraftModel(stage, c, seed, prior) for stage in STAGES for c in LOGISTIC_C_GRID
+    ]
+    boosting: list[DraftModel] = [BoostingDraftModel(params, seed, prior) for params in BOOSTING_GRID]
     return logistic + boosting
 
 

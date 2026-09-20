@@ -1,238 +1,49 @@
-import { Explainer } from "@/components/marketing/explainer";
-import { Hero } from "@/components/marketing/hero";
+import { CtaSection } from "@/components/home/cta-section";
+import { DataSection } from "@/components/home/data-section";
+import { FaqSection } from "@/components/home/faq-section";
+import { Hero } from "@/components/home/hero";
+import { MethodSection } from "@/components/home/method-section";
+import { SignalsSection } from "@/components/home/signals-section";
 import { SiteFooter } from "@/components/marketing/site-footer";
 import { SiteHeader } from "@/components/marketing/site-header";
-import { TrustBar } from "@/components/marketing/trust-bar";
-import { DraftBoard } from "@/components/draft/draft-board";
-import { mapCounterRelationRows, mapStatsRowsToChampionStats } from "@/lib/data/normalize";
-import { createDraftState } from "@/lib/draft/draft-state";
 import { DEFAULT_EXAMPLE } from "@/lib/draft/default-example";
-import { recommendChampions } from "@/lib/recommendation/engine";
-import type { Recommendation } from "@/lib/recommendation/types";
-import { createPublicClient } from "@/lib/supabase/public";
-import { unstable_cache } from "next/cache";
+import { ROLE_LABELS } from "@/lib/draft/roles";
+import { EXAMPLE_CONTEXT, headerContext, loadExampleOrEmpty } from "@/lib/draft/load-example";
 
-type StatsRow = Parameters<typeof mapStatsRowsToChampionStats>[0][number];
-type RelationRow = Parameters<typeof mapCounterRelationRows>[0][number];
-type ChampionRow = { id: string; name: string; image_url: string | null; ddragon_version: string };
-type DatedRow = { fetched_at: string };
-
-const CONTEXT = "EUW · Emerald+";
-
-// DO NOT REMOVE as "redundant given the cache" -- the cache is exactly why it is
-// needed. Once `loadExample` is wrapped in `unstable_cache` this page has no
-// remaining dynamic input, so Next would happily prerender it at build time.
-// There is no `.env.local` in this repo, so at build time `createPublicClient()`
-// throws, the `catch` below produces the degraded state, and "Les données de
-// draft ne sont pas disponibles" gets baked into static HTML and served to every
-// visitor until the next deploy. `force-dynamic` keeps `/` server-rendered per
-// request; `unstable_cache` still absorbs the query volume underneath it. That
-// pairing is the point: the cache without the trap.
+// Required alongside the cached loader: see the comment in load-example.ts.
 export const dynamic = "force-dynamic";
 
-// The underlying data only changes when a patch is scraped, so an hours-long
-// window costs nothing in freshness. It also buys outage tolerance: on a plan
-// where the Supabase project pauses after ~7 days idle, a cached read keeps
-// serving real content while the project is asleep, instead of the first visitor
-// back hitting a dead query and seeing the degraded state.
-const EXAMPLE_REVALIDATE_SECONDS = 6 * 60 * 60;
-
-// Resolved on the server so the page arrives already populated: no empty flash,
-// and the example is indexable. Calls the engine directly rather than fetching
-// this app's own API route over HTTP.
-//
-// Every query below is an anonymous read of patch-stable public data -- no
-// session, no cookie, and `playerPool` is hardcoded empty -- which is what lets
-// the whole function sit behind `unstable_cache`. Hence the cookie-free client.
-async function loadExample() {
-  const supabase = createPublicClient();
-
-  const [statsResult, relationResult, championResult, indexResult] = await Promise.all([
-    supabase
-      .from("champion_stats")
-      .select("champion_id, role, win_rate, pick_rate, ban_rate, games, fetched_at, champions(id, name, image_url)")
-      .eq("role", DEFAULT_EXAMPLE.role)
-      .eq("region", DEFAULT_EXAMPLE.region)
-      .eq("tier", DEFAULT_EXAMPLE.tier)
-      .order("win_rate", { ascending: false }),
-    supabase
-      .from("counter_relations")
-      .select("champion_id, countered_by_champion_id, role")
-      .eq("role", DEFAULT_EXAMPLE.role),
-    supabase.from("champions").select("id, name, image_url, ddragon_version").order("name"),
-    supabase
-      .from("champion_stats")
-      .select("games")
-      .eq("region", DEFAULT_EXAMPLE.region)
-      .eq("tier", DEFAULT_EXAMPLE.tier)
-  ]);
-
-  // A failed `champions` query is the dangerous one. `recommendations` derives
-  // from `stats`, so the board still renders -- but every slot and every map
-  // anchor resolves its portrait and name against `champions`, so the picks
-  // would stand on the map as bare ids while the verdict above them cites
-  // those same picks by name. Throwing routes both fatal cases into the
-  // caller's visible degraded state instead.
-  if (statsResult.error) throw statsResult.error;
-  if (championResult.error) throw championResult.error;
-
-  if (relationResult.error) {
-    // Not fatal, but not silent either: the engine's "no counter relation
-    // known" wording is identical whether the relation is genuinely absent or
-    // this query fell over.
-    console.error("counter_relations query failed", relationResult.error);
-  }
-
-  if (indexResult.error) {
-    // Same posture as the relations query: the tool is fully usable without the
-    // index totals, and their tiles are omitted rather than zeroed. Logged so an
-    // outage is distinguishable from a genuinely empty index.
-    console.error("champion_stats index query failed", indexResult.error);
-  }
-
-  const { data: statsRows } = statsResult;
-  const { data: relationRows } = relationResult;
-  const championRows = (championResult.data ?? []) as unknown as ChampionRow[];
-
-  const stats = mapStatsRowsToChampionStats((statsRows ?? []) as unknown as StatsRow[]);
-
-  const champions = championRows.map((row) => ({
-    id: row.id,
-    name: row.name,
-    imageUrl: row.image_url ?? undefined
-  }));
-
-  const recommendations = recommendChampions({
-    stats,
-    playerPool: [],
-    enemyPicks: DEFAULT_EXAMPLE.enemyPicks,
-    draftingRole: DEFAULT_EXAMPLE.role,
-    bannedChampionIds: [],
-    alreadyPickedChampionIds: DEFAULT_EXAMPLE.enemyPicks.map((pick) => pick.championId),
-    priority: 50,
-    topN: 4,
-    counterRelations: mapCounterRelationRows((relationRows ?? []) as unknown as RelationRow[]),
-    // The dossier names enemy picks, which need not be ranked in the
-    // candidate's own role. Without the full table the engine falls back to the
-    // raw id and prints a slug in its headline sentence.
-    championNames: championRows.map((row) => ({ championId: row.id, name: row.name }))
-  });
-
-  // The League patch is the first two segments of the Data Dragon version:
-  // "16.3.1" is patch 16.3. Derived rather than hardcoded, because a patch
-  // number the data cannot support is exactly the kind of claim this bar exists
-  // to rule out.
-  const version = championRows[0]?.ddragon_version ?? null;
-  const patch = version === null ? null : version.split(".").slice(0, 2).join(".");
-
-  const fetchedAt =
-    ((statsResult.data ?? []) as unknown as DatedRow[])
-      .map((row) => row.fetched_at)
-      .sort()
-      .at(-1) ?? null;
-
-  // Champion appearances, not matches. See the comment on TrustBar.
-  //
-  // Deliberately unscoped by role: these two numbers describe the whole indexed
-  // dataset, they are rendered once on the server, and the visitor can switch
-  // role without them updating. A role-qualified label would be wrong the moment
-  // they did.
-  const indexRows = (indexResult.data ?? []) as unknown as Array<{ games: number | null }>;
-  const appearances = indexRows.reduce<number | null>(
-    (sum, row) => (row.games === null ? sum : (sum ?? 0) + row.games),
-    null
-  );
-  const rankedChampions = indexRows.length === 0 ? null : indexRows.length;
-
-  // An unknown count is not a count of zero, and this row exists to establish
-  // that real data sits behind the product.
-  return {
-    recommendations,
-    champions,
-    appearances,
-    rankedChampions,
-    patch,
-    fetchedAt
-  };
-}
-
-// No arguments: the one input, `DEFAULT_EXAMPLE`, is a module constant that
-// `loadExample` closes over, so the key array below is the whole cache key and
-// every visitor to `/` shares one entry.
-const loadCachedExample = unstable_cache(loadExample, ["home-default-example"], {
-  revalidate: EXAMPLE_REVALIDATE_SECONDS
-});
-
 export default async function HomePage() {
-  let example: {
-    recommendations: Recommendation[];
-    champions: { id: string; name: string; imageUrl?: string }[];
-    appearances: number | null;
-    rankedChampions: number | null;
-    patch: string | null;
-    fetchedAt: string | null;
-  };
+  const example = await loadExampleOrEmpty();
 
-  try {
-    example = await loadCachedExample();
-  } catch {
-    example = {
-      recommendations: [],
-      champions: [],
-      appearances: null,
-      rankedChampions: null,
-      patch: null,
-      fetchedAt: null
-    };
-  }
-
-  // A missing patch drops that segment entirely rather than rendering
-  // "Patch null" -- the rest of the context is still true without it.
-  const headerContext = [example.patch === null ? null : `Patch ${example.patch}`, "EUW", "Emerald+"]
-    .filter((part): part is string => part !== null)
-    .join(" · ");
+  const roleLabel = ROLE_LABELS[DEFAULT_EXAMPLE.role];
+  // Resolved against the champion table rather than printing slugs; a pick the
+  // table does not know is left out instead of shown as an id.
+  const enemyNames = DEFAULT_EXAMPLE.enemyPicks
+    .map((pick) => example.champions.find((champion) => champion.id === pick.championId)?.name)
+    .filter((name): name is string => name !== undefined);
+  const caption = enemyNames.length === 0 ? null : `${roleLabel} contre ${enemyNames.join(" et ")}`;
 
   return (
-    <main>
-      <SiteHeader context={headerContext} />
+    <>
+      <SiteHeader current="home" context={headerContext(example.patch)} />
 
-      <div className="mx-auto max-w-5xl px-6 pt-7">
-        <Hero />
-      </div>
-
-      <div data-surface="draft" className="w-full bg-paper py-7">
-        <div className="mx-auto max-w-5xl px-6">
-          {example.recommendations.length === 0 ? (
-            <p className="rounded-xl border border-rule bg-surface p-6 text-center text-sm text-ink-muted">
-              Les données de draft ne sont pas disponibles pour le moment. Réessayez dans un instant.
-            </p>
-          ) : (
-            <DraftBoard
-              champions={example.champions}
-              initialDraft={createDraftState({
-                yourRole: DEFAULT_EXAMPLE.role,
-                enemyPicks: DEFAULT_EXAMPLE.enemyPicks
-              })}
-              initialRecommendations={example.recommendations}
-            />
-          )}
-        </div>
-      </div>
-
-      <div className="mx-auto max-w-5xl px-6 pb-7">
-        <Explainer />
-        {example.rankedChampions !== null && (
-          <TrustBar
-            appearances={example.appearances}
-            rankedChampions={example.rankedChampions}
-            patch={example.patch}
-            context={CONTEXT}
-            updatedAt={example.fetchedAt}
-          />
-        )}
-      </div>
+      <main>
+        <Hero recommendations={example.recommendations} caption={caption} patch={example.patch} />
+        <SignalsSection top={example.recommendations[0]} />
+        <MethodSection />
+        <DataSection
+          appearances={example.appearances}
+          rankedChampions={example.rankedChampions}
+          patch={example.patch}
+          context={EXAMPLE_CONTEXT}
+          updatedAt={example.fetchedAt}
+        />
+        <FaqSection />
+        <CtaSection />
+      </main>
 
       <SiteFooter />
-    </main>
+    </>
   );
 }

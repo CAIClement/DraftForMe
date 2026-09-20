@@ -207,7 +207,7 @@ export function DraftBoard({
   }
 
   return (
-    <div data-surface="draft" className="rounded-xl border border-rule bg-surface p-4">
+    <div className="rounded-xl border border-rule bg-surface p-4">
       <div className="grid gap-4 sm:grid-cols-[186px_1fr_186px]">
         {column("ally")}
 

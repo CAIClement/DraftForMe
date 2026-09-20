@@ -1,11 +1,12 @@
 import json
 
+import joblib
 import numpy as np
 
 from ml.win.baselines import References
-from ml.win.models import BoostingDraftModel
+from ml.win.models import BoostingDraftModel, LogisticDraftModel
 from win_command_fixtures import run_select, small_candidates, world
-from win_fixtures import random_drafts, write_database
+from win_fixtures import neutral_prior, random_drafts, write_database
 
 
 def test_select_saves_the_split_the_model_its_weights_and_a_validation_report(tmp_path):
@@ -19,12 +20,31 @@ def test_select_saves_the_split_the_model_its_weights_and_a_validation_report(tm
     weights = json.loads((artifacts / "model_weights.json").read_text(encoding="utf-8"))
     assert weights["stage"] in (1, 2)
     report = json.loads((artifacts / "validation_report.json").read_text(encoding="utf-8"))
-    assert [row["model"] for row in report["candidates"]] == [model.name for model in small_candidates(42)]
-    assert {row["model"] for row in report["references"]} == {References.ENGINE, References.WIN_RATES}
+    assert [row["model"] for row in report["candidates"]] == [
+        model.name for model in small_candidates(42, neutral_prior())
+    ]
+    assert {row["model"] for row in report["references"]} == {
+        References.ENGINE,
+        References.WIN_RATES,
+        References.PRIORS_ONLY,
+    }
     assert report["chosen"] in {row["model"] for row in report["candidates"]}
     assert any(line.startswith("Modèle retenu") for line in lines)
     for line in lines:
         line.encode("cp1252")
+
+
+def test_select_saves_the_priors_only_reference_model_alongside_the_chosen_one(tmp_path):
+    db, seed_sql, artifacts = world(tmp_path)
+
+    code, _ = run_select(db, seed_sql, artifacts)
+
+    assert code == 0
+    saved = joblib.load(artifacts / "model.joblib")
+    assert "priors_reference" in saved
+    priors_reference = saved["priors_reference"]
+    assert isinstance(priors_reference, LogisticDraftModel)
+    assert priors_reference.stage == 0
 
 
 def test_select_removes_stale_weights_when_boosting_is_chosen(tmp_path):
@@ -33,7 +53,9 @@ def test_select_removes_stale_weights_when_boosting_is_chosen(tmp_path):
     (artifacts / "model_weights.json").write_text("{}", encoding="utf-8")
 
     boosting = {"learning_rate": 0.1, "max_leaf_nodes": 15, "l2_regularization": 1.0}
-    code, _ = run_select(db, seed_sql, artifacts, candidates=lambda seed: [BoostingDraftModel(boosting, seed)])
+    code, _ = run_select(
+        db, seed_sql, artifacts, candidates=lambda seed, prior: [BoostingDraftModel(boosting, seed, prior)]
+    )
 
     assert code == 0
     assert not (artifacts / "model_weights.json").exists()

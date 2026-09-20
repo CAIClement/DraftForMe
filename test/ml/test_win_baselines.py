@@ -5,6 +5,7 @@ import pytest
 
 from ml.paths import SEED_SQL_PATH
 from ml.win.baselines import (
+    ChampionPrior,
     RateTables,
     References,
     ScoreCalibration,
@@ -16,6 +17,7 @@ from ml.win.baselines import (
     load_engine_data,
     meta_score,
     score_counter,
+    win_rate_log_odds,
 )
 from ml.win.encoding import swap_sides
 from ml.win.metrics import summary
@@ -72,6 +74,7 @@ def test_ranks_come_from_win_rate_order_within_each_role(tmp_path):
     assert data.meta_by_role["mid"] == pytest.approx({"ahri": 100, "orianna": 70, "zed": 40})
     assert data.meta_by_role["top"] == {"garen": 100}
     assert data.slug_by_key[103] == "ahri"
+    assert data.win_rate_by_role["mid"] == pytest.approx({"ahri": 52.0, "orianna": 51.0, "zed": 50.0})
 
 
 def test_ties_in_win_rate_are_broken_by_slug(tmp_path):
@@ -115,6 +118,10 @@ def test_reads_the_real_seed_file():
     assert len(data.slug_by_key) == 172
     assert set(data.meta_by_role) == {"top", "jungle", "mid", "adc", "support"}
     assert sum(len(relations) for relations in data.relations_by_role.values()) == 725
+    assert set(data.win_rate_by_role) == {"top", "jungle", "mid", "adc", "support"}
+    for role, rates in data.win_rate_by_role.items():
+        assert set(rates) == set(data.meta_by_role[role])
+        assert all(0 < rate < 100 for rate in rates.values())
 
 
 def test_refuses_a_missing_or_empty_seed_file(tmp_path):
@@ -166,3 +173,99 @@ def test_the_win_rate_reference_learns_a_dominant_champion(tmp_path):
     engine = summary(labels[2000:], predictions[References.ENGINE])
     assert rates["log_loss"] < engine["log_loss"]
     assert set(predictions) == {References.ENGINE, References.WIN_RATES}
+
+
+# --- champion priors from public statistics -----------------------------------------
+
+
+def test_win_rate_log_odds_clips_extreme_rates_to_stay_finite():
+    low = win_rate_log_odds(0.0)
+    high = win_rate_log_odds(100.0)
+
+    assert math.isfinite(low) and math.isfinite(high)
+    assert low < 0 < high
+
+
+def prior_fixture(tmp_path):
+    # mid: ahri ranked at 60 %, zed at 40 %. top: only garen, at 55 %. jungle/adc/support unranked.
+    seed = write_seed_sql(
+        tmp_path / "seed.sql",
+        champions={"ahri": 103, "zed": 238, "garen": 86, "orianna": 61},
+        stats=[("ahri", "mid", 60.0), ("zed", "mid", 40.0), ("garen", "top", 55.0), ("orianna", "adc", 65.0)],
+    )
+    return ChampionPrior(load_engine_data(seed))
+
+
+def test_log_odds_matches_the_win_rate_in_that_role(tmp_path):
+    prior = prior_fixture(tmp_path)
+
+    assert prior.log_odds(103, "mid") == pytest.approx(win_rate_log_odds(60.0))
+    assert prior.log_odds(238, "mid") == pytest.approx(win_rate_log_odds(40.0))
+
+
+def test_log_odds_falls_back_to_the_mean_of_ranked_roles_then_to_neutral(tmp_path):
+    prior = prior_fixture(tmp_path)
+
+    # orianna is ranked in adc only: mid falls back to that single value.
+    assert prior.log_odds(61, "mid") == pytest.approx(win_rate_log_odds(65.0))
+    # garen is ranked in top only: jungle falls back to that single value too.
+    assert prior.log_odds(86, "jungle") == pytest.approx(win_rate_log_odds(55.0))
+    # a champion the statistics never rank anywhere, and a hidden pick, are both neutral.
+    assert prior.log_odds(9999, "mid") == 0.0
+    assert prior.log_odds(0, "mid") == 0.0
+
+
+def test_prior_features_are_antisymmetric_and_the_sixth_is_the_sum(tmp_path):
+    prior = prior_fixture(tmp_path)
+    drafts = np.array([[103, 0, 0, 61, 0, 238, 0, 0, 0, 0]])
+
+    features = prior.features(drafts)
+
+    assert features.shape == (1, 6)
+    assert features[0, 5] == pytest.approx(features[0, :5].sum())
+    assert np.allclose(prior.features(swap_sides(drafts)), -features)
+
+
+def test_prior_features_treat_a_hidden_or_unknown_pick_as_zero(tmp_path):
+    prior = prior_fixture(tmp_path)
+    drafts = np.array([[103, 0, 0, 0, 0, 0, 0, 0, 0, 0], [9999, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
+
+    features = prior.features(drafts)
+
+    assert features[0, 0] == pytest.approx(win_rate_log_odds(60.0))
+    assert features[0, 1:5].sum() == 0
+    assert features[1] == pytest.approx([0.0] * 6)
+
+
+def test_features_are_cached_and_computed_once_per_distinct_input(tmp_path, monkeypatch):
+    prior = prior_fixture(tmp_path)
+    calls = []
+    original = ChampionPrior._compute_features
+
+    def counting(self, drafts):
+        calls.append(drafts.shape)
+        return original(self, drafts)
+
+    monkeypatch.setattr(ChampionPrior, "_compute_features", counting)
+
+    drafts_a = np.array([[103, 0, 0, 61, 0, 238, 0, 0, 0, 0]])
+    drafts_b = drafts_a.copy()  # same content, different array object
+    drafts_c = np.array([[86, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
+
+    for _ in range(5):
+        prior.features(drafts_a)
+    prior.features(drafts_b)
+    prior.features(drafts_c)
+
+    assert len(calls) == 2  # drafts_a/drafts_b share one computation, drafts_c gets its own
+
+
+def test_features_cache_returns_a_copy_callers_cannot_corrupt(tmp_path):
+    prior = prior_fixture(tmp_path)
+    drafts = np.array([[103, 0, 0, 61, 0, 238, 0, 0, 0, 0]])
+
+    first = prior.features(drafts)
+    first[0, 0] = 12345.0
+    second = prior.features(drafts)
+
+    assert second[0, 0] != 12345.0

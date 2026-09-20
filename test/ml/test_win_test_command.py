@@ -7,7 +7,14 @@ import pytest
 
 from ml.win import test
 from ml.win.baselines import References
+from ml.win.models import LOGISTIC_C_GRID, LogisticDraftModel
 from win_command_fixtures import run_select, world
+
+
+def stage0_only_candidates(seed, prior):
+    """Every logistic candidate is stage 0: whichever wins on validation is, by construction,
+    the exact same fit ml.win.select separately produces for the priors-only reference."""
+    return [LogisticDraftModel(0, c, seed, prior) for c in LOGISTIC_C_GRID]
 
 
 def run_test(artifacts, seed_sql, now=lambda: "2026-09-20T10:00:00"):
@@ -37,9 +44,13 @@ def test_test_evaluates_once_then_only_prints_the_saved_report(tmp_path):
     saved = report_path.read_bytes()
     report = json.loads(saved.decode("utf-8"))
     assert report["date"] == "2026-09-20T10:00:00"
-    assert set(report["comparisons"]) == {References.ENGINE, References.WIN_RATES}
-    assert set(report["comparisons_by_match"]) == {References.ENGINE, References.WIN_RATES}
+    three_references = {References.ENGINE, References.WIN_RATES, References.PRIORS_ONLY}
+    assert set(report["comparisons"]) == three_references
+    assert set(report["comparisons_by_match"]) == three_references
+    assert set(report["references"]) == three_references
     assert set(report["partial_drafts"]) == {"3", "5", "8"}
+    for known in report["partial_drafts"].values():
+        assert set(known) == three_references | {"model"}
     assert set(report["by_tier_group"]) == {"iron-silver", "gold-emerald", "diamond-plus"}
     assert len(report["calibration"]) == 10
     assert report["top_weights"][0]["key"] == ["champion", "top", 101]
@@ -145,3 +156,41 @@ def test_test_raises_on_a_well_formed_model_file_with_the_wrong_shape(tmp_path):
 
     with pytest.raises(KeyError):
         run_test(artifacts, seed_sql)
+
+
+def test_test_reports_a_model_saved_before_the_priors_only_reference_existed(tmp_path):
+    """A model.joblib produced by an older ml.win.select, without the new priors_reference key,
+    must be reported and refused, not crash with a KeyError."""
+    db, seed_sql, artifacts = world(tmp_path)
+    run_select(db, seed_sql, artifacts)
+    model_path = artifacts / "model.joblib"
+    saved = joblib.load(model_path)
+    del saved["priors_reference"]
+    joblib.dump(saved, model_path)
+
+    code, lines = run_test(artifacts, seed_sql)
+
+    assert code == 5
+    assert "ml.win.select" in lines[0]
+    assert not (artifacts / "test_report.json").exists()
+    for line in lines:
+        line.encode("cp1252")
+
+
+def test_test_handles_a_chosen_model_that_is_itself_the_priors_only_reference(tmp_path):
+    """When the chosen model is itself a stage-0 model built the same way, its comparison with
+    the priors-only reference is exactly zero: nothing should crash, and the verdict is negative."""
+    db, seed_sql, artifacts = world(tmp_path, count=3000)
+    run_select(db, seed_sql, artifacts, candidates=stage0_only_candidates)
+
+    code, lines = run_test(artifacts, seed_sql)
+
+    assert code == 0
+    report = json.loads((artifacts / "test_report.json").read_text(encoding="utf-8"))
+    comparison = report["comparisons"][References.PRIORS_ONLY]
+    assert comparison["difference"] == pytest.approx(0.0)
+    assert comparison["low"] <= 0 <= comparison["high"]
+    assert report["beats_references"] is False
+    assert lines[-1].startswith("Verdict")
+    for line in lines:
+        line.encode("cp1252")
