@@ -31,6 +31,14 @@ export type CounterVerdict = {
   losesTo: string[];
 };
 
+export type EnemyPick = {
+  championId: string;
+  /** The lane this champion was placed on. Not narrowed to the `Role` union
+   *  here: this module is consumed by the engine, which has no reason to
+   *  depend on the draft UI's vocabulary. The API schema does the narrowing. */
+  role: string;
+};
+
 export type RecommendationFactor = {
   key: "meta" | "player" | "counter";
   label: string;
@@ -76,7 +84,11 @@ export type Recommendation = {
 export type RecommendInput = {
   stats: ChampionStats[];
   playerPool: PlayerPoolEntry[];
-  enemyPicks: string[];
+  enemyPicks: EnemyPick[];
+  /** The role being drafted for. The enemy standing on it counts double in
+   *  `scoreCounter`. Optional: callers that have no draft context (tests, and
+   *  any future batch use) get the previous flat weighting. */
+  draftingRole?: string;
   bannedChampionIds: string[];
   alreadyPickedChampionIds: string[];
   priority: number;
