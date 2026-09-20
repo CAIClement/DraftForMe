@@ -212,6 +212,16 @@ The board redeclares **the same token names** the site already uses, scoped to `
 
 Two new tokens, defined in both scopes: `--team-ally` (`#1d4ed8` light, `#2f6fd0` dark) and `--team-enemy` (`#b91c1c` light, `#c0392b` dark). `tailwind.config.ts` maps them as `team-ally` and `team-enemy`.
 
+Three things the scoped block must handle, which redefining the tokens alone does not:
+
+1. **`body` sets `color: var(--ink)`, and that resolves once.** Descendants inherit the *computed* near-black, they do not re-resolve the variable. Any element with no `text-*` class — the champion name in `Verdict`, the fact values, the alternative names — would stay dark on dark. The scoped block therefore sets `color: var(--ink)` itself, so the cascade re-resolves inside the board. That fixes every case at once; no component is edited for it.
+2. **`:root` pins `color-scheme: light`**, which governs the chrome of native controls: the priority slider's empty track, the picker input's placeholder and clear affordance, scrollbars, focus rings. The scoped block sets `color-scheme: dark`.
+3. **The Tailwind tokens are bare `var(--x)` with no alpha channel**, so `bg-accent/14` does not work. `--accent-wash` is therefore declared as a literal translucent value rather than composed with an opacity modifier.
+
+One inherited detail: `shadow-sm` is `rgb(0 0 0 / 0.05)` and is invisible on a dark ground. The board's cards use a ring rather than a shadow for lift.
+
+Out of scope but worth naming: `trust-bar.tsx` is already a hand-rolled dark band built from literal hex values. It is the closest precedent to this mechanism and a candidate to fold into it later. This spec does not touch it.
+
 The map asset is copied into `public/map/rift.png` from Data Dragon at the version the project already pins, rather than hotlinked. Anchors are positioned against the frame, not the image, so a missing asset costs the background and nothing else.
 
 `public/riot.txt`, currently untracked, is committed alongside it.
