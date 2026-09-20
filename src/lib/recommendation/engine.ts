@@ -95,9 +95,14 @@ function counterDetail(
   if (counter.beats.length > 0) parts.push(`Prend l'avantage sur ${first(counter.beats).map(label).join(", ")}.`);
   if (counter.losesTo.length > 0) parts.push(`En difficulté contre ${first(counter.losesTo).map(label).join(", ")}.`);
 
-  // The factor of two is a modelling choice, not something the data measured.
-  // It is stated wherever its effect is visible.
-  if (directOpponentId !== null) {
+  // The weight applies in the score regardless of whether this candidate's
+  // matchup against the direct opponent is known -- an unmatched enemy still
+  // counts twice as a neutral. But naming that opponent here when neither
+  // clause above mentions them would claim a matchup verdict the data does
+  // not support: the reader would see a name and "compte double" with nothing
+  // to say whether it's good, bad, or simply unmeasured. So the disclosure is
+  // said only where it's anchored to a sentence that actually names them.
+  if (directOpponentId !== null && (counter.beats.includes(directOpponentId) || counter.losesTo.includes(directOpponentId))) {
     parts.push(`${label(directOpponentId)}, votre adversaire direct, compte double dans ce calcul.`);
   }
 

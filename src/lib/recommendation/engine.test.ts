@@ -323,7 +323,12 @@ describe("counter relations in recommendations", () => {
   });
 
   it("names the direct opponent first in the matchup detail", () => {
-    const [top] = recommendChampions({
+    const directRelations: CounterRelation[] = [
+      { championId: "ahri", counteredByChampionId: "orianna", role: "mid" },
+      { championId: "zed", counteredByChampionId: "orianna", role: "mid" }
+    ];
+
+    const result = recommendChampions({
       stats: counterStats,
       playerPool: [],
       enemyPicks: [
@@ -333,15 +338,17 @@ describe("counter relations in recommendations", () => {
       bannedChampionIds: [],
       alreadyPickedChampionIds: [],
       priority: 50,
-      topN: 1,
-      counterRelations: relations,
+      topN: 10,
+      counterRelations: directRelations,
       draftingRole: "mid"
     });
 
-    const counter = top.explanation.factors.find((factor) => factor.key === "counter");
+    // orianna beats both; ahri is pushed onto `beats` first (its pick comes
+    // first in enemyPicks) but zed is the direct opponent (mid) and must lead.
+    const orianna = result.find((entry) => entry.championId === "orianna");
+    const counter = orianna?.explanation.factors.find((factor) => factor.key === "counter");
 
-    expect(counter?.detail).toMatch(/zed/i);
-    expect(counter?.detail).toContain("compte double");
+    expect(counter?.detail).toContain("Prend l'avantage sur Zed, Ahri");
   });
 
   it("says nothing about doubling when no enemy stands on the drafted lane", () => {
@@ -359,6 +366,36 @@ describe("counter relations in recommendations", () => {
 
     const counter = top.explanation.factors.find((factor) => factor.key === "counter");
 
+    expect(counter?.detail).not.toContain("compte double");
+  });
+
+  // `available` only requires SOME enemy to have a known relation, not the
+  // direct opponent specifically. If the disclosure fired on `directOpponentId
+  // !== null` alone, this candidate would say the direct opponent "compte
+  // double" while never telling the reader whether that matchup is good, bad,
+  // or unmeasured -- a claim the data does not support.
+  it("says nothing about doubling when the direct opponent has no known relation for this candidate", () => {
+    const result = recommendChampions({
+      stats: counterStats,
+      playerPool: [],
+      enemyPicks: [
+        { championId: "orianna", role: "top" },
+        { championId: "zed", role: "mid" }
+      ],
+      bannedChampionIds: [],
+      alreadyPickedChampionIds: [],
+      priority: 50,
+      topN: 10,
+      // ahri beats orianna (the non-direct enemy); nothing relates ahri to zed
+      // (the direct opponent), so ahri's verdict never mentions zed at all.
+      counterRelations: [{ championId: "orianna", counteredByChampionId: "ahri", role: "mid" }],
+      draftingRole: "mid"
+    });
+
+    const ahri = result.find((entry) => entry.championId === "ahri");
+    const counter = ahri?.explanation.factors.find((factor) => factor.key === "counter");
+
+    expect(counter?.available).toBe(true);
     expect(counter?.detail).not.toContain("compte double");
   });
 });
