@@ -108,7 +108,7 @@ export function RiftMap({
               }`}
             >
               {pinName === null ? (
-                <span aria-hidden="true" className="block h-4 w-4 text-center text-xs leading-4 text-ink-faint">
+                <span aria-hidden="true" className="block h-4 w-4 text-center text-base font-semibold leading-4 text-ink">
                   +
                 </span>
               ) : (

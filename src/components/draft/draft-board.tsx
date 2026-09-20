@@ -159,7 +159,7 @@ export function DraftBoard({
               : (byId.get(championId) ?? { id: championId, name: championId });
 
           return (
-            <div key={role}>
+            <div key={role} className="relative">
               <DraftSlot
                 side={side}
                 role={role}
@@ -168,13 +168,20 @@ export function DraftBoard({
                 onOpen={(openSide, openRole) => dispatch({ type: "openPicker", side: openSide, role: openRole })}
                 onClear={(clearSide, clearRole) => apply({ type: "clear", side: clearSide, role: clearRole })}
               />
+              {/* Sits on top of the slot rather than under it: as a row of its
+                  own it doubled the column's height and made five lanes read as
+                  ten. It cannot be nested inside the slot -- that slot is itself
+                  a button, and a button inside a button is invalid. Its
+                  accessible name says what it does; the visible label is short
+                  because the row it sits in already names the lane. */}
               {side === "ally" && !isYourLane && (
                 <button
                   type="button"
                   onClick={() => apply({ type: "setYourRole", role })}
-                  className="mt-0.5 text-[9px] font-semibold uppercase tracking-[0.12em] text-ink-faint underline"
+                  aria-label={`Jouer ${ROLE_LABELS[role].toLowerCase()}`}
+                  className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded-md border border-rule bg-surface px-1.5 py-1 text-[8px] font-extrabold uppercase tracking-[0.1em] text-ink-faint hover:border-accent hover:text-accent"
                 >
-                  {`Jouer ${ROLE_LABELS[role].toLowerCase()}`}
+                  Vous ?
                 </button>
               )}
             </div>
