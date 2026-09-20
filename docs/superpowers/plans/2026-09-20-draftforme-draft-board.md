@@ -2915,3 +2915,15 @@ Written as the plan was carried out, so the next reader sees where the map and t
 **Task 5 — the dangerous line got a test after all.** The plan accepted that the `recommendation_sessions` insert could not be covered, because the Supabase stub returns `user: null`. Review showed covering it was cheap: stub a signed-in user, capture the insert payload, assert `enemy_picks` is `["zed"]`. It fails with a precise diff if the reshaped objects are passed through. Added.
 
 **Noted, not acted on.** `recommendation_sessions` stores enemy champion ids without their lanes, and stores no ally picks at all. That was already true before this work, and changing it is a migration decision rather than a route-reshape one. Anyone later trying to reconstruct a draft from that table should know it is a lossy summary.
+
+**Task 8 — `bg-paper/70` was inert, as suspected, and the fix belongs on the button.** Confirmed with a Tailwind CLI probe against this project's own config: an opacity modifier on a bare `var(--x)` token emits no rule at all, silently. The arbitrary value `bg-[color-mix(in_srgb,var(--paper)_70%,transparent)]` does emit, and keeps the tint on the element the design put it on. This trap recurred in Task 10 and was handled the same way.
+
+**Task 8 — the plan shipped an "adc" bug.** `anchorLabel`'s your-lane branch interpolated the raw role key while every other branch used `ROLE_LABELS`, so an ADC player read "Votre lane, adc". Fixed before Task 11 could bake the string into more tests, with a test on the one role whose label is not merely its id capitalised.
+
+**Task 11 — the plan's own tests were unrunnable.** `RiftMap` and `DraftSlot` deliberately give the same slot the same accessible name, so that a keyboard user gets the same product from the columns that a mouse user gets from the map. The moment the board renders both, `getByRole("button", { name: "Top adverse, vide" })` matches two elements and throws. Rather than rename the buttons — the matching names are the feature — the columns, the map and the results panel each became a labelled `role="group"`, and the ambiguous queries are scoped with `within()`.
+
+A third collision surfaced only once the tests ran: the recommended champion's name appears both in your own lane's slot and in the `Verdict` header, so `getByText("Galio")` was ambiguous too. Same remedy.
+
+**Task 11 — the excluded-ids wiring was correct but unpinned.** `excludedChampionIds` had unit tests and `ChampionPicker` had unit tests, but nothing exercised the line connecting them. Dropping it would have left every test green while the board offered to recommend a champion already standing on the map. Now covered end to end.
+
+**`npm run lint` does not run in this repository.** There is no ESLint config, so `next lint` drops into its interactive setup wizard — which a non-interactive agent cannot answer and must not answer on the user's behalf. Task 15's verification step should skip it, or the project should configure ESLint first. Not done here; that is a decision for the repository owner.
