@@ -70,18 +70,18 @@ describe("recommendationRequestSchema", () => {
 });
 
 describe("POST /api/recommend", () => {
+  function makeQuery(result: { data: unknown; error: null }) {
+    const query = {
+      select: () => query,
+      eq: () => query,
+      order: () => query,
+      then: (resolve: (value: typeof result) => void) => resolve(result)
+    };
+    return query;
+  }
+
   it("passes the queried counter relations through to the engine", async () => {
     const relationFixture = [{ champion_id: "zed", countered_by_champion_id: "galio", role: "mid" }];
-
-    function makeQuery(result: { data: unknown; error: null }) {
-      const query = {
-        select: () => query,
-        eq: () => query,
-        order: () => query,
-        then: (resolve: (value: typeof result) => void) => resolve(result)
-      };
-      return query;
-    }
 
     const supabaseStub = {
       auth: { getUser: () => Promise.resolve({ data: { user: null } }) },
@@ -117,5 +117,47 @@ describe("POST /api/recommend", () => {
     // Allies are excluded from the candidates and nothing else.
     expect(input.alreadyPickedChampionIds.sort()).toEqual(["malphite", "zed"]);
     expect(input.draftingRole).toBe("mid");
+  });
+
+  // The insert below is cast `as never`, so nothing else in the toolchain —
+  // not the compiler, not the schema — would catch `enemy_picks` regressing
+  // from champion ids back to `{championId, role}` pick objects.
+  it("inserts enemy champion ids, not pick objects, into the session row", async () => {
+    let insertPayload: unknown = null;
+
+    const supabaseStub = {
+      auth: { getUser: () => Promise.resolve({ data: { user: { id: "user-1" } } }) },
+      from: (table: string) => {
+        if (table === "recommendation_sessions") {
+          return {
+            insert: (payload: unknown) => {
+              insertPayload = payload;
+              return Promise.resolve({ data: null, error: null });
+            }
+          };
+        }
+        return makeQuery({ data: [], error: null });
+      }
+    };
+
+    const { createClient } = await import("@/lib/supabase/server");
+    vi.mocked(createClient).mockResolvedValue(supabaseStub as never);
+
+    const { POST } = await import("./route");
+    const request = new Request("http://localhost/api/recommend", {
+      method: "POST",
+      body: JSON.stringify({
+        role: "mid",
+        region: "euw",
+        tier: "emerald_plus",
+        enemyPicks: [{ championId: "zed", role: "mid" }],
+        allyPicks: ["malphite"],
+        bans: []
+      })
+    });
+
+    await POST(request);
+
+    expect(insertPayload).toMatchObject({ enemy_picks: ["zed"] });
   });
 });
