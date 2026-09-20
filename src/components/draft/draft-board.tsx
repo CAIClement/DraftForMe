@@ -125,6 +125,12 @@ export function DraftBoard({
           championImageUrl: top.championImageUrl
         };
 
+  // Held once so the picker's `onPick` closure narrows on `picker`, not on
+  // `draft.picker` re-read behind a `!`. The assertion was safe -- the
+  // picker only ever renders while this is non-null -- but it was invisible;
+  // this makes the compiler carry the guarantee instead of a promise.
+  const picker = draft.picker;
+
   function column(side: Side) {
     const label = side === "ally" ? "Votre équipe" : "En face";
 
@@ -194,16 +200,16 @@ export function DraftBoard({
               else apply({ type: "clear", side, role });
             }}
           />
-          {draft.picker !== null && (
+          {picker !== null && (
             <ChampionPicker
               champions={champions}
               excludedIds={excludedChampionIds(draft)}
-              target={draft.picker}
+              target={picker}
               onPick={(championId) =>
                 apply({
                   type: "place",
-                  side: draft.picker!.side,
-                  role: draft.picker!.role,
+                  side: picker.side,
+                  role: picker.role,
                   championId
                 })
               }

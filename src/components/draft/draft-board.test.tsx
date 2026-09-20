@@ -122,6 +122,30 @@ describe("DraftBoard", () => {
     expect(JSON.parse(String(fetchSpy.mock.calls[0][1]?.body)).enemyPicks).toEqual([]);
   });
 
+  // Neither `draft-state.test.ts` (which calls `excludedChampionIds` directly)
+  // nor `champion-picker.test.tsx` (which supplies `excludedIds` as a literal
+  // prop) exercises the wire between them at this component: the line that
+  // passes `excludedChampionIds(draft)` into `ChampionPicker`. If that
+  // argument were dropped, the board would offer to recommend a champion
+  // already standing on the map.
+  it("excludes an already-placed champion from a picker opened on a different lane", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(ok("Orianna"));
+
+    render(<DraftBoard champions={champions} initialDraft={solved} initialRecommendations={initial} />);
+
+    fireEvent.click(enemyColumn().getByRole("button", { name: "Top adverse, vide" }));
+    fireEvent.change(screen.getByRole("combobox"), { target: { value: "caitlyn" } });
+    fireEvent.click(screen.getByRole("button", { name: "Caitlyn" }));
+    await waitFor(() => expect(fetchSpy).toHaveBeenCalled());
+
+    fireEvent.click(enemyColumn().getByRole("button", { name: "Jungle adverse, vide" }));
+
+    expect(screen.queryByRole("button", { name: "Caitlyn" })).not.toBeInTheDocument();
+    // Matters as much as the line above: without it, a picker excluding
+    // everyone (or rendering nothing) would also pass.
+    expect(screen.getByRole("button", { name: "Galio" })).toBeInTheDocument();
+  });
+
   it("requests again when you change lane", async () => {
     const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(ok("Darius"));
 
