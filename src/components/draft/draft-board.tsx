@@ -38,6 +38,10 @@ export function DraftBoard({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Ephemeral by design: a preview changes what the map shows and nothing
+  // else. It never enters the draft and never triggers a request.
+  const [previewId, setPreviewId] = useState<string | null>(null);
+
   // Only the newest request may write state. Without this, two in-flight
   // requests resolve in arbitrary order and the slower one wins, leaving a
   // recommendation on screen that does not match the visible board.
@@ -116,13 +120,20 @@ export function DraftBoard({
   const [top, ...rest] = recommendations;
   const playerFactor = top?.explanation.factors.find((factor) => factor.key === "player");
 
+  // A preview only ever points at an entry from the list already on screen
+  // -- it is a look, not a fetch -- so a stale id (the previewed alternative
+  // got promoted or the list changed under it) simply falls back to `top`
+  // rather than showing nothing.
+  const previewed = previewId === null ? undefined : recommendations.find((entry) => entry.championId === previewId);
+  const shown = previewed ?? top;
+
   const recommended =
-    top === undefined
+    shown === undefined
       ? null
       : {
-          championId: top.championId,
-          championName: top.championName,
-          championImageUrl: top.championImageUrl
+          championId: shown.championId,
+          championName: shown.championName,
+          championImageUrl: shown.championImageUrl
         };
 
   // Held once so the picker's `onPick` closure narrows on `picker`, not on
@@ -260,7 +271,20 @@ export function DraftBoard({
             ) : (
               <PriorityUnavailable />
             )}
-            <Alternatives recommendations={rest} />
+            <Alternatives
+              recommendations={rest}
+              onPreview={setPreviewId}
+              onSelect={(championId) => {
+                setPreviewId(null);
+                // Reorders what the server already sent; it asks for nothing new
+                // because the server has already answered this exact draft.
+                setRecommendations((current) => {
+                  const chosen = current.find((entry) => entry.championId === championId);
+                  if (chosen === undefined) return current;
+                  return [chosen, ...current.filter((entry) => entry.championId !== championId)];
+                });
+              }}
+            />
             <RefinePrompt />
           </>
         ) : (

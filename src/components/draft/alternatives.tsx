@@ -17,23 +17,37 @@ function Facts({ recommendation }: { recommendation: Recommendation }) {
   return <span className="text-[10.5px] text-ink-faint">{facts.join(" · ")}</span>;
 }
 
-export function Alternatives({ recommendations }: { recommendations: Recommendation[] }) {
+export function Alternatives({
+  recommendations,
+  onPreview,
+  onSelect
+}: {
+  recommendations: Recommendation[];
+  onPreview: (championId: string | null) => void;
+  onSelect: (championId: string) => void;
+}) {
   if (recommendations.length === 0) return null;
 
   return (
     <div className="mt-2 flex gap-2">
       {recommendations.map((recommendation) => (
-        <div
+        <button
           key={recommendation.championId}
+          type="button"
           data-testid="alternative"
-          className="flex-1 rounded-lg border border-rule bg-surface px-3 py-2.5"
+          onMouseEnter={() => onPreview(recommendation.championId)}
+          onMouseLeave={() => onPreview(null)}
+          onFocus={() => onPreview(recommendation.championId)}
+          onBlur={() => onPreview(null)}
+          onClick={() => onSelect(recommendation.championId)}
+          className="flex-1 rounded-lg border border-rule bg-surface px-3 py-2.5 text-left hover:border-accent"
         >
-          <b className="block text-sm font-bold tracking-tight">
+          <b className="block text-sm font-bold tracking-tight text-ink">
             {recommendation.championName}{" "}
             <span className="font-extrabold text-accent">{Math.round(recommendation.totalScore)}</span>
           </b>
           <Facts recommendation={recommendation} />
-        </div>
+        </button>
       ))}
     </div>
   );

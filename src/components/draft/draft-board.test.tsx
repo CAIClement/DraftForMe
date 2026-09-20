@@ -189,4 +189,16 @@ describe("DraftBoard", () => {
     await waitFor(() => expect(recommendationPanel().getByText("Darius")).toBeInTheDocument());
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
+
+  // A preview is a look, not a decision. If it fired a request, hovering the
+  // alternatives list would hammer the API and could even reorder itself.
+  it("fires no request when an alternative is previewed", () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+
+    render(<DraftBoard champions={champions} initialDraft={solved} initialRecommendations={initial} />);
+
+    fireEvent.mouseEnter(screen.getByRole("button", { name: /lissandra/i }));
+
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
 });
