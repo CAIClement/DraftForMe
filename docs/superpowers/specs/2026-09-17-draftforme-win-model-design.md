@@ -233,6 +233,52 @@ Unit tests in `test/ml/`, without network, on small synthetic datasets:
 - **Test lock:** a second run of `ml.win.test` recomputes nothing, and `ml.win.select` refuses to run once the test has been evaluated.
 - **Corrupt artifacts:** a `test_report.json` that cannot be parsed and a `model.joblib` that cannot be loaded are each reported with a message instead of crashing; a well-formed model file of the wrong shape still raises.
 
+## Results
+
+Run on 2026-09-20, patch 16.18, seed 42. 26,185 collected matches split by seed player into 18,337 training, 3,943 validation and 3,905 test matches. Chosen on validation: **logistic regression, stage 4, C=0.003**.
+
+### Test set (3,905 matches, never seen)
+
+| | log loss | AUC | accuracy |
+|---|---|---|---|
+| model | 0.6911 | 0.5330 | 51.9 % |
+| the site's rule engine | 0.6909 | 0.5332 | 52.8 % |
+| public statistics alone | 0.6911 | 0.5319 | 52.4 % |
+| champion win rates | 0.7026 | 0.5280 | 52.2 % |
+
+Deciding intervals (reference minus model, resampled by whole seed player):
+
+| against | difference | 95 % interval | above zero? |
+|---|---|---|---|
+| the site's rule engine | −0.0003 | [−0.0029, +0.0024] | no |
+| public statistics alone | −0.0000 | [−0.0028, +0.0026] | no |
+| champion win rates | +0.0115 | [+0.0066, +0.0163] | yes |
+
+**Verdict: the model does not beat the three references.** Under `Follow-Up Work`, work stops here and the site is not touched.
+
+### Why
+
+**A baseline already captures it.** The gap to public statistics alone is −0.0000: the 10,422 learned columns add nothing at all to a plain calibration of the public win rates the rule engine already reads. The only reference clearly beaten is champion win rates re-estimated from the 18,337 training matches (+0.0115) — which says that 18,337 matches are far too few to estimate a per-champion, per-role win rate, not that the model learned anything the public numbers lack.
+
+**The validation ranking was noise.** Before the test was spent, paired intervals on validation showed the chosen model was indistinguishable from stage 2 (+0.0003), stage 1 (+0.0005), stage 0 (+0.0006) and the rule engine (+0.0016) — every interval straddling zero. Choosing "stage 4, C=0.003" among 43 candidates was therefore arbitrary, and its +0.0016 validation edge over the engine duly reversed to −0.0003 on the test set. The same reversal had happened on the earlier, smaller run (+0.0030 on validation, −0.0029 on test).
+
+**The model memorises.** On the chosen model, training log loss is 0.6732 (AUC 0.656) against 0.6907 on validation (AUC 0.537). Of its 10,422 columns, 9,640 are interactions — 4,324 lane matchups, 3,252 synergies, 2,064 elo-by-champion terms — and they buy 0.0005 of validation log loss over stage 1 alone. With `MIN_PAIR_COUNT = 5`, most pair columns rest on a handful of matches.
+
+**Per-tier-group results flip between splits**, which confirms they are noise rather than structure: on validation the model looked strongest in `iron-silver` (AUC 0.560) and weakest in `diamond-plus` (0.523); on test it is the reverse, `diamond-plus` 0.557 and `iron-silver` 0.520. Nothing should be read into either.
+
+### Would more matches change the answer?
+
+No, not within reach. The deciding interval narrows as 1/√n, so from the test-set half-width of about 0.0027:
+
+| to establish the model beats | effect to show | factor on n | matches on one patch |
+|---|---|---|---|
+| the site's rule engine | 0.0016 | ×2.9 | ≈ 75,000 |
+| public statistics alone | 0.0006 | ×20 | ≈ 500,000 |
+
+Collecting 26,185 matches took ten days, and a patch lasts two weeks, so 75,000 on a single patch is already out of reach and 500,000 is out by an order of magnitude. Pooling patches would break the one-patch validity this spec rests on (`Data and Split`).
+
+The honest reading is that the outcome of a ranked game is close to unpredictable from its draft alone, and the little that is predictable is already in the public per-champion win rates. Player-level data — the other lead named under `Follow-Up Work` — is a different question this collection cannot answer, since the drafts here carry no information about who plays them beyond the seed player's tier.
+
 ## Follow-Up Work
 
 - **If the model wins:** project 3, integration on the site with the rule engine as fallback, still gated on Riot's answer about using a model trained on API data in the public product.
