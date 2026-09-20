@@ -103,9 +103,10 @@ async function loadExample() {
   const recommendations = recommendChampions({
     stats,
     playerPool: [],
-    enemyPicks: [...DEFAULT_EXAMPLE.enemyPicks],
+    enemyPicks: DEFAULT_EXAMPLE.enemyPicks,
+    draftingRole: DEFAULT_EXAMPLE.role,
     bannedChampionIds: [],
-    alreadyPickedChampionIds: [...DEFAULT_EXAMPLE.enemyPicks],
+    alreadyPickedChampionIds: DEFAULT_EXAMPLE.enemyPicks.map((pick) => pick.championId),
     priority: 50,
     topN: 3,
     counterRelations: mapCounterRelationRows((relationRows ?? []) as unknown as RelationRow[]),
@@ -204,7 +205,7 @@ export default async function HomePage() {
           <DraftTool
             champions={example.champions}
             initialRole={DEFAULT_EXAMPLE.role}
-            initialEnemyPicks={[...DEFAULT_EXAMPLE.enemyPicks]}
+            initialEnemyPicks={DEFAULT_EXAMPLE.enemyPicks.map((pick) => pick.championId)}
             initialRecommendations={example.recommendations}
           />
         )}
