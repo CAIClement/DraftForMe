@@ -41,7 +41,17 @@ describe("RiftMap", () => {
       />
     );
 
-    expect(screen.getByRole("button", { name: "Votre lane, mid : Ahri recommandé" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Votre lane, Mid : Ahri recommandé" })).toBeInTheDocument();
+  });
+
+  // "adc" is the role whose label is not merely its id capitalised, so it is the
+  // one that catches an anchor label interpolating the raw role key.
+  it("labels your own lane with the role's display name, not its id", () => {
+    const adc = createDraftState({ yourRole: "adc" });
+
+    render(<RiftMap state={adc} champions={champions} recommended={null} onSlotClick={() => {}} />);
+
+    expect(screen.getByRole("button", { name: "Votre lane, ADC" })).toBeInTheDocument();
   });
 
   it("reports which slot was clicked", () => {

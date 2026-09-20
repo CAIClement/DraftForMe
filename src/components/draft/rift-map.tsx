@@ -44,8 +44,8 @@ export function anchorLabel(
 ): string {
   if (isYourLane) {
     return recommendedName === null
-      ? `Votre lane, ${role}`
-      : `Votre lane, ${role} : ${recommendedName} recommandé`;
+      ? `Votre lane, ${ROLE_LABELS[role]}`
+      : `Votre lane, ${ROLE_LABELS[role]} : ${recommendedName} recommandé`;
   }
 
   const lane = `${ROLE_LABELS[role]} ${sideLabel(side)}`;
@@ -98,15 +98,17 @@ export function RiftMap({
               aria-label={anchorLabel(side, role, champion?.name ?? championId, isYourLane, recommended?.championName ?? null)}
               style={{ left: `${position.x}%`, top: `${position.y}%` }}
               className={`absolute -translate-x-1/2 -translate-y-1/2 rounded-full ${
-                pinName === null ? "border-2 border-dashed border-ink-faint p-2" : ring
+                pinName === null
+                  ? // `bg-paper/70` would be silently inert: this project's colour tokens are
+                    // bare `var(--x)` with no `<alpha-value>` channel, so Tailwind emits no
+                    // rule at all for an opacity modifier on one. The arbitrary value does
+                    // emit, and keeps the tint on the same element the design put it on.
+                    "border-2 border-dashed border-ink-faint bg-[color-mix(in_srgb,var(--paper)_70%,transparent)] p-2"
+                  : ring
               }`}
             >
               {pinName === null ? (
-                <span
-                  aria-hidden="true"
-                  style={{ backgroundColor: "color-mix(in srgb, var(--paper) 70%, transparent)" }}
-                  className="block h-4 w-4 rounded-full text-center text-xs leading-4 text-ink-faint"
-                >
+                <span aria-hidden="true" className="block h-4 w-4 text-center text-xs leading-4 text-ink-faint">
                   +
                 </span>
               ) : (
