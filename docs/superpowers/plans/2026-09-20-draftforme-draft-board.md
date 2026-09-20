@@ -2937,3 +2937,19 @@ A third collision surfaced only once the tests ran: the recommended champion's n
 **Task 14 — the measured flight was dropped, deliberately.** The plan called for a FLIP: measure the alternative card and the lane anchor, then animate a transform. But the anchor is keyed by occupant, so a changed preview unmounts and remounts it — a CSS transition has no "from" value to interpolate from on a node that was just created, and the code would have been inert. The honest simpler thing ships instead: the portrait swaps and the existing landing animation replays, which is the substance of the effect. Requirement unchanged — hover *and* keyboard focus both preview, the preview never mutates the draft and never fires a request, and reduced motion collapses it to an instant swap.
 
 **Task 15 — a sequencing mistake worth remembering.** Running `npm run build` while `next dev` is serving the same checkout clobbers `.next`, and the dev server then serves blank pages with `Cannot find module './331.js'`. It looks exactly like a catastrophic regression and is nothing of the sort. Stop the dev server, clear `.next`, and rebuild.
+
+---
+
+## Integration with a moved `main`
+
+`main` gained 18 commits while this branch was being built, and three of them cut against the spec's own premises. Recorded here because anyone reading the spec afterwards will otherwise wonder why the shipped code does not match it.
+
+**The dark scope is gone.** The spec's central visual decision — a dark band for the board inside a light page — existed because the Riot minimap is dark and the site was warm paper. `main` switched the whole site to a Hextech palette: deep navy grounds, gold accent, parchment ink. The board's reason for its own scope disappeared with that, so `[data-surface="draft"]` was removed and the board simply inherits the page's tokens. Its gold accent was already within a shade of the site's. Only `--team-ally` and `--team-enemy` had to be re-picked: stock blue and red sink into navy, so they were lifted to `#4f9bf5` and `#e05a4a`.
+
+**The board lives at `/draft`, not `/`.** `main` rebuilt `/` as a sectioned home page and moved the tool to its own route. The spec assumed the opposite and had `/draft` redirecting to `/`. The board went where the tool now lives.
+
+**The alternatives list is shared with a read-only surface.** `main`'s home page renders `Alternatives` beside a panel labelled "Lecture seule". Task 14 had made those cards buttons with required handlers, which would have put pressable controls on a sample with nothing to press. `onPreview` and `onSelect` are optional now; without them the cards render as plain elements. A button that does nothing is worse than no button.
+
+**The loader moved.** `main` extracted the example query into `src/lib/draft/load-example.ts`, shared by both routes. The enemy lanes, the drafting role and `topN: 4` were ported into it.
+
+The merge itself touched four overlapping files: `src/app/page.tsx`, `src/app/globals.css`, `tailwind.config.ts`, and `src/components/draft/role-selector.tsx` (which this branch deleted and `main` still used — its `ROLES` consumer was repointed at `@/lib/draft/roles`).
