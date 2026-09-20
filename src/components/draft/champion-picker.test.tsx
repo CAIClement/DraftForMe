@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { ChampionPicker } from "./champion-picker";
@@ -71,5 +72,48 @@ describe("ChampionPicker", () => {
     fireEvent.keyDown(screen.getByRole("combobox"), { key: "Escape" });
 
     expect(props.onClose).toHaveBeenCalled();
+  });
+  it("takes focus on open", () => {
+    renderPicker();
+
+    expect(screen.getByRole("combobox")).toHaveFocus();
+  });
+
+  // A keyboard user who opens the picker and changes their mind must land back
+  // where they were, not at the top of the document. The board mounts and
+  // unmounts this component, so the restoration has to survive that.
+  it("hands focus back to whatever opened it", () => {
+    function Harness() {
+      const [open, setOpen] = useState(false);
+
+      return (
+        <>
+          <button type="button" onClick={() => setOpen(true)}>
+            Ouvrir
+          </button>
+          {open && (
+            <ChampionPicker
+              champions={champions}
+              excludedIds={[]}
+              target={{ side: "enemy", role: "mid" }}
+              onPick={vi.fn()}
+              onClose={() => setOpen(false)}
+            />
+          )}
+        </>
+      );
+    }
+
+    render(<Harness />);
+
+    const opener = screen.getByRole("button", { name: "Ouvrir" });
+    opener.focus();
+    fireEvent.click(opener);
+
+    expect(screen.getByRole("combobox")).toHaveFocus();
+
+    fireEvent.keyDown(screen.getByRole("combobox"), { key: "Escape" });
+
+    expect(opener).toHaveFocus();
   });
 });

@@ -68,10 +68,11 @@ async function loadExample() {
   ]);
 
   // A failed `champions` query is the dangerous one. `recommendations` derives
-  // from `stats`, so the tool still renders -- but `EnemyPicks` resolves its
-  // chips against `champions`, so every enemy pick silently disappears while
-  // the verdict above it still cites those picks by name. Throwing routes both
-  // fatal cases into the caller's visible degraded state instead.
+  // from `stats`, so the board still renders -- but every slot and every map
+  // anchor resolves its portrait and name against `champions`, so the picks
+  // would stand on the map as bare ids while the verdict above them cites
+  // those same picks by name. Throwing routes both fatal cases into the
+  // caller's visible degraded state instead.
   if (statsResult.error) throw statsResult.error;
   if (championResult.error) throw championResult.error;
 

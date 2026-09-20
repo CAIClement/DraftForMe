@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { ChampionAvatar } from "@/components/ui/champion-avatar";
 import type { Side } from "@/lib/draft/draft-state";
 import { ROLE_LABELS, type Role } from "@/lib/draft/roles";
@@ -23,6 +23,28 @@ export function ChampionPicker({
   onClose: () => void;
 }) {
   const [query, setQuery] = useState("");
+
+  const input = useRef<HTMLInputElement>(null);
+  const opener = useRef<HTMLElement | null>(null);
+
+  // Focus is moved here on open and handed back on close, so closing with
+  // Escape does not drop a keyboard user at the top of the document. The
+  // opener is read in a layout effect rather than through `autoFocus`,
+  // because `autoFocus` would already have taken focus by the time any
+  // effect could look at where it came from.
+  //
+  // `isConnected` matters: picking a champion replaces the empty slot's
+  // button with the occupied one, so the element that opened the picker is
+  // frequently gone by the time this runs. Focusing a detached node silently
+  // sends focus to the body, which is worse than leaving it where it is.
+  useLayoutEffect(() => {
+    opener.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    input.current?.focus();
+
+    return () => {
+      if (opener.current?.isConnected) opener.current.focus();
+    };
+  }, []);
 
   // Matched against the id as well as the display name: ids are the
   // punctuation-stripped slugs, so a search for "kaisa" finds Kai'Sa, which
@@ -55,7 +77,7 @@ export function ChampionPicker({
         id="champion-picker"
         type="search"
         role="combobox"
-        autoFocus
+        ref={input}
         aria-expanded={matches.length > 0}
         aria-controls="champion-picker-results"
         value={query}
