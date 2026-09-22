@@ -7,10 +7,14 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "lint:fix": "next lint --fix",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "seed:build": "node scripts/build-seed-data.mjs"
+    "test:ml": "python -m pytest test/ml -q",
+    "seed:build": "node scripts/build-seed-data.mjs",
+    "seed:check": "node scripts/build-seed-data.mjs && git diff --exit-code supabase/seed.sql",
+    "ci": "npm run typecheck && npm run lint && npm run test"
   },
   "dependencies": {
     "@supabase/ssr": "^0.6.1",
@@ -22,6 +26,7 @@
     "zod": "^3.24.2"
   },
   "devDependencies": {
+    "@eslint/eslintrc": "^3.3.7",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.2.0",
     "@types/node": "^22.13.10",
@@ -29,6 +34,8 @@
     "@types/react-dom": "^19.0.4",
     "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.4.20",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "^15.5.26",
     "jsdom": "^26.0.0",
     "postcss": "^8.5.3",
     "tailwindcss": "^3.4.17",
