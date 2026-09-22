@@ -1,0 +1,46 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git status)",
+      "Bash(git status --short)",
+      "Bash(git diff)",
+      "Bash(git diff --stat)",
+      "Bash(git log)",
+      "Bash(git branch)",
+      "Bash(git worktree list)",
+      "Bash(npm run typecheck)",
+      "Bash(npm run lint)",
+      "Bash(npm test)",
+      "Bash(npm run test)",
+      "Bash(npm run test:watch)",
+      "Bash(npm run test:ml)",
+      "Bash(npm run ci)",
+      "Bash(npx tsc --noEmit)",
+      "Bash(python -m pytest test/ml -q)",
+      "Bash(python -m pytest test/ml/*)"
+    ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/session-start.mjs"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/lint-file.mjs"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -20,3 +20,8 @@ ml/artifacts/matches*.sqlite-wal
 ml/artifacts/matches*.sqlite-shm
 ml/artifacts/win*/
 .vercel
+
+# Sibling git worktrees checked out under .claude/ (see CLAUDE.md's Workflow
+# note); each is its own checkout with its own node_modules and must never be
+# swept in by a broad `.claude` add now that .claude/ has tracked files.
+.claude/worktrees/
