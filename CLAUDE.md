@@ -11,7 +11,9 @@ npm run dev                  # site on http://localhost:3000 (needs .env.local)
 npm test                     # Vitest, all site tests
 npx tsc --noEmit             # typecheck (typedRoutes is on: links take `Route`)
 npm run lint
+npm run ci                   # typecheck + lint + test, what CI runs for the site
 npm run seed:build           # regenerate supabase/seed.sql from data/
+npm run seed:check           # fails if seed.sql doesn't match the generator (what CI checks)
 python -m pytest test/ml -q  # every Python test, about two minutes
 ```
 
@@ -52,6 +54,15 @@ python -m pytest test/ml -q  # every Python test, about two minutes
 ## Workflow
 
 1. New work starts with a spec, then a plan, both in `docs/superpowers/`.
-2. Branch from `main`; never commit feature work directly on `main`.
+2. Branch from `main`; never commit feature work directly on `main`. This checkout can hold `main` in a sibling worktree under `.claude/worktrees/` rather than here — check `git worktree list` before assuming this checkout's `main` is current.
 3. Commit in small steps with messages like `feat: ...`, `fix: ...`, `docs: ...`, `test: ...`.
 4. When a statistic or model result is reported, say how it was measured and on how much data.
+
+## Claude Code tooling
+
+- `.claude/agents/`: `explorer` (locate code), `architect` (spec/plan), `test-runner` (run the suites), `reviewer` (check a diff against this file's guardrails).
+- `.claude/commands/`: `/feature`, `/fix` (start work), `/table` (current Supabase schema), `/idee`, `/backlog` (capture and triage ideas), `/point`, `/pause` (status and checkpoint), `/review`, `/commit`, `/ship` (finish a change), `/explain` (explain code to the owner, in French).
+- `.claude/rules/`: one file per concern (security, typescript, supabase, ui, testing, nextjs/app-router), each with the `paths` it applies to. Reference material a session is expected to read — nothing auto-loads them based on which files are touched.
+- `.claude/hooks/`: `session-start.mjs` surfaces the branch/worktree state and `.claude/work/current.md` at the start of a session; `lint-file.mjs` runs ESLint `--fix` after an Edit/Write on a JS/TS file.
+- `.claude/work/current.md` and `backlog.md`: session state and captured ideas, committed to git, read/written by the commands above.
+- `.github/workflows/ci.yml` runs `npm run ci`, `npm run seed:check`, and `python -m pytest test/ml -q` on every push and PR.
