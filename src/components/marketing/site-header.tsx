@@ -6,7 +6,7 @@ const NAV = [
   { href: "/draft", label: "Outil de draft", page: "draft" }
 ] as const;
 
-export function SiteHeader({ context, current }: { context?: string; current: "home" | "draft" }) {
+export function SiteHeader({ context, current }: { context?: string; current?: "home" | "draft" }) {
   return (
     <header className="sticky top-0 z-30 border-b border-rule bg-[color-mix(in_srgb,var(--paper)_88%,transparent)] backdrop-blur-md">
       <div className="mx-auto flex min-h-16 max-w-6xl flex-wrap items-center justify-between gap-x-6 gap-y-2 px-4 py-2 sm:px-6">
