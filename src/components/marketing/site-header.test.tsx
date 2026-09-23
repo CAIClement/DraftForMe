@@ -18,4 +18,11 @@ describe("SiteHeader", () => {
     expect(tool).toHaveAttribute("aria-current", "page");
     expect(screen.getByText("Patch 16.3 · EUW · Emerald+")).toBeInTheDocument();
   });
+
+  it("marks no page as current when rendered outside home and the tool", () => {
+    render(<SiteHeader />);
+
+    expect(screen.getByRole("link", { name: "Accueil" })).not.toHaveAttribute("aria-current");
+    expect(screen.getByRole("link", { name: "Outil de draft" })).not.toHaveAttribute("aria-current");
+  });
 });
