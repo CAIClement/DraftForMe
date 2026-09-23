@@ -31,7 +31,7 @@ export function PrivacyPolicy({ info }: { info: SiteInfo }) {
           l&apos;intérêt légitime de l&apos;éditeur. Ces journaux sont conservés par l&apos;hébergeur selon sa propre
           politique, consultable sur la{" "}
           <ExternalLink href={siteHost.privacyPolicy}>
-            politique de confidentialité de {siteHost.name}
+            politique de confidentialité de son hébergeur
           </ExternalLink>
           {/* Vercel is US-based; this sentence is specific to Vercel and must be revisited if the site host changes. */}
           . Vercel étant situé aux États-Unis, ce transfert est encadré par le Data Privacy Framework UE–États-Unis.

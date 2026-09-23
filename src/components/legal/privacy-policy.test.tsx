@@ -29,7 +29,7 @@ describe("PrivacyPolicy", () => {
   it("describes both technical flows with their processor's policy", () => {
     render(<PrivacyPolicy info={noContact} />);
 
-    expect(screen.getByRole("link", { name: /politique de confidentialité de Vercel/i })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: /politique de confidentialité de son hébergeur/i })).toHaveAttribute(
       "href",
       "https://vercel.com/legal/privacy-policy"
     );
@@ -59,5 +59,17 @@ describe("PrivacyPolicy", () => {
     for (const link of links) {
       expect(link).toHaveAttribute("href", "mailto:contact@example.com");
     }
+  });
+
+  it("never doubles a full stop or spaces a punctuation mark, with or without a contact address", () => {
+    const { container: withoutContact } = render(<PrivacyPolicy info={noContact} />);
+    expect(withoutContact.textContent).not.toMatch(/\.\./);
+    expect(withoutContact.textContent).not.toMatch(/\s[.,]/);
+
+    const { container: withContact } = render(
+      <PrivacyPolicy info={{ ...noContact, contactEmail: "contact@example.com" }} />
+    );
+    expect(withContact.textContent).not.toMatch(/\.\./);
+    expect(withContact.textContent).not.toMatch(/\s[.,]/);
   });
 });

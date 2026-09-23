@@ -10,7 +10,7 @@ This is the first of three pieces of work. The owner also wants accounts and com
 
 ## Why
 
-- **The site has no legal pages at all.** French law (LCEN art. 6-III) requires a legal notice on any public site, and the GDPR requires telling visitors what data is processed, even when that is only hosting logs.
+- **The site has no legal pages at all.** French law (LCEN art. 1-1, I) requires a legal notice on any public site, and the GDPR requires telling visitors what data is processed, even when that is only hosting logs.
 - **The footer's Riot line is not what Riot asks for.** Riot's policy for community projects requires its own disclaimer text, verbatim.
 - **The texts must stay true.** The project's rule is that the site never shows an invented value. A generated policy would describe cookies, forms and analytics the site does not have; these pages describe only what the site actually does.
 

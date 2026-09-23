@@ -42,6 +42,6 @@ describe("getSiteHost", () => {
 
   it("throws when there is no host with role \"site\"", () => {
     const info: SiteInfo = { ...SITE_INFO, hosts: SITE_INFO.hosts.filter((host) => host.role === "database") };
-    expect(() => getSiteHost(info)).toThrow();
+    expect(() => getSiteHost(info)).toThrow(/role "site"/);
   });
 });

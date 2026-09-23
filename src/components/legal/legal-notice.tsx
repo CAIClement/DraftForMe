@@ -14,7 +14,7 @@ export function LegalNotice({ info }: { info: SiteInfo }) {
             {info.siteName} est un projet personnel, non professionnel et non commercial. Conformément à
             l&apos;article 1-1, II, de la loi n° 2004-575 du 21 juin 2004 pour la confiance dans l&apos;économie
             numérique, son éditeur a choisi de rester anonyme ; ses coordonnées ont été communiquées à son
-            hébergeur, {siteHost.name}.
+            hébergeur ({siteHost.name}).
           </p>
         ) : (
           <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-1">

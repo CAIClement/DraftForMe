@@ -10,10 +10,10 @@ describe("LegalNotice", () => {
   it("names the hosts and no identity when the publisher is anonymous", () => {
     render(<LegalNotice info={anonymous} />);
 
-    expect(screen.getAllByText(/Vercel Inc\./).length).toBeGreaterThan(0);
+    expect(screen.getByText("Vercel Inc.")).toBeInTheDocument();
     expect(screen.getByText(/Supabase Pte\. Ltd\./)).toBeInTheDocument();
     expect(screen.getByText(/article 1-1, II/)).toBeInTheDocument();
-    expect(screen.getByText(/communiquées à son hébergeur, Vercel Inc\./)).toBeInTheDocument();
+    expect(screen.getByText(/communiquées à son hébergeur \(Vercel Inc\.\)/)).toBeInTheDocument();
     expect(screen.queryByText(/Directeur de la publication/)).not.toBeInTheDocument();
   });
 
@@ -65,5 +65,17 @@ describe("LegalNotice", () => {
     expect(screen.getByText(RIOT_DISCLAIMER)).toBeInTheDocument();
     expect(screen.getByText(/OP\.GG/)).toBeInTheDocument();
     expect(screen.getByText(/Data Dragon/)).toBeInTheDocument();
+  });
+
+  it("never doubles a full stop or spaces a punctuation mark, with or without a contact address", () => {
+    const { container: withoutContact } = render(<LegalNotice info={anonymous} />);
+    expect(withoutContact.textContent).not.toMatch(/\.\./);
+    expect(withoutContact.textContent).not.toMatch(/\s[.,]/);
+
+    const { container: withContact } = render(
+      <LegalNotice info={{ ...anonymous, contactEmail: "contact@example.com" }} />
+    );
+    expect(withContact.textContent).not.toMatch(/\.\./);
+    expect(withContact.textContent).not.toMatch(/\s[.,]/);
   });
 });
