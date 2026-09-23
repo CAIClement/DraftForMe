@@ -3,8 +3,8 @@
 // address, is a change to this file only.
 
 export type Publisher =
-  // LCEN art. 6-III-2: a non-professional publisher may stay anonymous and
-  // name the host instead.
+  // LCEN art. 1-1, II (as rewritten by loi SREN, 2024): a non-professional
+  // publisher may stay anonymous and name the host instead.
   | { mode: "anonymous" }
   | { mode: "identified"; name: string; address: string; director: string; siret?: string };
 
@@ -48,6 +48,12 @@ export const SITE_INFO: SiteInfo = {
   ],
   lastUpdated: "2026-09-23"
 };
+
+export function getSiteHost(info: SiteInfo): Host {
+  const host = info.hosts.find((candidate) => candidate.role === "site");
+  if (!host) throw new Error("SiteInfo has no host with role \"site\".");
+  return host;
+}
 
 export function formatLegalDate(iso: string): string {
   // Parsed and printed in UTC so the day never moves with the reader's time zone.

@@ -48,13 +48,16 @@ describe("PrivacyPolicy", () => {
   it("hides every mention of the contact while it is empty", () => {
     render(<PrivacyPolicy info={noContact} />);
     expect(screen.queryByRole("link", { name: /@/ })).not.toBeInTheDocument();
+    expect(screen.queryByText(/Pour les exercer/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/joignable/)).not.toBeInTheDocument();
   });
 
   it("offers the contact to exercise rights once configured", () => {
     render(<PrivacyPolicy info={{ ...noContact, contactEmail: "contact@example.com" }} />);
-    expect(screen.getAllByRole("link", { name: "contact@example.com" })[0]).toHaveAttribute(
-      "href",
-      "mailto:contact@example.com"
-    );
+    const links = screen.getAllByRole("link", { name: "contact@example.com" });
+    expect(links).toHaveLength(2);
+    for (const link of links) {
+      expect(link).toHaveAttribute("href", "mailto:contact@example.com");
+    }
   });
 });

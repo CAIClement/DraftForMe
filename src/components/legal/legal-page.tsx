@@ -39,3 +39,11 @@ export function ExternalLink({ href, children }: { href: string; children: React
     </a>
   );
 }
+
+export function ContactLink({ email }: { email: string }) {
+  return (
+    <a href={`mailto:${email}`} className={LEGAL_LINK_CLASS}>
+      {email}
+    </a>
+  );
+}

@@ -1,9 +1,10 @@
-import type { SiteInfo } from "@/lib/legal/site-info";
-import { ExternalLink, LEGAL_LINK_CLASS, LegalPage, LegalSection } from "./legal-page";
+import { getSiteHost, type SiteInfo } from "@/lib/legal/site-info";
+import { ContactLink, ExternalLink, LegalPage, LegalSection } from "./legal-page";
 import { RiotDisclaimer } from "./riot-disclaimer";
 
 export function LegalNotice({ info }: { info: SiteInfo }) {
   const { publisher } = info;
+  const siteHost = getSiteHost(info);
 
   return (
     <LegalPage title="Mentions légales" lastUpdated={info.lastUpdated}>
@@ -11,9 +12,9 @@ export function LegalNotice({ info }: { info: SiteInfo }) {
         {publisher.mode === "anonymous" ? (
           <p>
             {info.siteName} est un projet personnel, non professionnel et non commercial. Conformément à
-            l&apos;article 6-III-2 de la loi n° 2004-575 du 21 juin 2004 pour la confiance dans l&apos;économie
-            numérique, son éditeur a choisi de rester anonyme ; ses coordonnées ont été communiquées à
-            l&apos;hébergeur ci-dessous.
+            l&apos;article 1-1, II, de la loi n° 2004-575 du 21 juin 2004 pour la confiance dans l&apos;économie
+            numérique, son éditeur a choisi de rester anonyme ; ses coordonnées ont été communiquées à son
+            hébergeur, {siteHost.name}.
           </p>
         ) : (
           <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-1">
@@ -33,7 +34,7 @@ export function LegalNotice({ info }: { info: SiteInfo }) {
         )}
         {info.contactEmail && (
           <p>
-            Contact : <a href={`mailto:${info.contactEmail}`} className={LEGAL_LINK_CLASS}>{info.contactEmail}</a>
+            Contact : <ContactLink email={info.contactEmail} />
           </p>
         )}
       </LegalSection>
@@ -41,7 +42,7 @@ export function LegalNotice({ info }: { info: SiteInfo }) {
       <LegalSection title="Hébergement">
         <ul className="space-y-3">
           {info.hosts.map((host) => (
-            <li key={host.name}>
+            <li key={host.role}>
               <span className="font-medium text-ink">{host.name}</span>
               {host.role === "site" ? " (hébergement du site)" : " (base de données)"}
               <br />

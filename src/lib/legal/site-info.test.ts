@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatLegalDate, SITE_INFO } from "./site-info";
+import { formatLegalDate, getSiteHost, SITE_INFO, type SiteInfo } from "./site-info";
 
 describe("SITE_INFO", () => {
   it("has either no contact yet or a well-formed e-mail address", () => {
@@ -32,5 +32,16 @@ describe("formatLegalDate", () => {
 
   it("does not shift the day with the local time zone", () => {
     expect(formatLegalDate("2026-01-01")).toBe("1 janvier 2026");
+  });
+});
+
+describe("getSiteHost", () => {
+  it("returns Vercel for SITE_INFO", () => {
+    expect(getSiteHost(SITE_INFO).name).toBe("Vercel Inc.");
+  });
+
+  it("throws when there is no host with role \"site\"", () => {
+    const info: SiteInfo = { ...SITE_INFO, hosts: SITE_INFO.hosts.filter((host) => host.role === "database") };
+    expect(() => getSiteHost(info)).toThrow();
   });
 });
