@@ -20,7 +20,7 @@ This is the first of three pieces of work. The owner also wants accounts and com
 |---|---|---|
 | Vercel (hosting) | IP address, user agent, requested URL, in request logs | Vercel Inc., USA; transfer covered by the EU-US Data Privacy Framework |
 | `ddragon.leagueoflegends.com` | Visitor IP, sent by the browser when it loads champion images (`image_url` in `champions`, rendered by `champion-avatar.tsx`) | Riot Games, Inc. |
-| Supabase (database) | No visitor data: login is disabled (`/auth/login` redirects home), so no auth cookie is ever set | Supabase Inc. |
+| Supabase (database) | No visitor data: login is disabled (`/auth/login` redirects home), so no auth cookie is ever set | Supabase Pte. Ltd. |
 | Fonts | None: `next/font/google` self-hosts at build time, no request to Google | — |
 | Cookies, `localStorage`, analytics, ads | None | No cookie banner: there is nothing to consent to, and a banner would suggest otherwise |
 
@@ -28,7 +28,7 @@ This is the first of three pieces of work. The owner also wants accounts and com
 
 | Question | Decision |
 |---|---|
-| Publisher identity | **Legal anonymity** (LCEN art. 6-III-2, non-professional publisher): the legal notice names the hosting providers and a contact, not the owner. The owner has no legal structure yet and the site earns nothing. `site-info.ts` supports an `identified` mode (name, address, publication director, optional SIRET) for the day the site is monetised; switching is a config change, not a rewrite |
+| Publisher identity | **Legal anonymity** (LCEN art. 1-1, II, non-professional publisher; renumbered by loi SREN, 2024): the legal notice names the hosting providers and a contact, not the owner. The owner has no legal structure yet and the site earns nothing. `site-info.ts` supports an `identified` mode (name, address, publication director, optional SIRET) for the day the site is monetised; switching is a config change, not a rewrite |
 | Contact | A dedicated e-mail address the owner will create. Until it exists, `contactEmail` is empty and the contact line is **hidden**, like any missing data on the site. No build guard: the project is not public yet. Filling it is on the pre-launch checklist below |
 | Format | Static TSX pages plus one config file. Rejected: MDX (a dependency and config for three rarely-changed pages, and it handles the anonymous/identified switch poorly); third-party policy generators (generic text that doesn't match the site, often a cookie-setting script, paid for full GDPR) |
 | Cookies | A "Cookies" section inside the privacy policy stating none are set. No banner, no separate page |
