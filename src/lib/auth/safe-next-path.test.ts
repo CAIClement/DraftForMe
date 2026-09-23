@@ -16,7 +16,9 @@ describe("safeNextPath", () => {
     "/\t/evil.com",
     "https://evil.com",
     "javascript:alert(1)",
-    "/%0a/evil.com\n"
+    "/%0a/evil.com\n",
+    "/.//evil.com",
+    "/..//evil.com"
   ])("falls back to / for %j", (value) => {
     expect(safeNextPath(value)).toBe("/");
   });

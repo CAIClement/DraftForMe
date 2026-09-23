@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/supabase/server", () => ({ createClient: vi.fn() }));
 
@@ -21,7 +21,13 @@ function stubSupabase({ user, displayName }: { user: { id: string } | null; disp
 }
 
 describe("getCurrentUser", () => {
-  beforeEach(() => vi.mocked(createClient).mockReset());
+  // No `beforeEach(() => vi.mocked(createClient).mockReset())`: in this
+  // Vitest/Node combination, resetting the mock from inside a hook (with
+  // mockReset or even mockClear) makes the last test's thrown rejection
+  // surface as an unhandled test error even though getCurrentUser's
+  // try/catch does catch it (verified by isolating the hook). Every test
+  // below overwrites the mock's resolved value or implementation before
+  // using it, so a shared reset is unnecessary.
 
   it("returns null when nobody is signed in", async () => {
     stubSupabase({ user: null });
@@ -42,20 +48,9 @@ describe("getCurrentUser", () => {
   });
 
   it("treats an unreachable Supabase as signed out rather than breaking the page", async () => {
-    // Not `vi.mocked(createClient).mockRejectedValue(...)`: in this Vitest/Node
-    // combination, a rejection thrown from a vi.fn() registered through
-    // vi.mock() is reported as an unhandled test error even though
-    // getCurrentUser's try/catch does catch it (verified with a console.log
-    // spike). A plain rejecting function swapped in via vi.doMock for a fresh
-    // dynamic import avoids the false positive while still exercising the
-    // same catch path.
-    vi.resetModules();
-    vi.doMock("@/lib/supabase/server", () => ({
-      createClient: async () => {
-        throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL");
-      }
-    }));
-    const { getCurrentUser: getCurrentUserWithFailingClient } = await import("./current-user");
-    expect(await getCurrentUserWithFailingClient()).toBeNull();
+    vi.mocked(createClient).mockImplementation(async () => {
+      throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL");
+    });
+    expect(await getCurrentUser()).toBeNull();
   });
 });

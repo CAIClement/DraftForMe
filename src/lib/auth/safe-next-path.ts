@@ -9,7 +9,11 @@ export function safeNextPath(value: string | null | undefined): string {
   if (/[\u0000-\u001f\u007f\\]/.test(value)) return "/";
 
   try {
-    return new URL(value, PROBE_ORIGIN).origin === PROBE_ORIGIN ? value : "/";
+    const url = new URL(value, PROBE_ORIGIN);
+    if (url.origin !== PROBE_ORIGIN) return "/";
+
+    const normalised = `${url.pathname}${url.search}${url.hash}`;
+    return normalised.startsWith("//") ? "/" : normalised;
   } catch {
     return "/";
   }
