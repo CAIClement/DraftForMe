@@ -33,8 +33,8 @@ This is the first of three pieces of work. The owner also wants accounts and com
 | Format | Static TSX pages plus one config file. Rejected: MDX (a dependency and config for three rarely-changed pages, and it handles the anonymous/identified switch poorly); third-party policy generators (generic text that doesn't match the site, often a cookie-setting script, paid for full GDPR) |
 | Cookies | A "Cookies" section inside the privacy policy stating none are set. No banner, no separate page |
 | Riot disclaimer | Riot's official English text, verbatim, in the footer and the legal notice. Checked against Riot's current developer policy at implementation time rather than copied from memory |
-| Data sources | Credited in the legal notice: OP.GG for statistics (patch 16.3), Riot Data Dragon for champion images |
-| Hosting log retention | Taken from Vercel's documentation at implementation time. If no reliable figure is found, the policy links to Vercel's privacy policy instead of stating a duration |
+| Data sources | Credited in the legal notice: OP.GG for statistics, Riot Data Dragon for champion images. No patch number: the header already shows it from the data, and a hardcoded one would go stale |
+| Hosting log retention | Vercel's retention depends on the plan (1 hour on Hobby, 1 day on Pro, up to 30 days with Observability Plus, per its runtime logs docs on 2026-09-23), so the policy states no figure and links to Vercel's privacy policy |
 
 ## Design
 
@@ -70,12 +70,12 @@ Purpose of the service; free access with no availability guarantee; recommendati
 Vitest, next to the code:
 
 - `site-info.test.ts`: when `contactEmail` is set, it is a valid address; `identified` mode requires `name`, `address` and `director`.
-- `mentions-legales/page.test.tsx`: anonymous mode shows the hosts and no identity field; identified mode shows name, address and director, and hides the SIRET line when absent; the contact line is hidden when `contactEmail` is empty and shown when set.
+- `src/components/legal/legal-notice.test.tsx`: anonymous mode shows the hosts and no identity field; identified mode shows name, address and director, and hides the SIRET line when absent; the contact line is hidden when `contactEmail` is empty and shown when set.
 - `riot-disclaimer.test.tsx`: the rendered text equals the official wording.
 - `site-footer.test.tsx`: links to `/mentions-legales`, `/confidentialite`, `/conditions-utilisation`; the Riot disclaimer is rendered.
-- `confidentialite/page.test.tsx` and `conditions-utilisation/page.test.tsx`: the expected sections render (including "Cookies" and the CNIL link).
+- `src/components/legal/privacy-policy.test.tsx` and `terms-of-use.test.tsx`: the expected sections render (including "Cookies" and the CNIL link).
 
-Pages read `site-info.ts` through an import that tests can mock, so both modes and both contact states are covered without editing the real config.
+The page content lives in components under `src/components/legal/` that take the `SiteInfo` as a prop; the routes pass the real `SITE_INFO`. Tests render the components with any config, so both publisher modes and both contact states are covered without mocking or editing the real config.
 
 ## Scope
 
