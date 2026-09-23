@@ -85,5 +85,7 @@ The page content lives in components under `src/components/legal/` that take the
 ## Before the site goes public
 
 - [ ] Create the dedicated contact address and set `contactEmail` in `src/lib/legal/site-info.ts`. Legally required even under anonymity.
-- [ ] If the site starts earning money (ads, subscriptions, regular donations): switch `publisher` to `identified` and fill in the fields (a domiciliation address keeps the home address private).
+- [ ] If the site starts earning money (ads, subscriptions, regular donations): switch `publisher` to `identified` and fill in the fields (a domiciliation address keeps the home address private). Identified mode also requires each host's **phone number** (LCEN art. 1-1, I): add a `phone` field to `Host`, taken from the hosts' own pages, not from memory.
+- [ ] Check that Vercel actually holds the owner's identification details (name, address, phone), since the anonymous legal notice states they were given to the host (art. 1-1, II).
+- [ ] The privacy policy does not mention that Riot Games, Inc. (USA) receives visitor IPs from outside the EU. Check whether Riot is certified under the EU-US Data Privacy Framework and add one sentence on that transfer.
 - [ ] Re-read the privacy policy against what the site processes at that point.
