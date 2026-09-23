@@ -28,15 +28,14 @@ export function LegalSection({ title, children }: { title: string; children: Rea
   );
 }
 
+export const LEGAL_LINK_CLASS =
+  "text-accent underline underline-offset-2 transition-colors duration-200 hover:text-accent-pale";
+
 export function ExternalLink({ href, children }: { href: string; children: ReactNode }) {
   return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="text-accent underline underline-offset-2 transition-colors duration-200 hover:text-accent-pale"
-    >
+    <a href={href} target="_blank" rel="noopener noreferrer" className={LEGAL_LINK_CLASS}>
       {children}
+      <span className="sr-only"> (nouvel onglet)</span>
     </a>
   );
 }
