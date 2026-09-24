@@ -11,7 +11,7 @@ export function DeleteAccountForm() {
 
   return (
     <form action={action} className="space-y-3">
-      <p className="text-sm text-ink-muted">
+      <p id="delete-help" className="text-sm text-ink-muted">
         La suppression est définitive : votre compte et votre pseudo sont effacés immédiatement.
       </p>
       <label htmlFor="confirmation" className="block text-sm text-ink">
@@ -21,7 +21,9 @@ export function DeleteAccountForm() {
         id="confirmation"
         name="confirmation"
         autoComplete="off"
-        className="w-full max-w-sm rounded-md border border-rule bg-surface px-3 py-2 text-ink focus:border-accent focus:outline-none"
+        aria-describedby="delete-help"
+        aria-invalid={Boolean(state.error)}
+        className="w-full max-w-sm rounded-md border border-rule bg-surface px-3 py-2 text-ink focus:border-accent"
       />
       {state.error && (
         <p role="alert" className="text-sm text-danger">

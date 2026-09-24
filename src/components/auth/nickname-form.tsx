@@ -22,7 +22,8 @@ export function NicknameForm({ defaultValue, next }: { defaultValue?: string; ne
         maxLength={20}
         autoComplete="nickname"
         aria-describedby="nickname-help"
-        className="w-full max-w-sm rounded-md border border-rule bg-surface px-3 py-2 text-ink focus:border-accent focus:outline-none"
+        aria-invalid={Boolean(state.error)}
+        className="w-full max-w-sm rounded-md border border-rule bg-surface px-3 py-2 text-ink focus:border-accent"
       />
       <p id="nickname-help" className="text-xs text-ink-faint">
         3 à 20 caractères : lettres sans accent, chiffres, « _ » et « - ». Il sera visible publiquement.

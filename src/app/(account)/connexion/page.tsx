@@ -34,7 +34,7 @@ export default async function SignInPage({
       </p>
       {erreur && (
         <p role="alert" className="mt-6 text-sm text-danger">
-          La connexion a échoué. Réessayez.
+          {erreur === "deconnexion" ? "La déconnexion a échoué. Réessayez." : "La connexion a échoué. Réessayez."}
         </p>
       )}
       <div className="mt-8 space-y-3">

@@ -22,14 +22,15 @@ export function AccountMenu({ user }: { user: CurrentUser | null }) {
   return (
     <div className="flex items-center gap-1">
       {user.nickname ? (
-        <Link href="/compte" className={`${LINK} font-medium text-ink`}>
-          {user.nickname}
-        </Link>
+        <span className="px-3 py-2 text-sm font-medium text-ink">{user.nickname}</span>
       ) : (
         <Link href={`/compte/pseudo?next=${next}` as Route} className={LINK}>
           Choisir un pseudo
         </Link>
       )}
+      <Link href="/compte" className={LINK}>
+        Mon compte
+      </Link>
       <form action={signOut}>
         <button type="submit" className={LINK}>
           Se déconnecter

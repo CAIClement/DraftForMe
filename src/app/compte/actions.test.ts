@@ -138,6 +138,6 @@ describe("signOut", () => {
     vi.mocked(createClient).mockResolvedValueOnce({
       auth: { signOut: vi.fn().mockResolvedValue({ error: new Error("down") }) }
     } as never);
-    await expect(signOut()).rejects.toThrow("REDIRECT:/compte?erreur=deconnexion");
+    await expect(signOut()).rejects.toThrow("REDIRECT:/connexion?erreur=deconnexion");
   });
 });

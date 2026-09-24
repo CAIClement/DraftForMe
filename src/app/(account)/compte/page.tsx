@@ -9,25 +9,13 @@ export const metadata: Metadata = {
   title: "Mon compte — DraftForMe"
 };
 
-export default async function AccountPage({
-  searchParams
-}: {
-  searchParams: Promise<{ erreur?: string }>;
-}) {
+export default async function AccountPage() {
   const user = await getCurrentUser();
   if (!user) redirect(`/connexion?next=${encodeURIComponent("/compte")}` as Route);
-
-  const { erreur } = await searchParams;
 
   return (
     <div className="mx-auto max-w-lg space-y-12 px-4 py-16">
       <h1 className="text-3xl font-semibold tracking-[-0.02em] text-ink">Mon compte</h1>
-
-      {erreur === "deconnexion" && (
-        <p role="alert" className="text-sm text-danger">
-          La déconnexion a échoué. Réessayez.
-        </p>
-      )}
 
       <section className="space-y-4">
         <h2 className="text-lg font-semibold text-ink">Pseudo</h2>

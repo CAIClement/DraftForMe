@@ -48,7 +48,7 @@ export async function signOut(): Promise<void> {
   const supabase = await createClient();
   const { error } = await supabase.auth.signOut();
   revalidatePath("/", "layout");
-  redirect(error ? ("/compte?erreur=deconnexion" as Route) : "/");
+  redirect(error ? ("/connexion?erreur=deconnexion" as Route) : "/");
 }
 
 export async function deleteAccount(_previous: FormState, formData: FormData): Promise<FormState> {

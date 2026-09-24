@@ -15,16 +15,18 @@ describe("AccountMenu", () => {
   it("shows the nickname, the account link and sign-out when signed in", () => {
     render(<AccountMenu user={{ id: "user-1", nickname: "Faker" }} />);
 
-    expect(screen.getByRole("link", { name: "Faker" })).toHaveAttribute("href", "/compte");
+    expect(screen.getByText("Faker")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Mon compte" })).toHaveAttribute("href", "/compte");
     expect(screen.getByRole("button", { name: "Se déconnecter" })).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Se connecter" })).not.toBeInTheDocument();
   });
 
-  it("asks a signed-in user without a nickname to choose one", () => {
+  it("asks a signed-in user without a nickname to choose one, and still links to the account page", () => {
     render(<AccountMenu user={{ id: "user-1", nickname: null }} />);
     expect(screen.getByRole("link", { name: "Choisir un pseudo" })).toHaveAttribute(
       "href",
       "/compte/pseudo?next=%2Fdraft"
     );
+    expect(screen.getByRole("link", { name: "Mon compte" })).toHaveAttribute("href", "/compte");
   });
 });

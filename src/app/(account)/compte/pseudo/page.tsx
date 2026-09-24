@@ -13,7 +13,11 @@ export default async function NicknamePage({ searchParams }: { searchParams: Pro
   const safeNext = safeNextPath(next);
   const user = await getCurrentUser();
 
-  if (!user) redirect(`/connexion?next=${encodeURIComponent("/compte/pseudo")}` as Route);
+  if (!user) {
+    redirect(
+      `/connexion?next=${encodeURIComponent(`/compte/pseudo?next=${encodeURIComponent(safeNext)}`)}` as Route
+    );
+  }
 
   return (
     <div className="mx-auto max-w-lg px-4 py-16">

@@ -1,10 +1,12 @@
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 
 export type CurrentUser = { id: string; nickname: string | null };
 
 // Every public page renders the header with this. Supabase being down or
 // unconfigured must not take the page with it: it is treated as signed out.
-export async function getCurrentUser(): Promise<CurrentUser | null> {
+// Wrapped in React's cache so a layout and a page share one lookup per render.
+export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
   try {
     const supabase = await createClient();
     const {
@@ -17,4 +19,4 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
   } catch {
     return null;
   }
-}
+});

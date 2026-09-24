@@ -31,7 +31,8 @@ describe("SiteHeader", () => {
 
   it("shows the account menu for the user it is given", () => {
     render(<SiteHeader current="home" user={{ id: "user-1", nickname: "Faker" }} />);
-    expect(screen.getByRole("link", { name: "Faker" })).toHaveAttribute("href", "/compte");
+    expect(screen.getByText("Faker")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Mon compte" })).toHaveAttribute("href", "/compte");
   });
 
   it("offers to sign in when nobody is signed in", () => {

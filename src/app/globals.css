@@ -26,7 +26,8 @@
   --accent-wash: #1c2338;
   --on-accent: #0a1428;
   --spark: #0ac8b9;
-  --danger: #e05a4a;
+  /* 4.5:1 on --surface; do not darken */
+  --danger: var(--team-enemy);
 
   /* The data band: a darker strip that sets the numbers apart from the page. */
   --band: #050c1a;
