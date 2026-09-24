@@ -26,7 +26,7 @@ export function DeleteAccountForm() {
         className="w-full max-w-sm rounded-md border border-rule bg-surface px-3 py-2 text-ink focus:border-accent"
       />
       {state.error && (
-        <p role="alert" className="text-sm text-danger">
+        <p role="alert" className="fade-in text-sm text-danger">
           {state.error}
         </p>
       )}

@@ -30,7 +30,7 @@ export function NicknameForm({ defaultValue, next }: { defaultValue?: string; ne
       </p>
       <input type="hidden" name="next" value={next} />
       {state.error && (
-        <p role="alert" className="text-sm text-danger">
+        <p role="alert" className="fade-in text-sm text-danger">
           {state.error}
         </p>
       )}

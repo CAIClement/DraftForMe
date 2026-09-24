@@ -248,7 +248,7 @@ export function DraftBoard({
       </div>
 
       {error && (
-        <p role="alert" className="mt-3 rounded-lg border border-rule bg-surface-sunk px-3 py-2 text-xs text-ink-muted">
+        <p role="alert" className="fade-in mt-3 rounded-lg border border-rule bg-surface-sunk px-3 py-2 text-xs text-ink-muted">
           {error}
         </p>
       )}

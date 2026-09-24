@@ -33,7 +33,7 @@ export default async function SignInPage({
         utilisable sans compte.
       </p>
       {erreur && (
-        <p role="alert" className="mt-6 text-sm text-danger">
+        <p role="alert" className="fade-in mt-6 text-sm text-danger">
           {erreur === "deconnexion" ? "La déconnexion a échoué. Réessayez." : "La connexion a échoué. Réessayez."}
         </p>
       )}
