@@ -24,8 +24,8 @@ export function PrivacyPolicy({ info }: { info: SiteInfo }) {
       <LegalSection title="Données traitées">
         <p>
           Si vous n&apos;avez pas de compte, aucune donnée vous concernant n&apos;est enregistrée dans la base de{" "}
-          {info.siteName}. Deux traitements techniques ont lieu pour tous les visiteurs ; la section « Compte »
-          décrit ce qui s&apos;y ajoute si vous vous connectez.
+          {info.siteName}. Deux traitements techniques ont lieu pour tous les visiteurs ; les sections « Compte » et
+          « Avis » décrivent ce qui s&apos;y ajoute si vous vous connectez.
         </p>
         <h3 className="pt-2 font-medium text-ink">Journaux de l&apos;hébergeur</h3>
         <p>
@@ -112,10 +112,27 @@ export function PrivacyPolicy({ info }: { info: SiteInfo }) {
         </p>
       </LegalSection>
 
-      <LegalSection title="Évolutions à venir">
+      <LegalSection title="Avis">
         <p>
-          Des avis sur les matchups sont prévus. Cette politique sera mise à jour avant leur ouverture pour décrire les
-          données qu&apos;ils impliquent.
+          Si vous donnez votre avis sur un matchup, {info.siteName} enregistre les éléments suivants, chacun associé à
+          votre compte : votre choix de vote, le texte de vos commentaires (vous pouvez en laisser plusieurs par
+          matchup), vos réactions (pour ou contre) sur les commentaires des autres joueurs, et le motif de vos
+          éventuels signalements (spam, insultant, hors sujet ou autre), que seul l&apos;éditeur peut lire.
+        </p>
+        <p>
+          Quand vous commentez, votre pseudo est affiché publiquement à côté de vos commentaires.
+        </p>
+        <p>
+          Finalité : publier les avis de la communauté sur les matchups et permettre la modération. Base légale :
+          l&apos;exécution du service que vous demandez en votant, en commentant ou en réagissant (article 6.1.b du
+          RGPD) ; l&apos;intérêt légitime de l&apos;éditeur pour les signalements. Durée de conservation : jusqu&apos;à
+          la suppression de votre compte ou jusqu&apos;à ce que l&apos;éditeur retire le contenu.
+        </p>
+        <p>
+          Vous pouvez modifier ou supprimer vos commentaires à tout moment. Si vous supprimez votre compte, vos votes,
+          vos réactions et vos signalements sont supprimés avec lui. Vos commentaires, en revanche, restent visibles :
+          c&apos;est le compte qui est supprimé, pas le contenu que d&apos;autres joueurs sont venus lire ; ils ne sont
+          plus associés à votre compte et leur auteur apparaît comme « Utilisateur supprimé ».
         </p>
       </LegalSection>
     </LegalPage>
