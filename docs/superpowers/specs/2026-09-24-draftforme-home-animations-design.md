@@ -52,7 +52,8 @@ All new files live in `src/components/motion/`.
 `<Reveal as="div" delay={80} className=...>{children}</Reveal>`
 
 - Server render: no `data-reveal` attribute, so the content is fully visible without JavaScript.
-- On mount: sets `data-reveal="pending"` and registers with one module-level shared `IntersectionObserver` (threshold 0.15). When it intersects, it becomes `data-reveal="shown"` and is unobserved.
+- On mount: sets `data-reveal="pending"` and observes itself with its own `IntersectionObserver` (threshold 0.15). When it intersects, it becomes `data-reveal="shown"` and is unobserved. One observer per element (about fifteen on the page) is simpler to test than a shared module-level one and costs nothing measurable.
+- Used only below the hero. The hero animates on page load with pure CSS classes, so hydration never hides content that is already on screen.
 - `delay` (ms) is passed as the CSS variable `--reveal-delay`.
 - If `IntersectionObserver` is unavailable, it goes straight to `shown`.
 - If the user prefers reduced motion, it does not set `pending` at all: the element stays in its final state.
