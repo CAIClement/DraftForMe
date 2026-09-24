@@ -70,7 +70,7 @@ export function Alternatives({
             onFocus={() => onPreview(recommendation.championId)}
             onBlur={() => onPreview(null)}
             onClick={() => onSelect(recommendation.championId)}
-            className={`${shell} hover:border-accent`}
+            className={`${shell} transition-colors duration-200 hover:border-accent`}
           >
             {body}
           </button>

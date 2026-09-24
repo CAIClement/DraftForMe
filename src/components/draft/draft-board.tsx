@@ -194,7 +194,7 @@ export function DraftBoard({
                   type="button"
                   onClick={() => apply({ type: "setYourRole", role })}
                   aria-label={`Jouer ${ROLE_LABELS[role].toLowerCase()}`}
-                  className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded-md border border-rule bg-surface px-1.5 py-1 text-[8px] font-extrabold uppercase tracking-[0.1em] text-ink-faint hover:border-accent hover:text-accent"
+                  className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded-md border border-rule bg-surface px-1.5 py-1 text-[8px] font-extrabold uppercase tracking-[0.1em] text-ink-faint transition-colors duration-200 hover:border-accent hover:text-accent"
                 >
                   Vous ?
                 </button>

@@ -97,7 +97,7 @@ export function ChampionPicker({
               type="button"
               onClick={() => onPick(champion.id)}
               aria-label={champion.name}
-              className="block w-full rounded-lg border border-rule p-0.5 hover:border-accent"
+              className="block w-full rounded-lg border border-rule p-0.5 transition-colors duration-200 hover:border-accent"
             >
               <ChampionAvatar name={champion.name} imageUrl={champion.imageUrl} size={34} />
             </button>
