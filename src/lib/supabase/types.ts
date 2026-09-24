@@ -293,7 +293,7 @@ export type Database = {
       >;
     };
     Views: {
-      // Owner-rights view over profiles exposing only the public nickname
+      // Owner-rights view over profiles exposing only comment authors' nicknames
       // (migration 0005); read-only, so no Insert/Update.
       public_profiles: {
         Row: { user_id: string; display_name: string };

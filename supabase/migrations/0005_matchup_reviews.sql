@@ -207,9 +207,14 @@ revoke select on public.matchup_comment_reports from anon, authenticated;
 -- exposes exactly two columns. display_name is public by design (it is shown
 -- next to every comment); default_region, default_role and the timestamps
 -- stay private and are only reachable through profiles' own-row policy.
--- Rows without a nickname are left out: those users cannot comment anyway.
+-- Only authors of at least one comment are listed, so the view cannot be used
+-- to enumerate every account's nickname; rows without a nickname are left out
+-- too (those users cannot comment anyway).
 create view public.public_profiles as
-  select user_id, display_name from public.profiles where display_name is not null;
+  select p.user_id, p.display_name
+  from public.profiles p
+  where p.display_name is not null
+    and exists (select 1 from public.matchup_comments c where c.user_id = p.user_id);
 
 revoke all on public.public_profiles from anon, authenticated;
 grant select on public.public_profiles to anon, authenticated;
