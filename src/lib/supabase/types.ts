@@ -274,7 +274,14 @@ export type Database = {
         Partial<{ id: string; comment_id: string; reporter_user_id: string; reason: string; created_at: string }>
       >;
     };
-    Views: Record<string, never>;
+    Views: {
+      // Owner-rights view over profiles exposing only the public nickname
+      // (migration 0005); read-only, so no Insert/Update.
+      public_profiles: {
+        Row: { user_id: string; display_name: string };
+        Relationships: [];
+      };
+    };
     Functions: {
       delete_my_account: { Args: Record<PropertyKey, never>; Returns: undefined };
     };

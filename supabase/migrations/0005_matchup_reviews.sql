@@ -200,6 +200,20 @@ grant insert on public.matchup_comment_reports to authenticated;
 -- so RLS (zero select policies, so nobody but postgres) is what decides.
 revoke select on public.matchup_comment_reports from anon, authenticated;
 
+-- Comment authors' nicknames. profiles only lets a user read their own row
+-- (0001), so the matchup page cannot read anyone else's display_name from it.
+-- This is a plain view, deliberately NOT security_invoker: it runs with its
+-- owner's rights, so it bypasses profiles' own-row RLS -- which is why it
+-- exposes exactly two columns. display_name is public by design (it is shown
+-- next to every comment); default_region, default_role and the timestamps
+-- stay private and are only reachable through profiles' own-row policy.
+-- Rows without a nickname are left out: those users cannot comment anyway.
+create view public.public_profiles as
+  select user_id, display_name from public.profiles where display_name is not null;
+
+revoke all on public.public_profiles from anon, authenticated;
+grant select on public.public_profiles to anon, authenticated;
+
 create index matchup_votes_lookup_idx on public.matchup_votes (role, champion_low_id, champion_high_id);
 create index matchup_comments_lookup_idx on public.matchup_comments (role, champion_low_id, champion_high_id, created_at desc);
 create index matchup_comments_author_idx on public.matchup_comments (user_id, created_at desc);
