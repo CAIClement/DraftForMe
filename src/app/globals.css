@@ -262,9 +262,11 @@ html {
   animation: card-pop 700ms var(--ease-overshoot) var(--reveal-delay, 0ms) backwards;
 }
 
+/* No `overflow: hidden`: the glint moves by `background-position` inside a
+   pseudo-element that already matches the box, and clipping would cut the
+   focus ring of a button inside. */
 .sheen {
   position: relative;
-  overflow: hidden;
 }
 
 .sheen::after {
