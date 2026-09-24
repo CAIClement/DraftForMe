@@ -48,11 +48,11 @@ export default async function SignInPage({
       </div>
       <p className="mt-8 text-xs text-ink-faint">
         En vous connectant, vous acceptez les{" "}
-        <Link href="/conditions-utilisation" className="underline underline-offset-2 hover:text-ink">
+        <Link href="/conditions-utilisation" className="underline underline-offset-2 transition-colors duration-200 hover:text-ink">
           conditions d&apos;utilisation
         </Link>{" "}
         et la{" "}
-        <Link href="/confidentialite" className="underline underline-offset-2 hover:text-ink">
+        <Link href="/confidentialite" className="underline underline-offset-2 transition-colors duration-200 hover:text-ink">
           politique de confidentialité
         </Link>
         .

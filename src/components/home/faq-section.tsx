@@ -34,7 +34,7 @@ export function FaqSection() {
         <div className="border-t border-rule">
           {QUESTIONS.map((item, index) => (
             <details key={item.q} open={index === 0} className="group border-b border-rule">
-              <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 py-5 text-base font-semibold [&::-webkit-details-marker]:hidden">
+              <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 py-5 text-base font-semibold transition-colors duration-200 hover:text-accent [&::-webkit-details-marker]:hidden">
                 {item.q}
                 <Plus
                   aria-hidden

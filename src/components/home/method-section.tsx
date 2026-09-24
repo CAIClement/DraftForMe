@@ -32,7 +32,7 @@ export function MethodSection() {
           </div>
           <Link
             href="/draft"
-            className="mb-4 inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-accent underline-offset-4 hover:underline"
+            className="mb-4 inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-accent underline decoration-transparent underline-offset-4 transition-colors duration-200 hover:decoration-current"
           >
             Ouvrir l'outil
             <ArrowRight aria-hidden className="size-4" />
