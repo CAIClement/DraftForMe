@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { reportComment } from "@/app/duel/[role]/[pair]/actions";
 import type { FormState } from "@/app/duel/[role]/[pair]/actions";
 import type { ReportReason } from "@/lib/matchup/reviews";
@@ -26,7 +26,24 @@ export function ReportButton({
   commentId: string;
 }) {
   const [open, setOpen] = useState(false);
+  const [sent, setSent] = useState(false);
   const [state, formAction, pending] = useActionState(reportComment, INITIAL);
+
+  // Same INITIAL-identity trick as comment-list.tsx's EditForm: only a
+  // resolved submission (not the initial render) can flip this to true.
+  useEffect(() => {
+    if (state !== INITIAL && !state.error) {
+      setSent(true);
+    }
+  }, [state]);
+
+  if (sent) {
+    return (
+      <p role="status" className="text-xs text-ink-faint">
+        Signalement envoyé.
+      </p>
+    );
+  }
 
   if (!open) {
     return (
@@ -48,9 +65,15 @@ export function ReportButton({
       <input type="hidden" name="commentId" value={commentId} />
       <fieldset className="space-y-1">
         <legend className="sr-only">Motif du signalement</legend>
-        {REASONS.map((reason) => (
+        {REASONS.map((reason, index) => (
           <label key={reason.value} className="flex items-center gap-2 text-ink-muted">
-            <input type="radio" name="reason" value={reason.value} defaultChecked={reason.value === "spam"} />
+            <input
+              type="radio"
+              name="reason"
+              value={reason.value}
+              defaultChecked={reason.value === "spam"}
+              autoFocus={index === 0}
+            />
             {reason.label}
           </label>
         ))}
@@ -60,9 +83,14 @@ export function ReportButton({
           {state.error}
         </p>
       )}
-      <button type="submit" disabled={pending} className="text-accent hover:text-accent-pale">
-        Envoyer le signalement
-      </button>
+      <div className="flex gap-2">
+        <button type="submit" disabled={pending} className="text-accent hover:text-accent-pale">
+          Envoyer le signalement
+        </button>
+        <button type="button" onClick={() => setOpen(false)} className="text-ink-faint">
+          Annuler
+        </button>
+      </div>
     </form>
   );
 }

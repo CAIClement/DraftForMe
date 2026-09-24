@@ -1,13 +1,22 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { deleteComment, editComment, reactToComment } from "@/app/duel/[role]/[pair]/actions";
 import type { FormState } from "@/app/duel/[role]/[pair]/actions";
 import type { Comment } from "@/lib/matchup/reviews";
 import { ReportButton } from "./report-button";
 
 const INITIAL: FormState = { error: null };
-const dateFormat = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short", year: "numeric" });
+// Timestamps are stored in UTC and always shown in the site's audience's own
+// time zone, not the reader's device time zone -- otherwise the same comment
+// renders a different day server- and client-side (hydration mismatch) and
+// two readers in different zones disagree on "when".
+const dateFormat = new Intl.DateTimeFormat("fr-FR", {
+  day: "numeric",
+  month: "short",
+  year: "numeric",
+  timeZone: "Europe/Paris"
+});
 
 type Matchup = { role: string; championLowId: string; championHighId: string };
 
@@ -16,51 +25,90 @@ function ReactionForm({
   commentId,
   value,
   active,
-  label
+  count
 }: {
   matchup: Matchup;
   commentId: string;
   value: "for" | "against";
   active: boolean;
-  label: string;
+  count: number;
 }) {
-  const [, formAction, pending] = useActionState(reactToComment, INITIAL);
+  const [state, formAction, pending] = useActionState(reactToComment, INITIAL);
+  const symbol = value === "for" ? "▲" : "▼";
+  const ariaLabel = value === "for" ? `Pertinent (${count})` : `Pas pertinent (${count})`;
+
   return (
-    <form action={formAction} className="inline">
-      <input type="hidden" name="role" value={matchup.role} />
-      <input type="hidden" name="championLowId" value={matchup.championLowId} />
-      <input type="hidden" name="championHighId" value={matchup.championHighId} />
-      <input type="hidden" name="commentId" value={commentId} />
-      <input type="hidden" name="value" value={value} />
-      <button
-        type="submit"
-        disabled={pending}
-        aria-pressed={active}
-        className={`px-1.5 ${active ? "text-accent" : "text-ink-faint hover:text-ink"}`}
-      >
-        {label}
-      </button>
-    </form>
+    <div className="inline-flex flex-col items-start">
+      <form action={formAction} className="inline">
+        <input type="hidden" name="role" value={matchup.role} />
+        <input type="hidden" name="championLowId" value={matchup.championLowId} />
+        <input type="hidden" name="championHighId" value={matchup.championHighId} />
+        <input type="hidden" name="commentId" value={commentId} />
+        <input type="hidden" name="value" value={value} />
+        <button
+          type="submit"
+          disabled={pending}
+          aria-pressed={active}
+          aria-label={ariaLabel}
+          className={`px-1.5 ${active ? "text-accent" : "text-ink-faint hover:text-ink"}`}
+        >
+          {symbol} {count}
+        </button>
+      </form>
+      {state.error && (
+        <p role="alert" className="text-danger">
+          {state.error}
+        </p>
+      )}
+    </div>
   );
 }
 
 function DeleteForm({ matchup, commentId }: { matchup: Matchup; commentId: string }) {
-  const [, formAction, pending] = useActionState(deleteComment, INITIAL);
+  const [state, formAction, pending] = useActionState(deleteComment, INITIAL);
   return (
-    <form action={formAction}>
-      <input type="hidden" name="role" value={matchup.role} />
-      <input type="hidden" name="championLowId" value={matchup.championLowId} />
-      <input type="hidden" name="championHighId" value={matchup.championHighId} />
-      <input type="hidden" name="commentId" value={commentId} />
-      <button type="submit" disabled={pending} className="text-xs text-ink-faint hover:text-danger">
-        Supprimer
-      </button>
-    </form>
+    <div>
+      <form action={formAction}>
+        <input type="hidden" name="role" value={matchup.role} />
+        <input type="hidden" name="championLowId" value={matchup.championLowId} />
+        <input type="hidden" name="championHighId" value={matchup.championHighId} />
+        <input type="hidden" name="commentId" value={commentId} />
+        <button type="submit" disabled={pending} className="text-xs text-ink-faint hover:text-danger">
+          Supprimer
+        </button>
+      </form>
+      {state.error && (
+        <p role="alert" className="text-xs text-danger">
+          {state.error}
+        </p>
+      )}
+    </div>
   );
 }
 
-function EditForm({ matchup, comment, onCancel }: { matchup: Matchup; comment: Comment; onCancel: () => void }) {
+function EditForm({
+  matchup,
+  comment,
+  onCancel,
+  onSaved
+}: {
+  matchup: Matchup;
+  comment: Comment;
+  onCancel: () => void;
+  onSaved: () => void;
+}) {
   const [state, formAction, pending] = useActionState(editComment, INITIAL);
+
+  // useActionState's state is still the INITIAL object (by reference) until a
+  // submission resolves, so comparing against it is how we tell "the save
+  // just succeeded" apart from "the form just mounted" -- firing onSaved on
+  // mount would close the form before the user typed anything.
+  useEffect(() => {
+    if (state !== INITIAL && !state.error) {
+      onSaved();
+    }
+  }, [state, onSaved]);
+
   return (
     <form action={formAction} className="space-y-1">
       <input type="hidden" name="role" value={matchup.role} />
@@ -73,6 +121,8 @@ function EditForm({ matchup, comment, onCancel }: { matchup: Matchup; comment: C
         minLength={3}
         maxLength={500}
         required
+        autoFocus
+        aria-label="Modifier le commentaire"
         className="w-full rounded-md border border-rule bg-surface px-2 py-1 text-sm text-ink"
       />
       {state.error && (
@@ -92,19 +142,13 @@ function EditForm({ matchup, comment, onCancel }: { matchup: Matchup; comment: C
   );
 }
 
-// currentUserId is accepted for API symmetry with the rest of the page (every
-// other matchup component takes the caller's id) even though CommentList
-// itself only needs the already-computed comment.isMine/comment.myReaction.
 export function CommentList({
   comments,
-  currentUserId,
   matchup
 }: {
   comments: Comment[];
-  currentUserId: string | null;
   matchup: Matchup;
 }) {
-  void currentUserId;
   const [editingId, setEditingId] = useState<string | null>(null);
 
   if (comments.length === 0) {
@@ -123,12 +167,17 @@ export function CommentList({
             <span>{comment.authorNickname ?? "Utilisateur supprimé"}</span>
             <span>
               {dateFormat.format(new Date(comment.createdAt))}
-              {comment.edited && " · modifié"}
+              {comment.edited && ` · modifié le ${dateFormat.format(new Date(comment.updatedAt))}`}
             </span>
           </div>
 
           {editingId === comment.id ? (
-            <EditForm matchup={matchup} comment={comment} onCancel={() => setEditingId(null)} />
+            <EditForm
+              matchup={matchup}
+              comment={comment}
+              onCancel={() => setEditingId(null)}
+              onSaved={() => setEditingId(null)}
+            />
           ) : (
             <p data-testid="comment-body" className="mt-1 text-sm text-ink">
               {comment.body}
@@ -141,14 +190,14 @@ export function CommentList({
               commentId={comment.id}
               value="for"
               active={comment.myReaction === "for"}
-              label={`▲ ${comment.forCount}`}
+              count={comment.forCount}
             />
             <ReactionForm
               matchup={matchup}
               commentId={comment.id}
               value="against"
               active={comment.myReaction === "against"}
-              label={`▼ ${comment.againstCount}`}
+              count={comment.againstCount}
             />
             {comment.isMine && editingId !== comment.id && (
               <>
