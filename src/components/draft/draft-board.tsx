@@ -11,6 +11,7 @@ import { Verdict } from "./verdict";
 import { DEFAULT_EXAMPLE } from "@/lib/draft/default-example";
 import {
   allyPickIds,
+  directOpponent,
   draftReducer,
   enemyPicksWithRoles,
   excludedChampionIds,
@@ -265,7 +266,7 @@ export function DraftBoard({
       >
         {top ? (
           <>
-            <Verdict recommendation={top} />
+            <Verdict recommendation={top} role={draft.yourRole} enemyChampionId={directOpponent(draft)} />
             {playerFactor?.available ? (
               <PriorityControl value={draft.priority} onChange={changePriority} />
             ) : (

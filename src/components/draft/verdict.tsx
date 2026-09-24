@@ -1,7 +1,11 @@
+import Link from "next/link";
+import type { Route } from "next";
 import { ChampionAvatar } from "@/components/ui/champion-avatar";
 import { Score } from "@/components/ui/score";
 import { FactorBars } from "./factor-bars";
 import type { Recommendation } from "@/lib/recommendation/types";
+import type { Role } from "@/lib/draft/roles";
+import { matchupHref } from "@/lib/matchup/key";
 
 function Fact({ label, value }: { label: string; value: string | null }) {
   if (value === null) return null;
@@ -16,8 +20,20 @@ function Fact({ label, value }: { label: string; value: string | null }) {
 
 const number = new Intl.NumberFormat("fr-FR");
 
-export function Verdict({ recommendation }: { recommendation: Recommendation }) {
+export function Verdict({
+  recommendation,
+  role,
+  enemyChampionId
+}: {
+  recommendation: Recommendation;
+  role?: Role;
+  enemyChampionId?: string | null;
+}) {
   const counter = recommendation.explanation.factors.find((factor) => factor.key === "counter");
+  const communityHref: Route | null =
+    role && enemyChampionId && enemyChampionId !== recommendation.championId
+      ? matchupHref(recommendation.championId, enemyChampionId, role)
+      : null;
 
   return (
     <div className="overflow-hidden rounded-xl border border-accent">
@@ -57,6 +73,14 @@ export function Verdict({ recommendation }: { recommendation: Recommendation }) 
 
         <p className="col-span-full border-t border-rule-soft pt-2.5 text-xs leading-relaxed text-ink-muted">
           {counter?.detail}
+          {communityHref && (
+            <>
+              {" "}
+              <Link href={communityHref} className="text-accent underline underline-offset-2 hover:text-accent-pale">
+                Avis de la communauté
+              </Link>
+            </>
+          )}
         </p>
       </div>
     </div>
