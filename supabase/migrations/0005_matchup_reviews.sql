@@ -52,6 +52,9 @@ declare
   same_matchup_count int;
   site_wide_count int;
 begin
+  -- Serializes concurrent inserts by the same author so a burst can't exceed the caps.
+  perform pg_catalog.pg_advisory_xact_lock(pg_catalog.hashtext(new.user_id::text));
+
   select count(*) into same_matchup_count
   from public.matchup_comments
   where user_id = new.user_id
@@ -98,6 +101,7 @@ language plpgsql
 set search_path = ''
 as $$
 begin
+  new.id := old.id;
   new.created_at := old.created_at;
   new.role := old.role;
   new.champion_low_id := old.champion_low_id;
