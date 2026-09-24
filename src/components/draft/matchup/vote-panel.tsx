@@ -25,14 +25,32 @@ export function VotePanel({
 }) {
   const [state, formAction, pending] = useActionState(action, INITIAL);
 
-  const leader: { label: string; count: number } | null =
+  // Below the threshold, no percentage line at all. At or above it, a single
+  // choice must beat the other two to be named -- an exact tie for the top
+  // spot (two or three choices sharing the max count) is reported as "Avis
+  // partagés" instead of arbitrarily picking one.
+  const percentLine: string | null =
     summary.total < PERCENT_THRESHOLD
       ? null
-      : [
-          { choice: "low" as const, label: `${championLow.name} gagne`, count: summary.low },
-          { choice: "high" as const, label: `${championHigh.name} gagne`, count: summary.high },
-          { choice: "even" as const, label: "Égalité", count: summary.even }
-        ].reduce((best, entry) => (entry.count > best.count ? entry : best));
+      : (() => {
+          const entries = [
+            { choice: "low" as const, count: summary.low },
+            { choice: "high" as const, count: summary.high },
+            { choice: "even" as const, count: summary.even }
+          ];
+          const max = Math.max(...entries.map((entry) => entry.count));
+          const top = entries.filter((entry) => entry.count === max);
+          if (top.length > 1) return `Avis partagés (${summary.total} votes)`;
+
+          const pct = Math.round((max / summary.total) * 100);
+          const verdict =
+            top[0].choice === "low"
+              ? `${championLow.name} gagne`
+              : top[0].choice === "high"
+                ? `${championHigh.name} gagne`
+                : "c'est une égalité";
+          return `${pct} % pensent que ${verdict} (${summary.total} votes)`;
+        })();
 
   function choiceButton(choice: VoteChoice, label: string, count: number) {
     return (
@@ -65,11 +83,7 @@ export function VotePanel({
         {choiceButton("high", `${championHigh.name} gagne`, summary.high)}
       </div>
 
-      {leader && (
-        <p className="text-xs text-ink-faint">
-          {Math.round((leader.count / summary.total) * 100)} % pensent que {leader.label.toLowerCase()} ({summary.total} votes)
-        </p>
-      )}
+      {percentLine && <p className="text-xs text-ink-faint">{percentLine}</p>}
 
       {state.error && (
         <p role="alert" className="text-sm text-danger">

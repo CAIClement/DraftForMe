@@ -27,10 +27,21 @@ describe("VotePanel", () => {
     expect(screen.queryByText(/%/)).not.toBeInTheDocument();
   });
 
-  it("shows the derived percentage once the matchup reaches 5 votes", () => {
+  it("shows the derived percentage once the matchup reaches 5 votes, keeping the champion's capitalization", () => {
     render(<VotePanel {...props({ low: 4, high: 1, even: 0, total: 5 })} />);
-    expect(screen.getByText(/80 %/)).toBeInTheDocument();
-    expect(screen.getByText(/Darius/)).toBeInTheDocument();
+    expect(screen.getByText(/80 % pensent que Darius gagne \(5 votes\)/)).toBeInTheDocument();
+    expect(screen.queryByText(/darius/)).not.toBeInTheDocument();
+  });
+
+  it("phrases an even lead as 'c'est une égalité', not the button label", () => {
+    render(<VotePanel {...props({ low: 0, high: 0, even: 5, total: 5 })} />);
+    expect(screen.getByText(/100 % pensent que c'est une égalité \(5 votes\)/)).toBeInTheDocument();
+  });
+
+  it("shows 'Avis partagés' instead of singling out a leader when the top choices tie", () => {
+    render(<VotePanel {...props({ low: 2, high: 2, even: 1, total: 5 })} />);
+    expect(screen.getByText(/Avis partagés \(5 votes\)/)).toBeInTheDocument();
+    expect(screen.queryByText(/pensent que/)).not.toBeInTheDocument();
   });
 
   it("marks the caller's own choice", () => {
