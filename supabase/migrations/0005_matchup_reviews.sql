@@ -124,14 +124,40 @@ create trigger matchup_comments_lock_columns
   before update on public.matchup_comments
   for each row execute function public.lock_matchup_comment_columns();
 
--- Changing a vote (castVote's upsert) keeps its original created_at and
--- stamps updated_at, so neither depends on what the client sends.
+-- A new vote's timestamps come from the server, never from the client.
+create function public.stamp_matchup_vote()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  new.created_at := now();
+  new.updated_at := now();
+  return new;
+end;
+$$;
+
+create trigger matchup_votes_stamp
+  before insert on public.matchup_votes
+  for each row execute function public.stamp_matchup_vote();
+
+-- Changing a vote (castVote's upsert) may change its choice, nothing else:
+-- the matchup key and the author are locked, like a comment's, so a vote
+-- cannot be moved to another matchup or handed to another account (user_id
+-- is not null with on delete cascade, so no anonymizing UPDATE needs to pass).
+-- It keeps its original created_at and stamps updated_at, so neither depends
+-- on what the client sends.
 create function public.touch_matchup_vote()
 returns trigger
 language plpgsql
 set search_path = ''
 as $$
 begin
+  new.id := old.id;
+  new.role := old.role;
+  new.champion_low_id := old.champion_low_id;
+  new.champion_high_id := old.champion_high_id;
+  new.user_id := old.user_id;
   new.created_at := old.created_at;
   new.updated_at := now();
   return new;
