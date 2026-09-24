@@ -26,6 +26,9 @@ export type Comment = {
 export type MutationResult = { ok: true } | { ok: false; error: string };
 
 const GENERIC_ERROR = "Une erreur est survenue. Réessayez plus tard.";
+// Migration 0005's rate-limit trigger: raise exception 'comment_rate_limited'
+// using errcode = 'P0001'. Both must match, so no other error is mistaken for it.
+const RATE_LIMITED_CODE = "P0001";
 const RATE_LIMITED_MESSAGE = "comment_rate_limited";
 const UNIQUE_VIOLATION = "23505";
 const COMMENT_MIN = 3;
@@ -194,10 +197,11 @@ export async function postComment(
   } as never);
 
   if (error) {
-    const message = (error as { message?: string }).message;
+    const { code, message } = error as { code?: string; message?: string };
+    const rateLimited = code === RATE_LIMITED_CODE && message === RATE_LIMITED_MESSAGE;
     return {
       ok: false,
-      error: message === RATE_LIMITED_MESSAGE ? "Vous commentez trop vite. Réessayez dans quelques minutes." : GENERIC_ERROR
+      error: rateLimited ? "Vous commentez trop vite. Réessayez dans quelques minutes." : GENERIC_ERROR
     };
   }
   return { ok: true };

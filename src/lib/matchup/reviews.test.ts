@@ -324,12 +324,23 @@ describe("postComment", () => {
 
   it("maps the rate-limit trigger's error to its French message", async () => {
     const supabase = stub({
-      matchup_comments: query({ data: null, error: { message: "comment_rate_limited" } })
+      matchup_comments: query({ data: null, error: { code: "P0001", message: "comment_rate_limited" } })
     });
 
     expect(await postComment(supabase, "user-1", KEY, "Un avis tout à fait valable.")).toEqual({
       ok: false,
       error: "Vous commentez trop vite. Réessayez dans quelques minutes."
+    });
+  });
+
+  it("does not take an error for the rate limit on its message alone", async () => {
+    const supabase = stub({
+      matchup_comments: query({ data: null, error: { code: "XX000", message: "comment_rate_limited" } })
+    });
+
+    expect(await postComment(supabase, "user-1", KEY, "Un avis tout à fait valable.")).toEqual({
+      ok: false,
+      error: "Une erreur est survenue. Réessayez plus tard."
     });
   });
 
