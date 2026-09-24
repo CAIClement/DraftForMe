@@ -5,7 +5,8 @@
 
 create table public.matchup_votes (
   id uuid primary key default gen_random_uuid(),
-  role text not null,
+  -- Exactly ROLES in src/lib/draft/roles.ts; keep the two in step.
+  role text not null check (role in ('top', 'jungle', 'mid', 'adc', 'support')),
   champion_low_id text not null references public.champions(id) on delete cascade,
   champion_high_id text not null references public.champions(id) on delete cascade,
   user_id uuid not null references auth.users(id) on delete cascade,
@@ -20,7 +21,8 @@ create table public.matchup_votes (
 
 create table public.matchup_comments (
   id uuid primary key default gen_random_uuid(),
-  role text not null,
+  -- Exactly ROLES in src/lib/draft/roles.ts; keep the two in step.
+  role text not null check (role in ('top', 'jungle', 'mid', 'adc', 'support')),
   champion_low_id text not null references public.champions(id) on delete cascade,
   champion_high_id text not null references public.champions(id) on delete cascade,
   -- Nullable: anonymized (not deleted) when the author's account is deleted --
