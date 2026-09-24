@@ -2,99 +2,101 @@
 
 ## Context
 
-The site currently has no animation beyond a few `transition-colors` utilities
-scattered inconsistently (`ButtonLink`, the site header nav links, the FAQ's
-`+` icon rotation). Most interactive elements change state with a hard snap:
-role buttons, champion-suggestion buttons, the chip's remove button, and —
-most noticeably — the factor bars in `Verdict`, whose widths jump instantly
-when a new recommendation replaces the old one.
+The owner asked for "small animations" across the site. Scoped during
+brainstorming to **micro-interactions only**, on both the marketing pages and
+the draft tool: hover and press feedback, and state transitions. No
+scroll-triggered entrances, no animated counters.
 
-The owner asked for "small animations" across the site. This spec scopes that
-down to consistent micro-interactions: hover/press feedback and state
-transitions. It deliberately excludes anything that reads as a flourish
-(scroll-triggered entrances, an animated score counter).
+The site already has a motion system, added with the draft board:
 
-## Goals
+- Tokens in `src/app/globals.css`: `--motion` (240ms), `--motion-slow`
+  (380ms), `--ease-out`, `--ease-overshoot`.
+- Keyframes and classes built on them: `.pin-drop` and `.pin-ping` (a pick
+  landing on the map), `.slot-rise` (board slots arriving in sequence),
+  `.board-sweep` (the loading sweep), `.factor-bar-fill` (score bars gliding
+  to a new width).
+- A `prefers-reduced-motion` block that zeroes every transition and animation
+  duration and stops loops.
+- A hover convention: `transition-colors duration-200`, used in eight places
+  (`ButtonLink`, header, footer, account menu, legal links, account pages).
 
-- Every hover/focus state change on an interactive element animates instead
-  of snapping, consistently across the marketing pages and the draft tool.
-- The factor bars visibly glide to their new width when a recommendation
-  updates, so the UI communicates that the recompute actually happened.
-- The draft tool's loading and error states get a visual transition instead
-  of a hard cut.
-- No visual flourish beyond that: no scroll-triggered reveals, no animated
-  counters, no page-transition effects.
+So the draft board's big moments are already animated. What is left is
+consistency: a handful of interactive elements still change colour on hover
+with a hard snap, some have no hover state at all, and error messages pop in.
 
-## Non-goals
+## Decision: no new dependency
 
-- An animated score counter (`Score`) — interpolating a number on a CSS-only
-  budget needs JS state, which is disproportionate to "micro".
-- Scroll-triggered section entrances on the home page — explicitly ruled out
-  when scoping intensity.
-- Any animation on the native `<details>` open/close in the FAQ beyond the
-  icon rotation it already has — animating a `<details>` element's height
-  needs JS or newer, less broadly supported CSS, and the existing rotation
-  already gives the expand/collapse enough affordance.
+An earlier draft of this spec, written against a stale branch, added the
+`tailwindcss-animate` plugin. It is dropped. The only enter animation this
+work needs is an error message fading in, and a plugin would introduce a
+second animation convention, with its own durations, beside the token-based
+one the board already uses. A six-line keyframe on the existing tokens does
+the job.
 
-## Approach
+## Changes
 
-Two levers, no new JS runtime dependency:
+**New in `globals.css`**: a `fade-in` keyframe (opacity 0 to 1) and a
+`.fade-in` class running it for `var(--motion)` with `var(--ease-out)` and
+`backwards` fill, next to the board's keyframes. `backwards` for the same
+reason as `.slot-rise`: the resting state is the visible one.
 
-1. **Tailwind's built-in `transition-*` utilities** for state changes that
-   are already driven by an existing CSS property change (color, border,
-   width, opacity, transform). This covers every hover/press case and the
-   factor bar width.
-2. **`tailwindcss-animate`** (a Tailwind plugin, no JS at runtime) for the
-   one case that needs an actual enter animation: the error message fading
-   in when it first appears. Added as a `devDependency` and registered in
-   `tailwind.config.ts`'s `plugins` array.
+**Hover transitions that currently snap** get the existing
+`transition-colors duration-200`:
 
-Two durations, applied consistently:
+| File | Element |
+|---|---|
+| `src/components/draft/champion-picker.tsx` | Champion grid buttons (`hover:border-accent`) |
+| `src/components/draft/alternatives.tsx` | Interactive alternative cards (`hover:border-accent`) |
+| `src/components/draft/draft-board.tsx` | The "Vous ?" button (`hover:border-accent hover:text-accent`) |
+| `src/app/(account)/connexion/page.tsx` | The two legal links (`hover:text-ink`) |
 
-- **150ms** for hover/press feedback (buttons, chips, links).
-- **300ms ease-out** for content changes (factor bar width, loading opacity,
-  the error message's fade-in).
+**Hover states that do not transition at all today:**
 
-Both mechanisms are plain CSS transitions/animations, so both are already
-covered by the `prefers-reduced-motion` block in `globals.css` (lines 64-75),
-which zeroes every `transition-duration` and `animation-duration` on the
-page. No component-level opt-out is needed.
+- `src/components/home/method-section.tsx`: the "Ouvrir l'outil" link toggles
+  `hover:underline`, and `text-decoration-line` cannot be animated. It becomes
+  `underline decoration-transparent hover:decoration-current` with
+  `transition-colors duration-200`, so the underline fades in instead.
+- `src/components/home/faq-section.tsx`: the `<summary>` gets
+  `transition-colors duration-200 hover:text-accent`. Its `+` icon keeps its
+  own colour and rotation.
+- `src/components/draft/draft-slot.tsx`: the empty and filled slot buttons
+  have no hover state. They get a background shift with
+  `transition-colors duration-200`: the empty slot goes
+  `bg-surface-sunk` to `hover:bg-surface`, the filled slot `bg-surface` to
+  `hover:bg-surface-sunk`. Deliberately not a border change: a
+  `hover:border-*` utility would override the `border-l-team-ally` /
+  `border-r-team-enemy` edge that tells the two teams apart.
 
-## Touch points
+**Press feedback**: `src/components/ui/button-link.tsx` gets
+`active:scale-[0.97]`, and its `transition-colors` becomes `transition` (which
+also covers `transform`), keeping `duration-200`.
 
-**Marketing**
+**Error messages fade in**: every `role="alert"` paragraph gets `.fade-in`:
+`draft-board.tsx`, `nickname-form.tsx`, `delete-account-form.tsx`,
+`connexion/page.tsx`.
 
-- `src/components/ui/button-link.tsx` — add `active:scale-[0.97]` with a
-  150ms transform transition, alongside the existing `transition-colors`.
-- `src/components/ui/chip.tsx` — add a 150ms `transition-colors` to the
-  remove (`×`) button's hover state.
-- `src/components/home/faq-section.tsx` — add a 150ms `transition-colors` to
-  the question text in `<summary>` on hover, matching the icon's existing
-  transition.
-- `src/components/marketing/site-header.tsx` — no change; nav links already
-  transition.
+## Out of scope
 
-**Draft tool**
+- Animated score counter (`Score`): needs JS interpolation.
+- Scroll-triggered section entrances on the home page.
+- Animating the FAQ `<details>` height: needs JS or poorly supported CSS; the
+  rotating icon already signals open/closed.
+- The board's existing motion (pins, slot rise, sweep, factor bars): already
+  done, unchanged.
 
-- `src/components/draft/role-selector.tsx` — add a 150ms `transition-colors`
-  to the inactive button's border/color hover state.
-- `src/components/draft/enemy-picks.tsx` — add a 150ms `transition-colors`
-  to the champion-suggestion button's border/color hover state.
-- `src/components/draft/factor-bars.tsx` — add a 300ms ease-out
-  `transition-[width]` to the bar fill (`<i>` element), so a recommendation
-  update glides instead of snapping.
-- `src/components/draft/draft-tool.tsx` — the results wrapper gets a 300ms
-  `transition-opacity`, dropping to a reduced opacity while
-  `aria-busy="true"`; the error message gets `animate-in fade-in
-  duration-300` from `tailwindcss-animate` so it fades in on first render
-  instead of appearing instantly.
+## Accessibility
+
+Everything added is a CSS transition or animation, so the existing
+`prefers-reduced-motion` block already covers it. No component-level opt-out.
 
 ## Testing
 
-Existing component tests assert on classes and behavior, not computed
-styles, so adding transition/animation utility classes to `className`
-strings does not change what those tests check — no test should need to
-change. `npm test` and `npx tsc --noEmit` must still pass. Manual check in
-the browser: hover states feel smooth, the factor bars glide on a role
-change and on a priority-slider update, and the loading/error states are
-visibly transitioning rather than snapping.
+No test asserts on the classes being changed (checked: the only `toHaveClass`
+in the suite is on `RiotDisclaimer`), and these are CSS-only changes with no
+behaviour to unit-test. Verification is: `npm test`, `npx tsc --noEmit` and
+`npm run lint` stay green; then in the browser, computed styles confirm each
+touched element has a non-zero `transition-duration` (or, for alerts, the
+`fade-in` animation), and the draft slots keep their team edge colour on
+hover. Reduced motion is not re-verified in the browser (the preview pane
+cannot emulate it); it rests on the global block, which this work does not
+touch.
