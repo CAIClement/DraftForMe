@@ -35,21 +35,40 @@ function whereMatchup<T extends { eq: (...args: [string, string]) => T }>(query:
   return query.eq("role", key.role).eq("champion_low_id", key.championLowId).eq("champion_high_id", key.championHighId);
 }
 
-// Throws on a read error, like getComments below: "0 votes" would be false.
+const VOTE_CHOICES: readonly VoteChoice[] = ["low", "high", "even"];
+
+// Each choice is counted by the database (head: true, no rows sent back):
+// loading the rows and counting them here would silently stop at PostgREST's
+// max_rows. Throws on a read error, like getComments below: "0 votes" would
+// be false.
 export async function getVoteSummary(
   supabase: SupabaseServerClient,
   key: MatchupKey,
   userId: string | null
 ): Promise<VoteSummary> {
-  const { data, error } = await whereMatchup(supabase.from("matchup_votes").select("choice, user_id"), key);
-  if (error) throw error;
-  const rows = (data ?? []) as { choice: VoteChoice; user_id: string }[];
+  const countQueries = VOTE_CHOICES.map((choice) =>
+    whereMatchup(supabase.from("matchup_votes").select("id", { count: "exact", head: true }), key).eq("choice", choice)
+  );
+  const ownVoteQuery =
+    userId === null
+      ? null
+      : whereMatchup(supabase.from("matchup_votes").select("choice"), key).eq("user_id", userId).maybeSingle();
 
-  const summary = { low: 0, high: 0, even: 0, total: 0, myChoice: null as VoteChoice | null };
-  for (const row of rows) {
-    summary[row.choice] += 1;
-    summary.total += 1;
-    if (userId !== null && row.user_id === userId) summary.myChoice = row.choice;
+  const [counts, ownVote] = await Promise.all([Promise.all(countQueries), ownVoteQuery]);
+
+  const summary: VoteSummary = { low: 0, high: 0, even: 0, total: 0, myChoice: null };
+  VOTE_CHOICES.forEach((choice, index) => {
+    const { count, error } = counts[index];
+    if (error) throw error;
+    // Never happens with count: "exact"; guarded so a missing count cannot pass as 0.
+    if (count === null) throw new Error(`matchup_votes: no count returned for "${choice}"`);
+    summary[choice] = count;
+    summary.total += summary[choice];
+  });
+
+  if (ownVote !== null) {
+    if (ownVote.error) throw ownVote.error;
+    summary.myChoice = (ownVote.data as { choice: VoteChoice } | null)?.choice ?? null;
   }
   return summary;
 }

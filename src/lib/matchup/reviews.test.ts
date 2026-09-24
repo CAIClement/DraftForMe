@@ -10,6 +10,7 @@ import {
   reportComment
 } from "./reviews";
 import type { MatchupKey } from "./key";
+import type { VoteChoice } from "./reviews";
 
 const KEY: MatchupKey = { role: "top", championLowId: "darius", championHighId: "garen" };
 
@@ -60,18 +61,25 @@ function stub(byTable: Record<string, Builder | (() => Builder)>) {
 const MATCHUP_FILTERS = { role: "top", champion_low_id: "darius", champion_high_id: "garen" };
 
 describe("getVoteSummary", () => {
+  // One builder per from() call: the three count queries and the caller's own
+  // vote are built concurrently and each carries its own filters.
+  function votesTable(counts: Record<VoteChoice, number>, myChoice: VoteChoice | null, error: unknown = null) {
+    const builders: Builder[] = [];
+    const factory = () => {
+      const builder = query((filters) =>
+        "user_id" in filters
+          ? { data: myChoice === null ? null : { choice: myChoice }, error }
+          : { count: counts[filters.choice as VoteChoice], error }
+      );
+      builders.push(builder);
+      return builder;
+    };
+    return { builders, factory };
+  }
+
   it("counts each choice and reports the caller's own vote", async () => {
-    const supabase = stub({
-      matchup_votes: query({
-        data: [
-          { choice: "low", user_id: "user-1" },
-          { choice: "low", user_id: "user-2" },
-          { choice: "high", user_id: "user-3" },
-          { choice: "even", user_id: "user-4" }
-        ],
-        error: null
-      })
-    });
+    const votes = votesTable({ low: 2, high: 1, even: 1 }, "low");
+    const supabase = stub({ matchup_votes: votes.factory });
 
     expect(await getVoteSummary(supabase, KEY, "user-1")).toEqual({
       low: 2,
@@ -82,22 +90,49 @@ describe("getVoteSummary", () => {
     });
   });
 
-  it("reads only the requested matchup's votes", async () => {
-    const votes = query({ data: [], error: null });
-    await getVoteSummary(stub({ matchup_votes: votes }), KEY, null);
-    expect(votes.filters).toMatchObject(MATCHUP_FILTERS);
+  it("counts in the database rather than loading rows, which max_rows would truncate", async () => {
+    const votes = votesTable({ low: 1500, high: 0, even: 3 }, null);
+    const summary = await getVoteSummary(stub({ matchup_votes: votes.factory }), KEY, null);
+
+    expect(summary).toEqual({ low: 1500, high: 0, even: 3, total: 1503, myChoice: null });
+    expect(votes.builders).toHaveLength(3);
+    for (const builder of votes.builders) {
+      expect(builder.select).toHaveBeenCalledWith("id", { count: "exact", head: true });
+    }
+    expect(votes.builders.map((b) => b.filters)).toEqual([
+      { ...MATCHUP_FILTERS, choice: "low" },
+      { ...MATCHUP_FILTERS, choice: "high" },
+      { ...MATCHUP_FILTERS, choice: "even" }
+    ]);
+  });
+
+  it("looks up the caller's own vote on this matchup only", async () => {
+    const votes = votesTable({ low: 0, high: 0, even: 0 }, null);
+    await getVoteSummary(stub({ matchup_votes: votes.factory }), KEY, "user-1");
+
+    const own = votes.builders.filter((b) => "user_id" in b.filters);
+    expect(own.map((b) => b.filters)).toEqual([{ ...MATCHUP_FILTERS, user_id: "user-1" }]);
   });
 
   it("has no opinion for a signed-out or non-voting caller", async () => {
-    const supabase = stub({ matchup_votes: query({ data: [{ choice: "low", user_id: "user-2" }], error: null }) });
+    const votes = votesTable({ low: 1, high: 0, even: 0 }, null);
+    const supabase = stub({ matchup_votes: votes.factory });
     expect((await getVoteSummary(supabase, KEY, null)).myChoice).toBeNull();
     expect((await getVoteSummary(supabase, KEY, "user-1")).myChoice).toBeNull();
   });
 
-  it("throws when the votes query fails instead of showing 0 votes", async () => {
+  it("throws when a count query fails instead of showing 0 votes", async () => {
     const failure = { message: "boom" };
-    const supabase = stub({ matchup_votes: query({ data: null, error: failure }) });
+    const supabase = stub({ matchup_votes: votesTable({ low: 0, high: 0, even: 0 }, null, failure).factory });
     await expect(getVoteSummary(supabase, KEY, null)).rejects.toBe(failure);
+  });
+
+  it("throws when the caller's own vote cannot be read", async () => {
+    const failure = { message: "boom" };
+    const supabase = stub({
+      matchup_votes: () => query((filters) => ("user_id" in filters ? { data: null, error: failure } : { count: 0 }))
+    });
+    await expect(getVoteSummary(supabase, KEY, "user-1")).rejects.toBe(failure);
   });
 });
 
