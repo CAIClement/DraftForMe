@@ -127,14 +127,24 @@ export function PrivacyPolicy({ info }: { info: SiteInfo }) {
         <p>
           Finalité : publier les avis de la communauté sur les matchups et permettre la modération. Base légale :
           l&apos;exécution du service que vous demandez en votant, en commentant ou en réagissant (article 6.1.b du
-          RGPD) ; l&apos;intérêt légitime de l&apos;éditeur pour les signalements. Durée de conservation : jusqu&apos;à
-          la suppression de votre compte ou jusqu&apos;à ce que l&apos;éditeur retire le contenu.
+          RGPD) ; l&apos;intérêt légitime de l&apos;éditeur pour les signalements. Durée de conservation : vos votes,
+          vos réactions et vos signalements sont conservés au plus tard jusqu&apos;à la suppression de votre compte ;
+          vos commentaires, jusqu&apos;à ce que vous les supprimiez ou que l&apos;éditeur les retire, y compris après
+          la suppression de votre compte.
         </p>
         <p>
-          Vous pouvez modifier ou supprimer vos commentaires à tout moment. Si vous supprimez votre compte, vos votes,
-          vos réactions et vos signalements sont supprimés avec lui. Vos commentaires, en revanche, restent visibles :
-          c&apos;est le compte qui est supprimé, pas le contenu que d&apos;autres joueurs sont venus lire ; ils ne sont
-          plus associés à votre compte et leur auteur apparaît comme « Utilisateur supprimé ».
+          Tant que votre compte existe, vous pouvez modifier ou supprimer vos commentaires, et changer votre vote ou
+          vos réactions. Le site ne permet pas de retirer un vote ou une réaction, seulement d&apos;en changer : pour en
+          effacer un sans supprimer votre compte, demandez-le à l&apos;éditeur, comme indiqué dans la section « Vos
+          droits ».
+        </p>
+        <p>
+          Si vous supprimez votre compte, vos votes, vos réactions et vos signalements sont supprimés avec lui. Vos
+          commentaires, en revanche, restent visibles : c&apos;est le compte qui est supprimé, pas le contenu que
+          d&apos;autres joueurs sont venus lire ; ils ne sont plus associés à votre compte et leur auteur apparaît
+          comme « Utilisateur supprimé ». Si vous voulez qu&apos;ils disparaissent, supprimez-les avant de supprimer
+          votre compte : ensuite, vous ne pourrez plus le faire vous-même et devrez le demander à l&apos;éditeur, comme
+          indiqué dans la section « Vos droits ».
         </p>
       </LegalSection>
     </LegalPage>

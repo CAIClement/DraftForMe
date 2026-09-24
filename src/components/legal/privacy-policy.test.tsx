@@ -75,7 +75,32 @@ describe("PrivacyPolicy", () => {
 
     const avis = within(sectionTitled("Avis"));
     expect(avis.getByText(/article 6\.1\.b du RGPD/)).toBeInTheDocument();
-    expect(avis.getByText(/jusqu'à ce que l'éditeur retire le contenu/)).toBeInTheDocument();
+  });
+
+  it("gives votes, reactions and reports a different retention from comments", () => {
+    render(<PrivacyPolicy info={noContact} />);
+    const avis = within(sectionTitled("Avis"));
+    expect(
+      avis.getByText(/vos votes, vos réactions et vos signalements sont conservés au plus tard jusqu'à la suppression de votre compte/)
+    ).toBeInTheDocument();
+    expect(
+      avis.getByText(
+        /vos commentaires, jusqu'à ce que vous les supprimiez ou que l'éditeur les retire, y compris après la suppression de votre compte/
+      )
+    ).toBeInTheDocument();
+    expect(avis.queryByText(/jusqu'à la suppression de votre compte ou jusqu'à ce que/)).not.toBeInTheDocument();
+  });
+
+  it("limits self-service edits to while the account exists and points to the rights section otherwise", () => {
+    render(<PrivacyPolicy info={noContact} />);
+    const avis = within(sectionTitled("Avis"));
+    expect(avis.getByText(/Tant que votre compte existe, vous pouvez modifier ou supprimer vos commentaires/)).toBeInTheDocument();
+    expect(avis.getByText(/ne permet pas de retirer un vote ou une réaction, seulement d'en changer/)).toBeInTheDocument();
+    expect(avis.getByText(/pour en effacer un sans supprimer votre compte, demandez-le à l'éditeur/)).toBeInTheDocument();
+    expect(avis.getByText(/supprimez-les avant de supprimer votre compte/)).toBeInTheDocument();
+    expect(avis.getByText(/vous ne pourrez plus le faire vous-même/)).toBeInTheDocument();
+    expect(avis.getAllByText(/à l'éditeur, comme indiqué dans la section « Vos droits »/)).toHaveLength(2);
+    expect(avis.queryByText(/à tout moment/)).not.toBeInTheDocument();
   });
 
   it("says the nickname is shown publicly next to comments", () => {
@@ -95,7 +120,6 @@ describe("PrivacyPolicy", () => {
     expect(screen.getByText(/vos votes, vos réactions et vos signalements sont supprimés avec lui/)).toBeInTheDocument();
     expect(screen.getByText(/supprimé, pas le contenu/)).toBeInTheDocument();
     expect(screen.getByText(/« Utilisateur supprimé »/)).toBeInTheDocument();
-    expect(screen.getByText(/modifier ou supprimer vos commentaires à tout moment/)).toBeInTheDocument();
   });
 
   it("describes both technical flows with their processor's policy", () => {

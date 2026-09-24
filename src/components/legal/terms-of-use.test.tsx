@@ -40,7 +40,15 @@ describe("TermsOfUse", () => {
     expect(screen.getByText(/ne sont pas une garantie/)).toBeInTheDocument();
     expect(screen.getByText(/n'influencent pas les recommandations/)).toBeInTheDocument();
     expect(screen.getByText(/retirer un commentaire ou supprimer un compte/)).toBeInTheDocument();
-    expect(screen.getByText(/ils sont anonymisés/)).toBeInTheDocument();
+    expect(screen.getByText(/ils ne sont plus associés à votre compte/)).toBeInTheDocument();
+    expect(screen.getByText(/« Utilisateur supprimé »/)).toBeInTheDocument();
+    expect(screen.queryByText(/anonymisés/)).not.toBeInTheDocument();
+    expect(screen.getByText(/Un signalement est enregistré et seul l'éditeur peut le lire/)).toBeInTheDocument();
+    expect(screen.queryByText(/transmis à l'éditeur/)).not.toBeInTheDocument();
+    expect(screen.getByText(/Tant que votre compte existe, vous pouvez modifier ou supprimer vos commentaires/)).toBeInTheDocument();
+    expect(screen.getByText(/changer votre vote ou vos réactions, mais pas les retirer depuis le site/)).toBeInTheDocument();
+    const reviews = screen.getByRole("heading", { level: 2, name: "Avis et commentaires" }).closest("section");
+    expect(reviews?.textContent).not.toMatch(/à tout moment/);
     expect(screen.getByRole("link", { name: "politique de confidentialité" })).toHaveAttribute(
       "href",
       "/confidentialite"
