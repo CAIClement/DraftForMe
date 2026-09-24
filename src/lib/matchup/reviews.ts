@@ -35,12 +35,14 @@ function whereMatchup<T extends { eq: (...args: [string, string]) => T }>(query:
   return query.eq("role", key.role).eq("champion_low_id", key.championLowId).eq("champion_high_id", key.championHighId);
 }
 
+// Throws on a read error, like getComments below: "0 votes" would be false.
 export async function getVoteSummary(
   supabase: SupabaseServerClient,
   key: MatchupKey,
   userId: string | null
 ): Promise<VoteSummary> {
-  const { data } = await whereMatchup(supabase.from("matchup_votes").select("choice, user_id"), key);
+  const { data, error } = await whereMatchup(supabase.from("matchup_votes").select("choice, user_id"), key);
+  if (error) throw error;
   const rows = (data ?? []) as { choice: VoteChoice; user_id: string }[];
 
   const summary = { low: 0, high: 0, even: 0, total: 0, myChoice: null as VoteChoice | null };

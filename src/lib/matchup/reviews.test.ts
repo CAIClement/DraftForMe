@@ -93,6 +93,12 @@ describe("getVoteSummary", () => {
     expect((await getVoteSummary(supabase, KEY, null)).myChoice).toBeNull();
     expect((await getVoteSummary(supabase, KEY, "user-1")).myChoice).toBeNull();
   });
+
+  it("throws when the votes query fails instead of showing 0 votes", async () => {
+    const failure = { message: "boom" };
+    const supabase = stub({ matchup_votes: query({ data: null, error: failure }) });
+    await expect(getVoteSummary(supabase, KEY, null)).rejects.toBe(failure);
+  });
 });
 
 describe("castVote", () => {
