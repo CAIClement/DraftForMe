@@ -93,6 +93,11 @@ describe("Verdict's community link", () => {
     expect(screen.queryByRole("link", { name: "Avis de la communauté" })).not.toBeInTheDocument();
   });
 
+  it("omits the link when the enemy champion is the same as the recommended one", () => {
+    render(<Verdict recommendation={build()} role="mid" enemyChampionId="galio" />);
+    expect(screen.queryByRole("link", { name: "Avis de la communauté" })).not.toBeInTheDocument();
+  });
+
   it("omits the link when the role is not known", () => {
     render(<Verdict recommendation={build()} enemyChampionId="zed" />);
     expect(screen.queryByRole("link", { name: "Avis de la communauté" })).not.toBeInTheDocument();
