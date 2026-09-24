@@ -59,4 +59,28 @@ describe("ReportButton", () => {
     expect(screen.queryByRole("radio", { name: /indésirable/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Signaler" })).not.toBeInTheDocument();
   });
+
+  it("does not show a stale error after cancelling and reopening", async () => {
+    reportComment.mockResolvedValue({ error: "Vous avez déjà signalé ce commentaire." });
+    render(<ReportButton role="top" championLowId="darius" championHighId="garen" commentId="c1" />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Signaler" }));
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Envoyer le signalement" }));
+    });
+    expect(await screen.findByRole("alert")).toHaveTextContent("Vous avez déjà signalé ce commentaire.");
+
+    fireEvent.click(screen.getByRole("button", { name: "Annuler" }));
+    fireEvent.click(screen.getByRole("button", { name: "Signaler" }));
+
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("returns focus to the Signaler button when the form is cancelled", () => {
+    render(<ReportButton role="top" championLowId="darius" championHighId="garen" commentId="c1" />);
+    fireEvent.click(screen.getByRole("button", { name: "Signaler" }));
+    fireEvent.click(screen.getByRole("button", { name: "Annuler" }));
+
+    expect(screen.getByRole("button", { name: "Signaler" })).toHaveFocus();
+  });
 });

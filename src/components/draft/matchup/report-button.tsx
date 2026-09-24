@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { reportComment } from "@/app/duel/[role]/[pair]/actions";
 import type { FormState } from "@/app/duel/[role]/[pair]/actions";
 import type { ReportReason } from "@/lib/matchup/reviews";
@@ -14,48 +14,27 @@ const REASONS: { value: ReportReason; label: string }[] = [
   { value: "autre", label: "Autre" }
 ];
 
-export function ReportButton({
+type ReportFields = { role: string; championLowId: string; championHighId: string; commentId: string };
+
+// Owns the action's state, so a fresh `key` from the parent (below) remounts
+// it -- and therefore resets state back to INITIAL -- every time the form
+// reopens. Without that, cancelling after a failed report and reopening
+// would show the previous, now-stale error again.
+function ReportForm({
   role,
   championLowId,
   championHighId,
-  commentId
-}: {
-  role: string;
-  championLowId: string;
-  championHighId: string;
-  commentId: string;
-}) {
-  const [open, setOpen] = useState(false);
-  const [sent, setSent] = useState(false);
+  commentId,
+  onCancel,
+  onSent
+}: ReportFields & { onCancel: () => void; onSent: () => void }) {
   const [state, formAction, pending] = useActionState(reportComment, INITIAL);
 
-  // Same INITIAL-identity trick as comment-list.tsx's EditForm: only a
-  // resolved submission (not the initial render) can flip this to true.
   useEffect(() => {
     if (state !== INITIAL && !state.error) {
-      setSent(true);
+      onSent();
     }
-  }, [state]);
-
-  if (sent) {
-    return (
-      <p role="status" className="text-xs text-ink-faint">
-        Signalement envoyé.
-      </p>
-    );
-  }
-
-  if (!open) {
-    return (
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="text-xs text-ink-faint transition-colors duration-200 hover:text-danger"
-      >
-        Signaler
-      </button>
-    );
-  }
+  }, [state, onSent]);
 
   return (
     <form action={formAction} className="mt-2 space-y-2 rounded-lg border border-rule bg-surface-sunk p-2 text-xs">
@@ -87,10 +66,83 @@ export function ReportButton({
         <button type="submit" disabled={pending} className="text-accent hover:text-accent-pale">
           Envoyer le signalement
         </button>
-        <button type="button" onClick={() => setOpen(false)} className="text-ink-faint">
+        <button type="button" onClick={onCancel} className="text-ink-faint">
           Annuler
         </button>
       </div>
     </form>
+  );
+}
+
+export function ReportButton({
+  role,
+  championLowId,
+  championHighId,
+  commentId
+}: {
+  role: string;
+  championLowId: string;
+  championHighId: string;
+  commentId: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const [sent, setSent] = useState(false);
+  // Bumped every time the form opens, so <ReportForm key={openCount}> is a
+  // fresh instance each time -- see ReportForm's comment.
+  const [openCount, setOpenCount] = useState(0);
+  const signalerRef = useRef<HTMLButtonElement>(null);
+  // The "Signaler" button doesn't exist in the DOM while the form is open, so
+  // focusing it has to happen after the close re-render, not inside the
+  // click handler that triggers it. Guarded by "was it open before" so this
+  // never steals focus on the very first render (open starts false too).
+  const wasOpenRef = useRef(false);
+
+  useEffect(() => {
+    if (wasOpenRef.current && !open) {
+      signalerRef.current?.focus();
+    }
+    wasOpenRef.current = open;
+  }, [open]);
+
+  function openForm() {
+    setOpenCount((count) => count + 1);
+    setOpen(true);
+  }
+
+  function closeForm() {
+    setOpen(false);
+  }
+
+  if (sent) {
+    return (
+      <p role="status" className="text-xs text-ink-faint">
+        Signalement envoyé.
+      </p>
+    );
+  }
+
+  if (!open) {
+    return (
+      <button
+        ref={signalerRef}
+        type="button"
+        onClick={openForm}
+        className="text-xs text-ink-faint transition-colors duration-200 hover:text-danger"
+      >
+        Signaler
+      </button>
+    );
+  }
+
+  return (
+    <ReportForm
+      key={openCount}
+      role={role}
+      championLowId={championLowId}
+      championHighId={championHighId}
+      commentId={commentId}
+      onCancel={closeForm}
+      onSent={() => setSent(true)}
+    />
   );
 }
