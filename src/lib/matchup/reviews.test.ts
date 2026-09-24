@@ -291,7 +291,7 @@ describe("getComments", () => {
   });
 
   it("stops after the comments query when the matchup has no comments", async () => {
-    const from = vi.fn((_table: string) => query({ data: [], error: null }));
+    const from = vi.fn<(table: string) => Builder>(() => query({ data: [], error: null }));
 
     expect(await getComments({ from } as never, KEY, "user-1", { limit: 20, offset: 0 })).toEqual({
       comments: [],
