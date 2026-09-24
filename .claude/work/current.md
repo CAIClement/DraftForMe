@@ -1,5 +1,16 @@
 # Current work
 
+## feat/home-animations
+Started: 2026-09-24
+Spec: docs/superpowers/specs/2026-09-24-draftforme-home-animations-design.md
+Plan: docs/superpowers/plans/2026-09-24-draftforme-home-animations.md
+
+- Done: plan Tasks 1-7 (subagent-driven, then a whole-branch review). `npm run ci` green (367 tests). Draft components, engine, seed, ml untouched.
+- Review fix: `.sheen` no longer sets `overflow: hidden`, which clipped the CTA button's focus ring.
+- Browser check on `npm run dev`: hero animates, reveals play once on scroll, top score counts to its real value (86), bars fill; mobile 375px has no horizontal scroll and 4 diamonds; `/draft` bars unaffected; reduced-motion CSS rule present. Reduced motion itself not emulable in the preview pane: owner can confirm in Chrome DevTools (Rendering).
+- Known, accepted: `CountUp` sets 0 on mount, but its card is hidden by `Reveal` at that point, so no visible flicker.
+- Next: ship (merge or PR), owner's choice. Nothing pushed.
+
 ## feat/matchup-reviews
 Started: 2026-09-24
 Spec: docs/superpowers/specs/2026-09-24-draftforme-matchup-reviews-design.md
