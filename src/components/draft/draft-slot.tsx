@@ -42,7 +42,7 @@ export function DraftSlot({
         type="button"
         onClick={() => onOpen(side, role)}
         aria-label={`${lane}, vide`}
-        className={`flex items-center gap-2.5 rounded-lg border border-dashed border-rule bg-surface-sunk p-1.5 text-left ${edge}`}
+        className={`flex items-center gap-2.5 rounded-lg border border-dashed border-rule bg-surface-sunk p-1.5 text-left transition-colors duration-200 hover:bg-surface ${edge}`}
       >
         <span
           aria-hidden="true"
@@ -63,7 +63,7 @@ export function DraftSlot({
       type="button"
       onClick={() => onClear(side, role)}
       aria-label={`Retirer ${champion.name}`}
-      className={`flex items-center gap-2.5 rounded-lg border border-rule bg-surface p-1.5 text-left ${edge}`}
+      className={`flex items-center gap-2.5 rounded-lg border border-rule bg-surface p-1.5 text-left transition-colors duration-200 hover:bg-surface-sunk ${edge}`}
     >
       <ChampionAvatar name={champion.name} imageUrl={champion.imageUrl} size={34} />
       <span className="min-w-0">
