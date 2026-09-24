@@ -1,6 +1,7 @@
 import type { Metadata, Route } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { cache } from "react";
 import { castVote } from "./actions";
 import { CommentForm } from "@/components/draft/matchup/comment-form";
 import { CommentList } from "@/components/draft/matchup/comment-list";
@@ -18,12 +19,49 @@ import { createClient } from "@/lib/supabase/server";
 const GENERIC_ERROR = "Une erreur est survenue. Réessayez plus tard.";
 const LINK = "text-sm text-accent underline underline-offset-2";
 
-export const metadata: Metadata = {
-  title: "Avis sur ce matchup — DraftForMe",
-  description: "Votez pour le gagnant de ce duel de lane et lisez l'avis des autres joueurs."
-};
+const DESCRIPTION = "Votez pour le gagnant de ce duel de lane et lisez l'avis des autres joueurs.";
+const FALLBACK_METADATA: Metadata = { title: "Avis sur ce matchup — DraftForMe", description: DESCRIPTION };
 
 type ChampionRow = { id: string; name: string; image_url: string };
+type RouteParams = Promise<{ role: string; pair: string }>;
+
+// Shared by generateMetadata and the page. Unknown role or non-canonical
+// pair gives null.
+const resolveKey = (role: string, pair: string): MatchupKey | null => {
+  if (!isRole(role)) return null;
+  const parsedPair = parsePairSegment(pair);
+  return parsedPair ? { role, ...parsedPair } : null;
+};
+
+// Wrapped in React's cache so generateMetadata and the page share one query.
+const loadChampions = cache(async (championLowId: string, championHighId: string) => {
+  const supabase = await createClient();
+  return supabase.from("champions").select("id, name, image_url").in("id", [championLowId, championHighId]);
+});
+
+// Never throws: anything that cannot be resolved falls back to the generic
+// title, and the page itself decides between 404 and the error message.
+export async function generateMetadata({ params }: { params: RouteParams }): Promise<Metadata> {
+  try {
+    const { role, pair } = await params;
+    const key = resolveKey(role, pair);
+    if (!key) return FALLBACK_METADATA;
+
+    const { data, error } = await loadChampions(key.championLowId, key.championHighId);
+    if (error) return FALLBACK_METADATA;
+    const rows = (data ?? []) as ChampionRow[];
+    const low = rows.find((c) => c.id === key.championLowId);
+    const high = rows.find((c) => c.id === key.championHighId);
+    if (!low || !high) return FALLBACK_METADATA;
+
+    return {
+      title: `${low.name} vs ${high.name} (${ROLE_LABELS[key.role]}) — avis de la communauté`,
+      description: DESCRIPTION
+    };
+  } catch {
+    return FALLBACK_METADATA;
+  }
+}
 
 function ErrorMessage() {
   return (
@@ -37,23 +75,20 @@ export default async function MatchupPage({
   params,
   searchParams
 }: {
-  params: Promise<{ role: string; pair: string }>;
+  params: RouteParams;
   searchParams: Promise<{ offset?: string | string[] }>;
 }) {
   const { role, pair } = await params;
   const { offset: offsetParam } = await searchParams;
 
-  if (!isRole(role)) notFound();
-  const parsedPair = parsePairSegment(pair);
-  if (!parsedPair) notFound();
-
-  const key: MatchupKey = { role, ...parsedPair };
-  const path = `/duel/${role}/${pairSegment(key)}`;
+  const key = resolveKey(role, pair);
+  if (!key) notFound();
+  const path = `/duel/${key.role}/${pairSegment(key)}`;
   const offset = parseOffset(offsetParam);
 
   const supabase = await createClient();
   const [championsResult, user] = await Promise.all([
-    supabase.from("champions").select("id, name, image_url").in("id", [key.championLowId, key.championHighId]),
+    loadChampions(key.championLowId, key.championHighId),
     getCurrentUser()
   ]);
 
@@ -92,7 +127,7 @@ export default async function MatchupPage({
     <>
       <SiteHeader user={user} />
       <main className="mx-auto max-w-3xl px-4 py-12 sm:px-6">
-        <p className="mb-2 text-sm text-ink-muted">{ROLE_LABELS[role]}</p>
+        <p className="mb-2 text-sm text-ink-muted">{ROLE_LABELS[key.role]}</p>
         <div className="mb-6 flex flex-wrap items-center gap-3">
           <ChampionAvatar name={championLow.name} imageUrl={championLow.image_url} />
           <h1 className="text-2xl font-semibold text-ink">
@@ -105,7 +140,7 @@ export default async function MatchupPage({
           <VotePanel
             championLow={{ id: championLow.id, name: championLow.name }}
             championHigh={{ id: championHigh.id, name: championHigh.name }}
-            role={role}
+            role={key.role}
             summary={summaryResult.value}
             action={castVote}
           />
@@ -116,10 +151,10 @@ export default async function MatchupPage({
         <section className="mt-10 space-y-4">
           <h2 className="text-lg font-semibold text-ink">Discussion</h2>
           {user ? (
-            <CommentForm role={role} championLowId={championLow.id} championHighId={championHigh.id} />
+            <CommentForm role={key.role} championLowId={championLow.id} championHighId={championHigh.id} />
           ) : (
             <p className="text-sm text-ink-muted">
-              <Link href={signInHref} className="text-accent underline underline-offset-2">
+              <Link href={signInHref} className={LINK}>
                 Connectez-vous
               </Link>{" "}
               pour donner votre avis.

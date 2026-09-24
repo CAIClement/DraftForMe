@@ -110,7 +110,8 @@ type PublicProfileRow = { user_id: string; display_name: string };
 
 // Reads throw on a query error (same as load-example.ts): an empty discussion,
 // zero scores or everyone shown as a deleted user would all be false, so the
-// page's error boundary shows its French error instead.
+// matchup page catches each read on its own and shows its French error in
+// place of that section only.
 export async function getComments(
   supabase: SupabaseServerClient,
   key: MatchupKey,
