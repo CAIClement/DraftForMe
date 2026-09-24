@@ -13,30 +13,51 @@ import type { MatchupKey } from "./key";
 
 const KEY: MatchupKey = { role: "top", championLowId: "darius", championHighId: "garen" };
 
+type QueryResult = { data?: unknown; error?: unknown; count?: number | null };
+type Filters = Record<string, unknown>;
+type Builder = Record<string, unknown> & { filters: Filters; eq: ReturnType<typeof vi.fn> };
+
 // A minimal thenable query builder: every chained call returns itself, and
 // awaiting it resolves to the fixture. Mirrors the pattern already used in
-// src/app/api/recommend/route.test.ts's makeQuery.
-function query(result: { data: unknown; error: unknown }) {
-  const builder: Record<string, unknown> = {};
+// src/app/api/recommend/route.test.ts's makeQuery. `.eq()` calls are recorded
+// in `filters`, and the fixture may be a function of them, so one table can
+// answer several differently-filtered queries (e.g. one count per choice).
+function query(result: QueryResult | ((filters: Filters) => QueryResult)) {
+  const filters: Filters = {};
+  const builder = { filters } as Builder;
   const chain = () => builder;
+  const resolved = () => ({ data: null, error: null, count: null, ...(typeof result === "function" ? result(filters) : result) });
   Object.assign(builder, {
-    select: chain,
-    eq: chain,
-    in: chain,
+    select: vi.fn(chain),
+    eq: vi.fn((column: string, value: unknown) => {
+      filters[column] = value;
+      return builder;
+    }),
+    in: vi.fn(chain),
     order: chain,
     upsert: vi.fn(chain),
     insert: vi.fn(chain),
     update: vi.fn(chain),
     delete: vi.fn(chain),
-    maybeSingle: () => Promise.resolve(result),
-    then: (resolve: (value: typeof result) => void) => resolve(result)
+    maybeSingle: () => Promise.resolve(resolved()),
+    then: (resolve: (value: ReturnType<typeof resolved>) => void) => resolve(resolved())
   });
   return builder;
 }
 
-function stub(byTable: Record<string, ReturnType<typeof query>>) {
-  return { from: (table: string) => byTable[table] ?? query({ data: null, error: null }) } as never;
+// A table maps to either one shared builder or a factory called on every
+// from(), for queries built concurrently that must not share their filters.
+function stub(byTable: Record<string, Builder | (() => Builder)>) {
+  return {
+    from: (table: string) => {
+      const entry = byTable[table];
+      if (entry === undefined) return query({ data: null, error: null });
+      return typeof entry === "function" ? entry() : entry;
+    }
+  } as never;
 }
+
+const MATCHUP_FILTERS = { role: "top", champion_low_id: "darius", champion_high_id: "garen" };
 
 describe("getVoteSummary", () => {
   it("counts each choice and reports the caller's own vote", async () => {
@@ -59,6 +80,12 @@ describe("getVoteSummary", () => {
       total: 4,
       myChoice: "low"
     });
+  });
+
+  it("reads only the requested matchup's votes", async () => {
+    const votes = query({ data: [], error: null });
+    await getVoteSummary(stub({ matchup_votes: votes }), KEY, null);
+    expect(votes.filters).toMatchObject(MATCHUP_FILTERS);
   });
 
   it("has no opinion for a signed-out or non-voting caller", async () => {
@@ -183,6 +210,14 @@ describe("getComments", () => {
     expect(from).not.toHaveBeenCalledWith("public_profiles");
   });
 
+  it("reads only the requested matchup's comments", async () => {
+    const comments = query({ data: [comment({})], error: null });
+    const supabase = stub({ matchup_comments: comments, matchup_comment_votes: query({ data: [], error: null }) });
+
+    await getComments(supabase, KEY, null, { limit: 20, offset: 0 });
+    expect(comments.filters).toEqual(MATCHUP_FILTERS);
+  });
+
   it("throws when the comments query fails instead of showing an empty discussion", async () => {
     const failure = { message: "boom" };
     const supabase = stub({ matchup_comments: query({ data: null, error: failure }) });
@@ -255,6 +290,16 @@ describe("editComment / deleteComment", () => {
       ok: false,
       error: "Une erreur est survenue. Réessayez plus tard."
     });
+  });
+
+  it("scopes the edit and the delete to the caller's own row", async () => {
+    const edited = query({ data: { id: "c1" }, error: null });
+    await editComment(stub({ matchup_comments: edited }), "user-1", "c1", "New text.");
+    expect(edited.filters).toEqual({ id: "c1", user_id: "user-1" });
+
+    const deleted = query({ data: { id: "c1" }, error: null });
+    await deleteComment(stub({ matchup_comments: deleted }), "user-1", "c1");
+    expect(deleted.filters).toEqual({ id: "c1", user_id: "user-1" });
   });
 
   it("succeeds when the row belongs to the caller", async () => {
