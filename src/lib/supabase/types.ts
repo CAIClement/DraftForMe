@@ -199,6 +199,80 @@ export type Database = {
           created_at: string;
         }>
       >;
+      matchup_votes: TableDefinition<
+        {
+          id: string;
+          role: string;
+          champion_low_id: string;
+          champion_high_id: string;
+          user_id: string;
+          choice: string;
+          created_at: string;
+          updated_at: string;
+        },
+        {
+          id?: string;
+          role: string;
+          champion_low_id: string;
+          champion_high_id: string;
+          user_id: string;
+          choice: string;
+          created_at?: string;
+          updated_at?: string;
+        },
+        Partial<{
+          id: string;
+          role: string;
+          champion_low_id: string;
+          champion_high_id: string;
+          user_id: string;
+          choice: string;
+          created_at: string;
+          updated_at: string;
+        }>
+      >;
+      matchup_comments: TableDefinition<
+        {
+          id: string;
+          role: string;
+          champion_low_id: string;
+          champion_high_id: string;
+          user_id: string | null;
+          body: string;
+          created_at: string;
+          updated_at: string;
+        },
+        {
+          id?: string;
+          role: string;
+          champion_low_id: string;
+          champion_high_id: string;
+          user_id: string;
+          body: string;
+          created_at?: string;
+          updated_at?: string;
+        },
+        Partial<{
+          id: string;
+          role: string;
+          champion_low_id: string;
+          champion_high_id: string;
+          user_id: string | null;
+          body: string;
+          created_at: string;
+          updated_at: string;
+        }>
+      >;
+      matchup_comment_votes: TableDefinition<
+        { id: string; comment_id: string; user_id: string; value: string; created_at: string },
+        { id?: string; comment_id: string; user_id: string; value: string; created_at?: string },
+        Partial<{ id: string; comment_id: string; user_id: string; value: string; created_at: string }>
+      >;
+      matchup_comment_reports: TableDefinition<
+        { id: string; comment_id: string; reporter_user_id: string; reason: string; created_at: string },
+        { id?: string; comment_id: string; reporter_user_id: string; reason: string; created_at?: string },
+        Partial<{ id: string; comment_id: string; reporter_user_id: string; reason: string; created_at: string }>
+      >;
     };
     Views: Record<string, never>;
     Functions: {
