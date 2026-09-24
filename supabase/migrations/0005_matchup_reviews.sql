@@ -90,7 +90,8 @@ create trigger matchup_comments_rate_limit
 -- is locked so a comment cannot be moved to another matchup; user_id is
 -- locked except for becoming null, because the on delete set null foreign key
 -- anonymizes a deleted account's comments through an UPDATE that must pass.
--- updated_at is maintained here so the application never has to set it.
+-- updated_at is maintained here (body edits only) so the application never
+-- has to set it.
 create function public.lock_matchup_comment_columns()
 returns trigger
 language plpgsql
@@ -104,7 +105,13 @@ begin
   if new.user_id is not null then
     new.user_id := old.user_id;
   end if;
-  new.updated_at := now();
+  -- updated_at > created_at shows a "modifié" marker, so only a real body
+  -- edit bumps it: anonymization on account deletion must not look like one.
+  if new.body is distinct from old.body then
+    new.updated_at := now();
+  else
+    new.updated_at := old.updated_at;
+  end if;
   return new;
 end;
 $$;
