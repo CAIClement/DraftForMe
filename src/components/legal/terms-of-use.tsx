@@ -15,9 +15,9 @@ export function TermsOfUse({ info }: { info: SiteInfo }) {
 
       <LegalSection title="Accès au service">
         <p>
-          Le site est gratuit. Ses outils sont accessibles sans inscription ; un compte n&apos;est nécessaire que pour
-          les fonctions qui le précisent. L&apos;éditeur peut le modifier, le suspendre ou l&apos;arrêter à tout
-          moment, sans préavis ; aucune disponibilité n&apos;est garantie.
+          Le site est gratuit. Ses outils sont accessibles sans inscription ; un compte n&apos;est nécessaire pour
+          aucune d&apos;entre elles aujourd&apos;hui. L&apos;éditeur peut modifier, suspendre ou arrêter le site à
+          tout moment, sans préavis ; aucune disponibilité n&apos;est garantie.
         </p>
       </LegalSection>
 

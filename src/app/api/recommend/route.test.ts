@@ -139,7 +139,7 @@ describe("POST /api/recommend", () => {
     vi.mocked(createClient).mockResolvedValue(supabaseStub as never);
 
     const { POST } = await import("./route");
-    await POST(
+    const response = await POST(
       new Request("http://localhost/api/recommend", {
         method: "POST",
         body: JSON.stringify({
@@ -153,6 +153,8 @@ describe("POST /api/recommend", () => {
       })
     );
 
+    expect(response.status).toBe(200);
+    expect(recommendChampionsMock).toHaveBeenCalled();
     expect(tablesTouched).not.toContain("recommendation_sessions");
   });
 });

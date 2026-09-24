@@ -14,9 +14,10 @@ export default async function NicknamePage({ searchParams }: { searchParams: Pro
   const user = await getCurrentUser();
 
   if (!user) {
-    redirect(
-      `/connexion?next=${encodeURIComponent(`/compte/pseudo?next=${encodeURIComponent(safeNext)}`)}` as Route
-    );
+    const back = safeNext.startsWith("/compte/pseudo")
+      ? safeNext
+      : `/compte/pseudo?next=${encodeURIComponent(safeNext)}`;
+    redirect(`/connexion?next=${encodeURIComponent(back)}` as Route);
   }
 
   return (

@@ -44,7 +44,7 @@ export function SiteHeader({
             })}
           </nav>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex min-w-0 flex-wrap items-center justify-end gap-4">
           {context && <span className="hidden text-xs text-ink-faint md:inline">{context}</span>}
           {current === "home" && (
             <span className="hidden sm:inline-flex">

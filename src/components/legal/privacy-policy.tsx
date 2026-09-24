@@ -59,7 +59,7 @@ export function PrivacyPolicy({ info }: { info: SiteInfo }) {
           pseudo que vous choisissez. Seul ce pseudo est affiché sur le site.
         </p>
         <p>
-          Finalité : vous permettre de vous connecter et d&apos;utiliser les fonctions réservées aux comptes. Base
+          Finalité : gérer votre compte et votre pseudo. Base
           légale : l&apos;exécution du service que vous demandez en créant un compte (article 6.1.b du RGPD). Durée
           de conservation : jusqu&apos;à la suppression de votre compte, que vous pouvez faire à tout moment depuis la
           page{" "}
@@ -104,10 +104,11 @@ export function PrivacyPolicy({ info }: { info: SiteInfo }) {
 
       <LegalSection title="Cookies">
         <p>
-          {info.siteName} ne dépose aucun cookie de mesure d&apos;audience ni publicitaire. Si vous vous connectez,
-          des cookies de session sont déposés pour vous garder connecté : ils sont strictement nécessaires au service
-          que vous demandez, donc exemptés de consentement, et sont supprimés à la déconnexion. Aucun consentement ne
-          vous est donc demandé.
+          {info.siteName} ne dépose aucun cookie de mesure d&apos;audience ni publicitaire. Si vous lancez une
+          connexion, des cookies techniques sont déposés pour la mener à bien puis vous garder connecté : ils sont
+          strictement nécessaires au service que vous demandez et exemptés de consentement. Ils sont supprimés à la
+          déconnexion ou, si la connexion est abandonnée, à leur expiration. Aucun consentement ne vous est donc
+          demandé.
         </p>
       </LegalSection>
 

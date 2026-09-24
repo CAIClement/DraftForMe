@@ -23,7 +23,7 @@ describe("PrivacyPolicy", () => {
 
   it("says only session cookies are set, and only when signing in", () => {
     render(<PrivacyPolicy info={noContact} />);
-    expect(screen.getByText(/cookies de session/)).toBeInTheDocument();
+    expect(screen.getByText(/cookies techniques/)).toBeInTheDocument();
     expect(screen.getByText(/exemptés de consentement/)).toBeInTheDocument();
     expect(screen.queryByText(/ne propose ni compte/)).not.toBeInTheDocument();
   });

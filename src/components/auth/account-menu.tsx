@@ -20,7 +20,7 @@ export function AccountMenu({ user }: { user: CurrentUser | null }) {
   }
 
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex flex-wrap items-center justify-end gap-1">
       {user.nickname ? (
         <span className="px-3 py-2 text-sm font-medium text-ink">{user.nickname}</span>
       ) : (

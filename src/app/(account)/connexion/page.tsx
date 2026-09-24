@@ -20,7 +20,7 @@ export default async function SignInPage({
   const { next, erreur } = await searchParams;
   const safeNext = safeNextPath(next);
 
-  if (await getCurrentUser()) redirect(safeNext as Route);
+  if (erreur !== "deconnexion" && (await getCurrentUser())) redirect(safeNext as Route);
 
   const loginHref = (provider: "discord" | "google") =>
     `/auth/login?provider=${provider}&next=${encodeURIComponent(safeNext)}`;
