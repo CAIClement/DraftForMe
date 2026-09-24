@@ -10,6 +10,7 @@ describe("TermsOfUse", () => {
     for (const title of [
       "Objet",
       "Accès au service",
+      "Compte",
       "Nature des recommandations",
       "Propriété intellectuelle",
       "Responsabilité",
@@ -22,6 +23,13 @@ describe("TermsOfUse", () => {
   it("says recommendations are decision support, not a guarantee", () => {
     render(<TermsOfUse info={SITE_INFO} />);
     expect(screen.getByText(/aide à la décision/)).toBeInTheDocument();
+  });
+
+  it("sets the account rules", () => {
+    render(<TermsOfUse info={SITE_INFO} />);
+    expect(screen.getByText(/au moins 13 ans/)).toBeInTheDocument();
+    expect(screen.getByText(/usurper l'identité/)).toBeInTheDocument();
+    expect(screen.getByText(/renommer ou supprimer un compte/)).toBeInTheDocument();
   });
 
   it("links to the legal notice", () => {

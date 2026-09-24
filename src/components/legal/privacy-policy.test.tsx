@@ -12,6 +12,7 @@ describe("PrivacyPolicy", () => {
     for (const title of [
       "Responsable du traitement",
       "Données traitées",
+      "Compte",
       "Vos droits",
       "Cookies",
       "Évolutions à venir"
@@ -20,10 +21,36 @@ describe("PrivacyPolicy", () => {
     }
   });
 
-  it("states that no cookie is set", () => {
+  it("says only session cookies are set, and only when signing in", () => {
     render(<PrivacyPolicy info={noContact} />);
-    // Said twice on purpose: in "Données traitées" and in "Cookies".
-    expect(screen.getAllByText(/aucun cookie/i)).toHaveLength(2);
+    expect(screen.getByText(/cookies de session/)).toBeInTheDocument();
+    expect(screen.getByText(/exemptés de consentement/)).toBeInTheDocument();
+    expect(screen.queryByText(/ne propose ni compte/)).not.toBeInTheDocument();
+  });
+
+  it("describes the account data, its basis, its retention and the processors", () => {
+    render(<PrivacyPolicy info={noContact} />);
+
+    expect(screen.getByText(/article 6\.1\.b du RGPD/)).toBeInTheDocument();
+    expect(screen.getByText(/jusqu'à la suppression de votre compte/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /politique de confidentialité de Discord/ })).toHaveAttribute(
+      "href",
+      "https://discord.com/privacy"
+    );
+    expect(screen.getByRole("link", { name: /politique de confidentialité de Google/ })).toHaveAttribute(
+      "href",
+      "https://policies.google.com/privacy?hl=fr"
+    );
+    expect(screen.getByRole("link", { name: /politique de confidentialité de Supabase/ })).toHaveAttribute(
+      "href",
+      "https://supabase.com/privacy"
+    );
+    expect(screen.getAllByRole("link", { name: "Mon compte" })[0]).toHaveAttribute("href", "/compte");
+  });
+
+  it("no longer announces accounts as upcoming", () => {
+    render(<PrivacyPolicy info={noContact} />);
+    expect(screen.queryByText(/création de comptes/)).not.toBeInTheDocument();
   });
 
   it("describes both technical flows with their processor's policy", () => {

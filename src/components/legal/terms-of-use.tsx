@@ -15,8 +15,22 @@ export function TermsOfUse({ info }: { info: SiteInfo }) {
 
       <LegalSection title="Accès au service">
         <p>
-          Le site est gratuit et accessible sans inscription. L&apos;éditeur peut le modifier, le suspendre ou
-          l&apos;arrêter à tout moment, sans préavis ; aucune disponibilité n&apos;est garantie.
+          Le site est gratuit. Ses outils sont accessibles sans inscription ; un compte n&apos;est nécessaire que pour
+          les fonctions qui le précisent. L&apos;éditeur peut le modifier, le suspendre ou l&apos;arrêter à tout
+          moment, sans préavis ; aucune disponibilité n&apos;est garantie.
+        </p>
+      </LegalSection>
+
+      <LegalSection title="Compte">
+        <p>
+          Vous pouvez créer un compte avec Discord ou Google si vous avez au moins 13 ans. Vous choisissez un pseudo
+          public : il ne doit ni usurper l&apos;identité d&apos;une autre personne, ni être injurieux, haineux ou
+          contraire à la loi. L&apos;éditeur peut renommer ou supprimer un compte qui enfreint ces règles. Vous pouvez
+          supprimer votre compte à tout moment depuis la page{" "}
+          <Link href="/compte" className={LEGAL_LINK_CLASS}>
+            Mon compte
+          </Link>
+          .
         </p>
       </LegalSection>
 
