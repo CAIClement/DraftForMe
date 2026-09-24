@@ -1,12 +1,22 @@
 import Link from "next/link";
+import { AccountMenu } from "@/components/auth/account-menu";
 import { ButtonLink } from "@/components/ui/button-link";
+import type { CurrentUser } from "@/lib/auth/current-user";
 
 const NAV = [
   { href: "/", label: "Accueil", page: "home" },
   { href: "/draft", label: "Outil de draft", page: "draft" }
 ] as const;
 
-export function SiteHeader({ context, current }: { context?: string; current?: "home" | "draft" }) {
+export function SiteHeader({
+  context,
+  current,
+  user = null
+}: {
+  context?: string;
+  current?: "home" | "draft";
+  user?: CurrentUser | null;
+}) {
   return (
     <header className="sticky top-0 z-30 border-b border-rule bg-[color-mix(in_srgb,var(--paper)_88%,transparent)] backdrop-blur-md">
       <div className="mx-auto flex min-h-16 max-w-6xl flex-wrap items-center justify-between gap-x-6 gap-y-2 px-4 py-2 sm:px-6">
@@ -43,6 +53,7 @@ export function SiteHeader({ context, current }: { context?: string; current?: "
               </ButtonLink>
             </span>
           )}
+          <AccountMenu user={user} />
         </div>
       </div>
     </header>

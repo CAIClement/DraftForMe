@@ -6,6 +6,7 @@ import { MethodSection } from "@/components/home/method-section";
 import { SignalsSection } from "@/components/home/signals-section";
 import { SiteFooter } from "@/components/marketing/site-footer";
 import { SiteHeader } from "@/components/marketing/site-header";
+import { getCurrentUser } from "@/lib/auth/current-user";
 import { DEFAULT_EXAMPLE } from "@/lib/draft/default-example";
 import { ROLE_LABELS } from "@/lib/draft/roles";
 import { EXAMPLE_CONTEXT, headerContext, loadExampleOrEmpty } from "@/lib/draft/load-example";
@@ -14,7 +15,7 @@ import { EXAMPLE_CONTEXT, headerContext, loadExampleOrEmpty } from "@/lib/draft/
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const example = await loadExampleOrEmpty();
+  const [example, user] = await Promise.all([loadExampleOrEmpty(), getCurrentUser()]);
 
   const roleLabel = ROLE_LABELS[DEFAULT_EXAMPLE.role];
   // Resolved against the champion table rather than printing slugs; a pick the
@@ -26,7 +27,7 @@ export default async function HomePage() {
 
   return (
     <>
-      <SiteHeader current="home" context={headerContext(example.patch)} />
+      <SiteHeader current="home" context={headerContext(example.patch)} user={user} />
 
       <main>
         <Hero recommendations={example.recommendations} caption={caption} patch={example.patch} />
