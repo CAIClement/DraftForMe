@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatLegalDate, getSiteHost, SITE_INFO, type SiteInfo } from "./site-info";
+import { formatLegalDate, getDatabaseHost, getSiteHost, SITE_INFO, type SiteInfo } from "./site-info";
 
 describe("SITE_INFO", () => {
   it("has either no contact yet or a well-formed e-mail address", () => {
@@ -43,5 +43,17 @@ describe("getSiteHost", () => {
   it("throws when there is no host with role \"site\"", () => {
     const info: SiteInfo = { ...SITE_INFO, hosts: SITE_INFO.hosts.filter((host) => host.role === "database") };
     expect(() => getSiteHost(info)).toThrow(/role "site"/);
+  });
+});
+
+describe("getDatabaseHost", () => {
+  it("returns Supabase for the real config", () => {
+    expect(getDatabaseHost(SITE_INFO).name).toBe("Supabase Pte. Ltd.");
+  });
+
+  it("throws when no database host is configured", () => {
+    expect(() => getDatabaseHost({ ...SITE_INFO, hosts: SITE_INFO.hosts.filter((h) => h.role !== "database") })).toThrow(
+      /role "database"/
+    );
   });
 });

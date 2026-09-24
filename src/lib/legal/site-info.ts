@@ -46,12 +46,18 @@ export const SITE_INFO: SiteInfo = {
       privacyPolicy: "https://supabase.com/privacy"
     }
   ],
-  lastUpdated: "2026-09-23"
+  lastUpdated: "2026-09-24"
 };
 
 export function getSiteHost(info: SiteInfo): Host {
   const host = info.hosts.find((candidate) => candidate.role === "site");
   if (!host) throw new Error("SiteInfo has no host with role \"site\".");
+  return host;
+}
+
+export function getDatabaseHost(info: SiteInfo): Host {
+  const host = info.hosts.find((candidate) => candidate.role === "database");
+  if (!host) throw new Error('SiteInfo has no host with role "database".');
   return host;
 }
 

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { DraftBoard } from "@/components/draft/draft-board";
 import { SiteFooter } from "@/components/marketing/site-footer";
 import { SiteHeader } from "@/components/marketing/site-header";
+import { getCurrentUser } from "@/lib/auth/current-user";
 import { DEFAULT_EXAMPLE } from "@/lib/draft/default-example";
 import { createDraftState } from "@/lib/draft/draft-state";
 import { headerContext, loadExampleOrEmpty } from "@/lib/draft/load-example";
@@ -15,11 +16,11 @@ export const metadata: Metadata = {
 };
 
 export default async function DraftPage() {
-  const example = await loadExampleOrEmpty();
+  const [example, user] = await Promise.all([loadExampleOrEmpty(), getCurrentUser()]);
 
   return (
     <>
-      <SiteHeader current="draft" context={headerContext(example.patch)} />
+      <SiteHeader current="draft" context={headerContext(example.patch)} user={user} />
 
       <main className="mx-auto max-w-6xl px-4 pb-16 pt-10 sm:px-6">
         <div className="mb-5">

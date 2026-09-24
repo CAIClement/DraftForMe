@@ -26,6 +26,8 @@
   --accent-wash: #1c2338;
   --on-accent: #0a1428;
   --spark: #0ac8b9;
+  /* alias of --team-enemy */
+  --danger: var(--team-enemy);
 
   /* The data band: a darker strip that sets the numbers apart from the page. */
   --band: #050c1a;
@@ -38,6 +40,7 @@
   /* The two draft sides. Lifted off the stock blue/red so they still read as
      team colours against the navy ground rather than sinking into it. */
   --team-ally: #4f9bf5;
+  /* 4.5:1 on --surface; do not darken */
   --team-enemy: #e05a4a;
 
   --motion: 240ms;

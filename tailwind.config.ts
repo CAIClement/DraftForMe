@@ -20,6 +20,7 @@ const config: Config = {
         "paper-deep": "var(--paper-deep)",
         "on-accent": "var(--on-accent)",
         spark: "var(--spark)",
+        danger: "var(--danger)",
         band: "var(--band)",
         "band-ink": "var(--band-ink)",
         "band-muted": "var(--band-muted)",

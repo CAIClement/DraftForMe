@@ -1,8 +1,10 @@
-import { getSiteHost, type SiteInfo } from "@/lib/legal/site-info";
-import { ContactLink, ExternalLink, LegalPage, LegalSection } from "./legal-page";
+import Link from "next/link";
+import { getDatabaseHost, getSiteHost, type SiteInfo } from "@/lib/legal/site-info";
+import { ContactLink, ExternalLink, LEGAL_LINK_CLASS, LegalPage, LegalSection } from "./legal-page";
 
 export function PrivacyPolicy({ info }: { info: SiteInfo }) {
   const siteHost = getSiteHost(info);
+  const databaseHost = getDatabaseHost(info);
 
   return (
     <LegalPage title="Politique de confidentialité" lastUpdated={info.lastUpdated}>
@@ -21,8 +23,9 @@ export function PrivacyPolicy({ info }: { info: SiteInfo }) {
 
       <LegalSection title="Données traitées">
         <p>
-          {info.siteName} ne propose ni compte, ni formulaire, et ne dépose aucun cookie. Aucune donnée vous concernant
-          n&apos;est enregistrée dans sa base. Seuls deux traitements techniques ont lieu lorsque vous consultez le site.
+          Si vous n&apos;avez pas de compte, aucune donnée vous concernant n&apos;est enregistrée dans la base de{" "}
+          {info.siteName}. Deux traitements techniques ont lieu pour tous les visiteurs ; la section « Compte »
+          décrit ce qui s&apos;y ajoute si vous vous connectez.
         </p>
         <h3 className="pt-2 font-medium text-ink">Journaux de l&apos;hébergeur</h3>
         <p>
@@ -48,10 +51,44 @@ export function PrivacyPolicy({ info }: { info: SiteInfo }) {
         </p>
       </LegalSection>
 
+      <LegalSection title="Compte">
+        <p>
+          Si vous vous connectez avec Discord ou Google, {info.siteName} enregistre l&apos;identifiant de votre compte
+          chez ce fournisseur, votre adresse e-mail, les informations de profil que le fournisseur transmet (nom
+          d&apos;utilisateur ou nom, photo de profil), les dates de création du compte et de dernière connexion, et le
+          pseudo que vous choisissez. Seul ce pseudo est affiché sur le site.
+        </p>
+        <p>
+          Finalité : gérer votre compte et votre pseudo. Base
+          légale : l&apos;exécution du service que vous demandez en créant un compte (article 6.1.b du RGPD). Durée
+          de conservation : jusqu&apos;à la suppression de votre compte, que vous pouvez faire à tout moment depuis la
+          page{" "}
+          <Link href="/compte" className={LEGAL_LINK_CLASS}>
+            Mon compte
+          </Link>
+          .
+        </p>
+        <p>
+          Ces données sont stockées par {databaseHost.name}, sous-traitant de l&apos;éditeur (
+          <ExternalLink href={databaseHost.privacyPolicy}>politique de confidentialité de Supabase</ExternalLink>).
+          La connexion elle-même est traitée par Discord ou Google selon leurs propres règles :{" "}
+          <ExternalLink href="https://discord.com/privacy">politique de confidentialité de Discord</ExternalLink>,{" "}
+          <ExternalLink href="https://policies.google.com/privacy?hl=fr">
+            politique de confidentialité de Google
+          </ExternalLink>
+          .
+        </p>
+      </LegalSection>
+
       <LegalSection title="Vos droits">
         <p>
           Conformément au RGPD, vous disposez d&apos;un droit d&apos;accès, de rectification, d&apos;effacement, de
-          limitation et d&apos;opposition sur les données vous concernant.
+          limitation et d&apos;opposition sur les données vous concernant. Vous pouvez aussi supprimer votre compte
+          vous-même depuis la page{" "}
+          <Link href="/compte" className={LEGAL_LINK_CLASS}>
+            Mon compte
+          </Link>
+          .
           {info.contactEmail && (
             <>
               {" "}
@@ -67,15 +104,18 @@ export function PrivacyPolicy({ info }: { info: SiteInfo }) {
 
       <LegalSection title="Cookies">
         <p>
-          {info.siteName} ne dépose aucun cookie, qu&apos;il soit de mesure d&apos;audience, publicitaire ou de
-          connexion. Aucun consentement ne vous est donc demandé.
+          {info.siteName} ne dépose aucun cookie de mesure d&apos;audience ni publicitaire. Si vous lancez une
+          connexion, des cookies techniques sont déposés pour la mener à bien puis vous garder connecté : ils sont
+          strictement nécessaires au service que vous demandez et exemptés de consentement. Ils sont supprimés à la
+          déconnexion ou, si la connexion est abandonnée, à leur expiration. Aucun consentement ne vous est donc
+          demandé.
         </p>
       </LegalSection>
 
       <LegalSection title="Évolutions à venir">
         <p>
-          La création de comptes et des avis sur les matchups sont prévus. Cette politique sera mise à jour avant leur
-          ouverture pour décrire les données qu&apos;ils impliquent.
+          Des avis sur les matchups sont prévus. Cette politique sera mise à jour avant leur ouverture pour décrire les
+          données qu&apos;ils impliquent.
         </p>
       </LegalSection>
     </LegalPage>

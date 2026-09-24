@@ -10,6 +10,32 @@ type TableDefinition<Row, Insert, Update> = {
 export type Database = {
   public: {
     Tables: {
+      profiles: TableDefinition<
+        {
+          user_id: string;
+          display_name: string | null;
+          default_region: string;
+          default_role: string;
+          created_at: string;
+          updated_at: string;
+        },
+        {
+          user_id: string;
+          display_name?: string | null;
+          default_region?: string;
+          default_role?: string;
+          created_at?: string;
+          updated_at?: string;
+        },
+        Partial<{
+          user_id: string;
+          display_name: string | null;
+          default_region: string;
+          default_role: string;
+          created_at: string;
+          updated_at: string;
+        }>
+      >;
       champions: TableDefinition<
         {
           id: string;
@@ -175,7 +201,9 @@ export type Database = {
       >;
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      delete_my_account: { Args: Record<PropertyKey, never>; Returns: undefined };
+    };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
   };

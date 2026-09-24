@@ -75,9 +75,8 @@ export async function POST(request: Request) {
   const stats = mapStatsRowsToChampionStats((statsRows ?? []) as unknown as StatsRow[]);
   const playerPool = mapPoolRowsToPlayerPool((poolRows ?? []) as unknown as PoolRow[]);
 
-  // The column behind `enemy_picks` is `text[]`, and the insert below is cast
-  // `as never`, so a shape mistake here would compile and only fail against
-  // the live database. Extract once, use for both.
+  // Only used below, to keep enemy picks out of the candidate list alongside
+  // allyPicks.
   const enemyChampionIds = parsed.data.enemyPicks.map((pick) => pick.championId);
 
   const recommendations = recommendChampions({
@@ -95,17 +94,6 @@ export async function POST(request: Request) {
       name: row.name
     }))
   });
-
-  if (user) {
-    await supabase.from("recommendation_sessions").insert({
-      user_id: user.id,
-      role: parsed.data.role,
-      region: parsed.data.region,
-      tier: parsed.data.tier,
-      enemy_picks: enemyChampionIds,
-      bans: parsed.data.bans
-    } as never);
-  }
 
   return NextResponse.json({ recommendations });
 }
