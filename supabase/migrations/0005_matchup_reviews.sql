@@ -166,10 +166,31 @@ alter table public.matchup_comment_votes enable row level security;
 alter table public.matchup_comment_reports enable row level security;
 
 create policy "matchup_votes_read_all" on public.matchup_votes for select using (true);
-create policy "matchup_votes_all_own" on public.matchup_votes for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+-- Voting and commenting both need a nickname (the Server Actions redirect to
+-- /compte/pseudo without one); the insert checks repeat it so a client
+-- calling Supabase directly cannot skip it. profiles_select_own (0001) lets
+-- the subquery read the caller's own row. castVote's upsert goes through the
+-- insert check even when it ends up updating.
+create policy "matchup_votes_insert_own" on public.matchup_votes for insert
+  with check (
+    auth.uid() = user_id
+    and exists (
+      select 1 from public.profiles p
+      where p.user_id = auth.uid() and p.display_name is not null
+    )
+  );
+create policy "matchup_votes_update_own" on public.matchup_votes for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
+create policy "matchup_votes_delete_own" on public.matchup_votes for delete using (auth.uid() = user_id);
 
 create policy "matchup_comments_read_all" on public.matchup_comments for select using (true);
-create policy "matchup_comments_insert_own" on public.matchup_comments for insert with check (auth.uid() = user_id);
+create policy "matchup_comments_insert_own" on public.matchup_comments for insert
+  with check (
+    auth.uid() = user_id
+    and exists (
+      select 1 from public.profiles p
+      where p.user_id = auth.uid() and p.display_name is not null
+    )
+  );
 create policy "matchup_comments_update_own" on public.matchup_comments for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
 create policy "matchup_comments_delete_own" on public.matchup_comments for delete using (auth.uid() = user_id);
 -- No policy clears user_id: that only happens through the on delete set null
