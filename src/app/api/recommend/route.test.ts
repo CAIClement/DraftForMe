@@ -119,24 +119,19 @@ describe("POST /api/recommend", () => {
     expect(input.draftingRole).toBe("mid");
   });
 
-  // The insert below is cast `as never`, so nothing else in the toolchain —
-  // not the compiler, not the schema — would catch `enemy_picks` regressing
-  // from champion ids back to `{championId, role}` pick objects.
-  it("inserts enemy champion ids, not pick objects, into the session row", async () => {
-    let insertPayload: unknown = null;
+  // Accounts must not start a silent collection: a signed-in user's drafts are
+  // not recorded (see docs/superpowers/specs/2026-09-24-draftforme-accounts-design.md).
+  it("does not record the draft of a signed-in user", async () => {
+    const tablesTouched: string[] = [];
 
     const supabaseStub = {
       auth: { getUser: () => Promise.resolve({ data: { user: { id: "user-1" } } }) },
       from: (table: string) => {
-        if (table === "recommendation_sessions") {
-          return {
-            insert: (payload: unknown) => {
-              insertPayload = payload;
-              return Promise.resolve({ data: null, error: null });
-            }
-          };
-        }
-        return makeQuery({ data: [], error: null });
+        tablesTouched.push(table);
+        return {
+          ...makeQuery({ data: [], error: null }),
+          insert: () => Promise.resolve({ data: null, error: null })
+        };
       }
     };
 
@@ -144,20 +139,20 @@ describe("POST /api/recommend", () => {
     vi.mocked(createClient).mockResolvedValue(supabaseStub as never);
 
     const { POST } = await import("./route");
-    const request = new Request("http://localhost/api/recommend", {
-      method: "POST",
-      body: JSON.stringify({
-        role: "mid",
-        region: "euw",
-        tier: "emerald_plus",
-        enemyPicks: [{ championId: "zed", role: "mid" }],
-        allyPicks: ["malphite"],
-        bans: []
+    await POST(
+      new Request("http://localhost/api/recommend", {
+        method: "POST",
+        body: JSON.stringify({
+          role: "mid",
+          region: "euw",
+          tier: "emerald_plus",
+          enemyPicks: [{ championId: "zed", role: "mid" }],
+          allyPicks: [],
+          bans: []
+        })
       })
-    });
+    );
 
-    await POST(request);
-
-    expect(insertPayload).toMatchObject({ enemy_picks: ["zed"] });
+    expect(tablesTouched).not.toContain("recommendation_sessions");
   });
 });

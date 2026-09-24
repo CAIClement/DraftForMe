@@ -96,16 +96,5 @@ export async function POST(request: Request) {
     }))
   });
 
-  if (user) {
-    await supabase.from("recommendation_sessions").insert({
-      user_id: user.id,
-      role: parsed.data.role,
-      region: parsed.data.region,
-      tier: parsed.data.tier,
-      enemy_picks: enemyChampionIds,
-      bans: parsed.data.bans
-    } as never);
-  }
-
   return NextResponse.json({ recommendations });
 }
