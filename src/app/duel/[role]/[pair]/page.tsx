@@ -121,7 +121,9 @@ export default async function MatchupPage({
 
   const nextPageHref = `${path}?offset=${offset + COMMENTS_PER_PAGE}` as Route;
   const firstPageHref = path as Route;
-  const signInHref = `/connexion?next=${encodeURIComponent(offset > 0 ? `${path}?offset=${offset}` : path)}` as Route;
+  const returnTo = encodeURIComponent(offset > 0 ? `${path}?offset=${offset}` : path);
+  const signInHref = `/connexion?next=${returnTo}` as Route;
+  const nicknameHref = `/compte/pseudo?next=${returnTo}` as Route;
 
   return (
     <>
@@ -150,8 +152,17 @@ export default async function MatchupPage({
 
         <section className="mt-10 space-y-4">
           <h2 className="text-lg font-semibold text-ink">Discussion</h2>
-          {user ? (
+          {user?.nickname ? (
             <CommentForm role={key.role} championLowId={championLow.id} championHighId={championHigh.id} />
+          ) : user ? (
+            // Without a nickname postComment would redirect to /compte/pseudo
+            // and lose the typed text, so the form is not offered until then.
+            <p className="text-sm text-ink-muted">
+              <Link href={nicknameHref} className={LINK}>
+                Choisissez un pseudo
+              </Link>{" "}
+              pour participer à la discussion.
+            </p>
           ) : (
             <p className="text-sm text-ink-muted">
               <Link href={signInHref} className={LINK}>
