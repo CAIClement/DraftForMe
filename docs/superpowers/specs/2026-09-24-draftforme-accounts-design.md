@@ -120,3 +120,12 @@ Vitest, next to the code, with the Supabase client mocked where a route or actio
 - [ ] Check the Supabase project's region and accept Supabase's DPA (standard contractual clauses), then add one sentence to the privacy policy's "Compte" section on that transfer, as for Vercel (GDPR art. 13.1.f). Supabase Pte. Ltd. is in Singapore, which has no EU adequacy decision.
 - [ ] Check whether Supabase Auth records IP addresses and browsers (`auth.audit_log_entries`, `auth.sessions`); if it does, list them in the "Compte" section.
 - [ ] Before the site goes public: everything in the legal pages checklist (`2026-09-23-draftforme-legal-pages-design.md`), plus a re-read of the privacy policy's "Compte" section against what production actually stores.
+
+## Verification (2026-09-24, local Supabase via `supabase start`, CLI 2.110)
+
+- `supabase db reset` applied migrations 0001-0004 and the seed without error.
+- Nicknames: inserting `faker` after `Faker` fails with `23505` on `profiles_display_name_lower`; `ab` fails `profiles_display_name_format`; a `NULL` nickname is accepted.
+- `delete_my_account()`: `anon` gets `permission denied`; an `authenticated` caller deletes only its own `auth.users` row, and its `profiles` row goes with it by cascade; the other test user and profile remain.
+- Routes on the dev server against the local stack: `/connexion` (with `erreur=1` and `erreur=deconnexion`) 200; `/compte` and `/compte/pseudo?next=/draft` redirect to `/connexion` keeping the target; `/auth/login?provider=github` 400; `/auth/login?provider=discord` redirects to the local GoTrue `/authorize` with a PKCE `code_challenge` and sets the `code-verifier` cookie; `/auth/callback` without a code redirects to `/connexion?erreur=1`.
+- At 375 px the header (signed out) and `/connexion` have no horizontal scroll.
+- **Not verified:** a complete OAuth round trip (needs the owner's Discord and Google apps), the signed-in header at 375 px, and what Supabase Auth stores in `auth.users.raw_user_meta_data` and its logs for a real provider (the owner actions above cover it).
