@@ -239,6 +239,41 @@ describe("getComments", () => {
     expect(comments.map((c) => c.authorNickname)).toEqual(["Faker", "Caps", "Faker", null]);
   });
 
+  it("resolves nicknames only for the comments on the requested page", async () => {
+    const profiles = query({ data: [{ user_id: "user-2", display_name: "Caps" }], error: null });
+    const inSpy = vi.fn(() => profiles);
+    profiles.in = inSpy;
+    const supabase = stub({
+      matchup_comments: query({
+        data: [
+          comment({ id: "newest", user_id: "user-1", created_at: "2026-09-03T00:00:00Z" }),
+          comment({ id: "middle", user_id: "user-2", created_at: "2026-09-02T00:00:00Z" }),
+          comment({ id: "oldest", user_id: "user-3", created_at: "2026-09-01T00:00:00Z" })
+        ],
+        error: null
+      }),
+      public_profiles: profiles
+    });
+
+    const { comments, hasMore } = await getComments(supabase, KEY, null, { limit: 1, offset: 1 });
+    expect(inSpy).toHaveBeenCalledTimes(1);
+    expect(inSpy).toHaveBeenCalledWith("user_id", ["user-2"]);
+    expect(comments.map((c) => [c.id, c.authorNickname])).toEqual([["middle", "Caps"]]);
+    expect(hasMore).toBe(true);
+  });
+
+  it("does not query public_profiles when the page is past the last comment", async () => {
+    const from = vi.fn<(table: string) => Builder>((table) =>
+      query({ data: table === "matchup_comments" ? [comment({})] : [], error: null })
+    );
+
+    expect(await getComments({ from } as never, KEY, null, { limit: 20, offset: 20 })).toEqual({
+      comments: [],
+      hasMore: false
+    });
+    expect(from).not.toHaveBeenCalledWith("public_profiles");
+  });
+
   it("does not query public_profiles when every comment is anonymized", async () => {
     const from = vi.fn((table: string) =>
       table === "matchup_comments"

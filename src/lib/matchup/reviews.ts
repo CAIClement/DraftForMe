@@ -132,9 +132,37 @@ export async function getComments(
   const rows = (commentRows ?? []) as CommentRow[];
   if (rows.length === 0) return { comments: [], hasMore: false };
 
+  const scored = rows.map((row) => {
+    const rowReactions = row.matchup_comment_votes;
+    const forCount = rowReactions.filter((r) => r.value === "for").length;
+    const againstCount = rowReactions.filter((r) => r.value === "against").length;
+    const mine = userId === null ? undefined : rowReactions.find((r) => r.user_id === userId);
+
+    const comment: Omit<Comment, "authorNickname"> = {
+      id: row.id,
+      body: row.body,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+      edited: row.updated_at !== row.created_at,
+      score: forCount - againstCount,
+      forCount,
+      againstCount,
+      myReaction: mine?.value ?? null,
+      isMine: userId !== null && row.user_id === userId
+    };
+    return { comment, authorId: row.user_id };
+  });
+
+  // Score descending, ties broken by recency descending -- see "Deviations
+  // from the spec" in the matchup-reviews plan for why this happens here and
+  // not in the comment-list component.
+  scored.sort((a, b) => b.comment.score - a.comment.score || b.comment.createdAt.localeCompare(a.comment.createdAt));
+  const page = scored.slice(offset, offset + limit);
+
   // Nicknames come from the public_profiles view (migration 0005): profiles
-  // itself only lets a user read their own row.
-  const authorIds = [...new Set(rows.flatMap((row) => (row.user_id === null ? [] : [row.user_id])))];
+  // itself only lets a user read their own row. Only the page's authors are
+  // looked up, so the .in() list holds at most `limit` ids.
+  const authorIds = [...new Set(page.flatMap(({ authorId }) => (authorId === null ? [] : [authorId])))];
   const nicknameByUser = new Map<string, string>();
   if (authorIds.length > 0) {
     const { data: profileRows, error: profilesError } = await supabase
@@ -147,34 +175,11 @@ export async function getComments(
     }
   }
 
-  const comments: Comment[] = rows.map((row) => {
-    const rowReactions = row.matchup_comment_votes;
-    const forCount = rowReactions.filter((r) => r.value === "for").length;
-    const againstCount = rowReactions.filter((r) => r.value === "against").length;
-    const mine = userId === null ? undefined : rowReactions.find((r) => r.user_id === userId);
-
-    return {
-      id: row.id,
-      authorNickname: row.user_id === null ? null : (nicknameByUser.get(row.user_id) ?? null),
-      body: row.body,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at,
-      edited: row.updated_at !== row.created_at,
-      score: forCount - againstCount,
-      forCount,
-      againstCount,
-      myReaction: mine?.value ?? null,
-      isMine: userId !== null && row.user_id === userId
-    };
-  });
-
-  // Score descending, ties broken by recency descending -- see "Deviations
-  // from the spec" in the matchup-reviews plan for why this happens here and
-  // not in the comment-list component.
-  comments.sort((a, b) => b.score - a.score || b.createdAt.localeCompare(a.createdAt));
-
-  const page = comments.slice(offset, offset + limit);
-  return { comments: page, hasMore: offset + limit < comments.length };
+  const comments: Comment[] = page.map(({ comment, authorId }) => ({
+    ...comment,
+    authorNickname: authorId === null ? null : (nicknameByUser.get(authorId) ?? null)
+  }));
+  return { comments, hasMore: offset + limit < scored.length };
 }
 
 export async function postComment(
