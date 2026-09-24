@@ -79,29 +79,34 @@ type CommentRow = {
   created_at: string;
   updated_at: string;
   user_id: string | null;
-  profiles: { display_name: string | null } | null;
 };
 type ReactionRow = { comment_id: string; user_id: string; value: ReactionValue };
+type PublicProfileRow = { user_id: string; display_name: string };
 
+// Reads throw on a query error (same as load-example.ts): an empty discussion,
+// zero scores or everyone shown as a deleted user would all be false, so the
+// page's error boundary shows its French error instead.
 export async function getComments(
   supabase: SupabaseServerClient,
   key: MatchupKey,
   userId: string | null,
   { limit, offset }: { limit: number; offset: number }
 ): Promise<{ comments: Comment[]; hasMore: boolean }> {
-  const { data: commentRows } = await whereMatchup(
-    supabase.from("matchup_comments").select("id, body, created_at, updated_at, user_id, profiles(display_name)"),
+  const { data: commentRows, error: commentsError } = await whereMatchup(
+    supabase.from("matchup_comments").select("id, body, created_at, updated_at, user_id"),
     key
   );
-  const rows = (commentRows ?? []) as unknown as CommentRow[];
+  if (commentsError) throw commentsError;
+  const rows = (commentRows ?? []) as CommentRow[];
 
-  const { data: reactionRows } = await supabase
+  const { data: reactionRows, error: reactionsError } = await supabase
     .from("matchup_comment_votes")
     .select("comment_id, user_id, value")
     .in(
       "comment_id",
       rows.map((row) => row.id)
     );
+  if (reactionsError) throw reactionsError;
   const reactions = (reactionRows ?? []) as ReactionRow[];
 
   const reactionsByComment = new Map<string, ReactionRow[]>();
@@ -109,6 +114,21 @@ export async function getComments(
     const list = reactionsByComment.get(reaction.comment_id) ?? [];
     list.push(reaction);
     reactionsByComment.set(reaction.comment_id, list);
+  }
+
+  // Nicknames come from the public_profiles view (migration 0005): profiles
+  // itself only lets a user read their own row.
+  const authorIds = [...new Set(rows.flatMap((row) => (row.user_id === null ? [] : [row.user_id])))];
+  const nicknameByUser = new Map<string, string>();
+  if (authorIds.length > 0) {
+    const { data: profileRows, error: profilesError } = await supabase
+      .from("public_profiles")
+      .select("user_id, display_name")
+      .in("user_id", authorIds);
+    if (profilesError) throw profilesError;
+    for (const profile of (profileRows ?? []) as PublicProfileRow[]) {
+      nicknameByUser.set(profile.user_id, profile.display_name);
+    }
   }
 
   const comments: Comment[] = rows.map((row) => {
@@ -119,7 +139,7 @@ export async function getComments(
 
     return {
       id: row.id,
-      authorNickname: row.user_id === null ? null : (row.profiles?.display_name ?? null),
+      authorNickname: row.user_id === null ? null : (nicknameByUser.get(row.user_id) ?? null),
       body: row.body,
       createdAt: row.created_at,
       updatedAt: row.updated_at,

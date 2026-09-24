@@ -89,7 +89,6 @@ describe("getComments", () => {
       created_at: "2026-09-01T00:00:00Z",
       updated_at: "2026-09-01T00:00:00Z",
       user_id: "user-1",
-      profiles: { display_name: "Faker" },
       ...overrides
     };
   }
@@ -120,7 +119,7 @@ describe("getComments", () => {
 
   it("shows Utilisateur supprimé when the author is anonymized", async () => {
     const supabase = stub({
-      matchup_comments: query({ data: [comment({ user_id: null, profiles: null })], error: null }),
+      matchup_comments: query({ data: [comment({ user_id: null })], error: null }),
       matchup_comment_votes: query({ data: [], error: null })
     });
 
@@ -139,6 +138,75 @@ describe("getComments", () => {
 
     const { comments } = await getComments(supabase, KEY, null, { limit: 20, offset: 0 });
     expect(comments[0].edited).toBe(true);
+  });
+
+  it("resolves author nicknames through public_profiles, once per distinct author", async () => {
+    const profiles = query({
+      data: [
+        { user_id: "user-1", display_name: "Faker" },
+        { user_id: "user-2", display_name: "Caps" }
+      ],
+      error: null
+    });
+    const inSpy = vi.fn(() => profiles);
+    profiles.in = inSpy;
+    const supabase = stub({
+      matchup_comments: query({
+        data: [
+          comment({ id: "a", user_id: "user-1", created_at: "2026-09-03T00:00:00Z" }),
+          comment({ id: "b", user_id: "user-2", created_at: "2026-09-02T00:00:00Z" }),
+          comment({ id: "c", user_id: "user-1", created_at: "2026-09-01T00:00:00Z" }),
+          comment({ id: "d", user_id: "user-3", created_at: "2026-08-31T00:00:00Z" })
+        ],
+        error: null
+      }),
+      matchup_comment_votes: query({ data: [], error: null }),
+      public_profiles: profiles
+    });
+
+    const { comments } = await getComments(supabase, KEY, null, { limit: 20, offset: 0 });
+    expect(inSpy).toHaveBeenCalledWith("user_id", ["user-1", "user-2", "user-3"]);
+    // user-3 has no public profile row: shown as a deleted user, never invented.
+    expect(comments.map((c) => c.authorNickname)).toEqual(["Faker", "Caps", "Faker", null]);
+  });
+
+  it("does not query public_profiles when every comment is anonymized", async () => {
+    const from = vi.fn((table: string) =>
+      table === "matchup_comments"
+        ? query({ data: [comment({ user_id: null })], error: null })
+        : query({ data: [], error: null })
+    );
+    const supabase = { from } as never;
+
+    const { comments } = await getComments(supabase, KEY, null, { limit: 20, offset: 0 });
+    expect(comments[0].authorNickname).toBeNull();
+    expect(from).not.toHaveBeenCalledWith("public_profiles");
+  });
+
+  it("throws when the comments query fails instead of showing an empty discussion", async () => {
+    const failure = { message: "boom" };
+    const supabase = stub({ matchup_comments: query({ data: null, error: failure }) });
+    await expect(getComments(supabase, KEY, null, { limit: 20, offset: 0 })).rejects.toBe(failure);
+  });
+
+  it("throws when the reactions query fails instead of showing zero scores", async () => {
+    const failure = { message: "boom" };
+    const supabase = stub({
+      matchup_comments: query({ data: [comment({})], error: null }),
+      matchup_comment_votes: query({ data: null, error: failure }),
+      public_profiles: query({ data: [], error: null })
+    });
+    await expect(getComments(supabase, KEY, null, { limit: 20, offset: 0 })).rejects.toBe(failure);
+  });
+
+  it("throws when the public_profiles query fails instead of anonymizing everyone", async () => {
+    const failure = { message: "boom" };
+    const supabase = stub({
+      matchup_comments: query({ data: [comment({})], error: null }),
+      matchup_comment_votes: query({ data: [], error: null }),
+      public_profiles: query({ data: null, error: failure })
+    });
+    await expect(getComments(supabase, KEY, null, { limit: 20, offset: 0 })).rejects.toBe(failure);
   });
 });
 
