@@ -74,6 +74,20 @@ describe("saveNickname", () => {
       "REDIRECT:/connexion?next=%2Fcompte"
     );
   });
+
+  it("keeps the original target when sending a signed-out visitor to sign in", async () => {
+    stubSupabase({ user: null });
+    await expect(saveNickname({ error: null }, form({ nickname: "Faker", next: "/draft" }))).rejects.toThrow(
+      "REDIRECT:/connexion?next=%2Fdraft"
+    );
+  });
+
+  it("never sends an unsafe next path to the sign-in redirect", async () => {
+    stubSupabase({ user: null });
+    await expect(saveNickname({ error: null }, form({ nickname: "Faker", next: "//evil.com" }))).rejects.toThrow(
+      "REDIRECT:/connexion?next=%2F"
+    );
+  });
 });
 
 describe("deleteAccount", () => {
@@ -102,6 +116,14 @@ describe("deleteAccount", () => {
     });
     expect(signOutFn).not.toHaveBeenCalled();
   });
+
+  it("sends a signed-out visitor to the sign-in page", async () => {
+    const { rpc } = stubSupabase({ user: null });
+    await expect(deleteAccount({ error: null }, form({ confirmation: "SUPPRIMER" }))).rejects.toThrow(
+      "REDIRECT:/connexion"
+    );
+    expect(rpc).not.toHaveBeenCalled();
+  });
 });
 
 describe("signOut", () => {
@@ -109,5 +131,13 @@ describe("signOut", () => {
     const { signOut: signOutFn } = stubSupabase();
     await expect(signOut()).rejects.toThrow("REDIRECT:/");
     expect(signOutFn).toHaveBeenCalled();
+  });
+
+  it("does not pretend it worked when Supabase reports a sign-out error", async () => {
+    stubSupabase();
+    vi.mocked(createClient).mockResolvedValueOnce({
+      auth: { signOut: vi.fn().mockResolvedValue({ error: new Error("down") }) }
+    } as never);
+    await expect(signOut()).rejects.toThrow("REDIRECT:/compte?erreur=deconnexion");
   });
 });

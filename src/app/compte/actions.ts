@@ -23,7 +23,10 @@ export async function saveNickname(_previous: FormState, formData: FormData): Pr
   const {
     data: { user }
   } = await supabase.auth.getUser();
-  if (!user) redirect(`/connexion?next=${encodeURIComponent("/compte")}` as Route);
+  if (!user) {
+    const next = safeNextPath(String(formData.get("next") ?? "/compte"));
+    redirect(`/connexion?next=${encodeURIComponent(next)}` as Route);
+  }
 
   // The profiles row is created here the first time: the insert and update
   // policies from 0001 limit it to the user's own row.
@@ -43,9 +46,9 @@ export async function saveNickname(_previous: FormState, formData: FormData): Pr
 
 export async function signOut(): Promise<void> {
   const supabase = await createClient();
-  await supabase.auth.signOut();
+  const { error } = await supabase.auth.signOut();
   revalidatePath("/", "layout");
-  redirect("/");
+  redirect(error ? ("/compte?erreur=deconnexion" as Route) : "/");
 }
 
 export async function deleteAccount(_previous: FormState, formData: FormData): Promise<FormState> {
@@ -62,8 +65,8 @@ export async function deleteAccount(_previous: FormState, formData: FormData): P
   const { error } = await supabase.rpc("delete_my_account");
   if (error) return { error: GENERIC_ERROR };
 
-  // The auth user no longer exists, so only the local cookies are cleared; a
-  // global sign-out would call Supabase about a user it has already deleted.
+  // auth-js tolerates the 401/403/404 from logging out a user that no longer
+  // exists, then clears the local cookies.
   await supabase.auth.signOut({ scope: "local" });
   revalidatePath("/", "layout");
   redirect("/");

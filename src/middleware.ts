@@ -1,7 +1,7 @@
-import { createServerClient, type CookieOptionsWithName } from "@supabase/ssr";
+import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-type CookieToSet = { name: string; value: string; options?: CookieOptionsWithName };
+type CookieToSet = { name: string; value: string; options?: CookieOptions };
 
 // Refreshes the Supabase session cookie on every page request, so Server
 // Components (which cannot write cookies) always see a live session. It does

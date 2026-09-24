@@ -7,24 +7,26 @@ import { GET } from "./route";
 
 function stubCallback({
   exchangeError = null,
-  displayName
+  displayName,
+  profileError = null
 }: {
   exchangeError?: Error | null;
   displayName?: string | null;
+  profileError?: Error | null;
 }) {
   const maybeSingle = vi.fn().mockResolvedValue({
     data: displayName === undefined ? null : { display_name: displayName },
-    error: null
+    error: profileError
+  });
+  const exchangeCodeForSession = vi.fn().mockResolvedValue({
+    data: { user: exchangeError ? null : { id: "user-1" } },
+    error: exchangeError
   });
   vi.mocked(createClient).mockResolvedValue({
-    auth: {
-      exchangeCodeForSession: vi.fn().mockResolvedValue({
-        data: { user: exchangeError ? null : { id: "user-1" } },
-        error: exchangeError
-      })
-    },
+    auth: { exchangeCodeForSession },
     from: vi.fn(() => ({ select: vi.fn(() => ({ eq: vi.fn(() => ({ maybeSingle })) })) }))
   } as never);
+  return { exchangeCodeForSession };
 }
 
 const location = (response: Response) => response.headers.get("location");
@@ -44,9 +46,16 @@ describe("GET /auth/callback", () => {
   });
 
   it("asks for a nickname first when the profile has none", async () => {
-    stubCallback({});
+    const { exchangeCodeForSession } = stubCallback({});
     const response = await GET(new Request("https://draftforme.test/auth/callback?code=abc&next=/draft"));
     expect(location(response)).toBe("https://draftforme.test/compte/pseudo?next=%2Fdraft");
+    expect(exchangeCodeForSession).toHaveBeenCalledWith("abc");
+  });
+
+  it("goes straight to the requested page when the profile lookup fails", async () => {
+    stubCallback({ profileError: new Error("down") });
+    const response = await GET(new Request("https://draftforme.test/auth/callback?code=abc&next=/draft"));
+    expect(location(response)).toBe("https://draftforme.test/draft");
   });
 
   it("returns to the requested page when the nickname exists", async () => {

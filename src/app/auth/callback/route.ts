@@ -14,13 +14,15 @@ export async function GET(request: Request) {
   const { data, error } = await supabase.auth.exchangeCodeForSession(code);
   if (error || !data.user) return failure;
 
-  const { data: profile } = await supabase
+  const { data: profile, error: profileError } = await supabase
     .from("profiles")
     .select("display_name")
     .eq("user_id", data.user.id)
     .maybeSingle();
 
-  if (!(profile as { display_name: string | null } | null)?.display_name) {
+  // The session is valid at this point; a failed profile lookup should not
+  // block sign-in, only the nickname prompt below.
+  if (!profileError && !(profile as { display_name: string | null } | null)?.display_name) {
     const nicknamePage = new URL("/compte/pseudo", url.origin);
     nicknamePage.searchParams.set("next", next);
     return NextResponse.redirect(nicknamePage);

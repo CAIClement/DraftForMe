@@ -17,7 +17,7 @@ export async function GET(request: Request) {
   const provider = url.searchParams.get("provider");
 
   if (!isProvider(provider)) {
-    return NextResponse.json({ error: "Unknown provider." }, { status: 400 });
+    return NextResponse.json({ error: "Fournisseur inconnu." }, { status: 400 });
   }
 
   const callback = new URL("/auth/callback", url.origin);
