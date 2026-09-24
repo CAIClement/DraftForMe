@@ -1,10 +1,18 @@
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
-type TableDefinition<Row, Insert, Update> = {
+type Relationship = {
+  foreignKeyName: string;
+  columns: string[];
+  isOneToOne?: boolean;
+  referencedRelation: string;
+  referencedColumns: string[];
+};
+
+type TableDefinition<Row, Insert, Update, Relationships extends Relationship[] = []> = {
   Row: Row;
   Insert: Insert;
   Update: Update;
-  Relationships: [];
+  Relationships: Relationships;
 };
 
 export type Database = {
@@ -266,7 +274,17 @@ export type Database = {
       matchup_comment_votes: TableDefinition<
         { id: string; comment_id: string; user_id: string; value: string; created_at: string },
         { id?: string; comment_id: string; user_id: string; value: string; created_at?: string },
-        Partial<{ id: string; comment_id: string; user_id: string; value: string; created_at: string }>
+        Partial<{ id: string; comment_id: string; user_id: string; value: string; created_at: string }>,
+        // Lets getComments embed a comment's reactions (migration 0005's foreign key).
+        [
+          {
+            foreignKeyName: "matchup_comment_votes_comment_id_fkey";
+            columns: ["comment_id"];
+            isOneToOne: false;
+            referencedRelation: "matchup_comments";
+            referencedColumns: ["id"];
+          }
+        ]
       >;
       matchup_comment_reports: TableDefinition<
         { id: string; comment_id: string; reporter_user_id: string; reason: string; created_at: string },

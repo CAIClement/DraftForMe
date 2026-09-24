@@ -157,6 +157,7 @@ describe("getComments", () => {
       created_at: "2026-09-01T00:00:00Z",
       updated_at: "2026-09-01T00:00:00Z",
       user_id: "user-1",
+      matchup_comment_votes: [],
       ...overrides
     };
   }
@@ -165,17 +166,20 @@ describe("getComments", () => {
     const supabase = stub({
       matchup_comments: query({
         data: [
-          comment({ id: "old-low-score", created_at: "2026-09-01T00:00:00Z" }),
-          comment({ id: "new-high-score", created_at: "2026-09-03T00:00:00Z" }),
+          comment({
+            id: "old-low-score",
+            created_at: "2026-09-01T00:00:00Z",
+            matchup_comment_votes: [{ user_id: "user-9", value: "against" }]
+          }),
+          comment({
+            id: "new-high-score",
+            created_at: "2026-09-03T00:00:00Z",
+            matchup_comment_votes: [
+              { user_id: "user-9", value: "for" },
+              { user_id: "user-8", value: "for" }
+            ]
+          }),
           comment({ id: "new-no-score", created_at: "2026-09-02T00:00:00Z" })
-        ],
-        error: null
-      }),
-      matchup_comment_votes: query({
-        data: [
-          { comment_id: "new-high-score", user_id: "user-9", value: "for" },
-          { comment_id: "new-high-score", user_id: "user-8", value: "for" },
-          { comment_id: "old-low-score", user_id: "user-9", value: "against" }
         ],
         error: null
       })
@@ -187,8 +191,7 @@ describe("getComments", () => {
 
   it("shows Utilisateur supprimé when the author is anonymized", async () => {
     const supabase = stub({
-      matchup_comments: query({ data: [comment({ user_id: null })], error: null }),
-      matchup_comment_votes: query({ data: [], error: null })
+      matchup_comments: query({ data: [comment({ user_id: null })], error: null })
     });
 
     const { comments } = await getComments(supabase, KEY, null, { limit: 20, offset: 0 });
@@ -200,8 +203,7 @@ describe("getComments", () => {
       matchup_comments: query({
         data: [comment({ created_at: "2026-09-01T00:00:00Z", updated_at: "2026-09-02T00:00:00Z" })],
         error: null
-      }),
-      matchup_comment_votes: query({ data: [], error: null })
+      })
     });
 
     const { comments } = await getComments(supabase, KEY, null, { limit: 20, offset: 0 });
@@ -228,7 +230,6 @@ describe("getComments", () => {
         ],
         error: null
       }),
-      matchup_comment_votes: query({ data: [], error: null }),
       public_profiles: profiles
     });
 
@@ -253,7 +254,7 @@ describe("getComments", () => {
 
   it("reads only the requested matchup's comments", async () => {
     const comments = query({ data: [comment({})], error: null });
-    const supabase = stub({ matchup_comments: comments, matchup_comment_votes: query({ data: [], error: null }) });
+    const supabase = stub({ matchup_comments: comments });
 
     await getComments(supabase, KEY, null, { limit: 20, offset: 0 });
     expect(comments.filters).toEqual(MATCHUP_FILTERS);
@@ -265,21 +266,44 @@ describe("getComments", () => {
     await expect(getComments(supabase, KEY, null, { limit: 20, offset: 0 })).rejects.toBe(failure);
   });
 
-  it("throws when the reactions query fails instead of showing zero scores", async () => {
-    const failure = { message: "boom" };
-    const supabase = stub({
-      matchup_comments: query({ data: [comment({})], error: null }),
-      matchup_comment_votes: query({ data: null, error: failure }),
-      public_profiles: query({ data: [], error: null })
+  it("loads reactions embedded in the comments query, not through a separate .in() list", async () => {
+    const comments = query({
+      data: [
+        comment({
+          id: "c1",
+          matchup_comment_votes: [
+            { user_id: "user-1", value: "for" },
+            { user_id: "user-2", value: "for" },
+            { user_id: "user-3", value: "against" }
+          ]
+        })
+      ],
+      error: null
     });
-    await expect(getComments(supabase, KEY, null, { limit: 20, offset: 0 })).rejects.toBe(failure);
+    const from = vi.fn((table: string) => (table === "matchup_comments" ? comments : query({ data: [], error: null })));
+
+    const { comments: result } = await getComments({ from } as never, KEY, "user-3", { limit: 20, offset: 0 });
+    expect(comments.select).toHaveBeenCalledWith(
+      "id, body, created_at, updated_at, user_id, matchup_comment_votes(user_id, value)"
+    );
+    expect(from).not.toHaveBeenCalledWith("matchup_comment_votes");
+    expect(result[0]).toMatchObject({ forCount: 2, againstCount: 1, score: 1, myReaction: "against" });
+  });
+
+  it("stops after the comments query when the matchup has no comments", async () => {
+    const from = vi.fn((_table: string) => query({ data: [], error: null }));
+
+    expect(await getComments({ from } as never, KEY, "user-1", { limit: 20, offset: 0 })).toEqual({
+      comments: [],
+      hasMore: false
+    });
+    expect(from.mock.calls).toEqual([["matchup_comments"]]);
   });
 
   it("throws when the public_profiles query fails instead of anonymizing everyone", async () => {
     const failure = { message: "boom" };
     const supabase = stub({
       matchup_comments: query({ data: [comment({})], error: null }),
-      matchup_comment_votes: query({ data: [], error: null }),
       public_profiles: query({ data: null, error: failure })
     });
     await expect(getComments(supabase, KEY, null, { limit: 20, offset: 0 })).rejects.toBe(failure);

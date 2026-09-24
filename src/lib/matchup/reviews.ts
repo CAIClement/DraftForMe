@@ -94,14 +94,15 @@ export async function castVote(
   return error ? { ok: false, error: GENERIC_ERROR } : { ok: true };
 }
 
+type ReactionRow = { user_id: string; value: ReactionValue };
 type CommentRow = {
   id: string;
   body: string;
   created_at: string;
   updated_at: string;
   user_id: string | null;
+  matchup_comment_votes: ReactionRow[];
 };
-type ReactionRow = { comment_id: string; user_id: string; value: ReactionValue };
 type PublicProfileRow = { user_id: string; display_name: string };
 
 // Reads throw on a query error (same as load-example.ts): an empty discussion,
@@ -113,29 +114,20 @@ export async function getComments(
   userId: string | null,
   { limit, offset }: { limit: number; offset: number }
 ): Promise<{ comments: Comment[]; hasMore: boolean }> {
+  // Reactions are embedded (matchup_comment_votes.comment_id's foreign key),
+  // so each comment carries all of its own: no separate .in() on a list of
+  // ids that could outgrow the URL, and no truncated reaction list. The
+  // top-level comments are still capped at PostgREST's max_rows (1000) per
+  // matchup, which is acceptable at this scale.
   const { data: commentRows, error: commentsError } = await whereMatchup(
-    supabase.from("matchup_comments").select("id, body, created_at, updated_at, user_id"),
+    supabase
+      .from("matchup_comments")
+      .select("id, body, created_at, updated_at, user_id, matchup_comment_votes(user_id, value)"),
     key
   );
   if (commentsError) throw commentsError;
   const rows = (commentRows ?? []) as CommentRow[];
-
-  const { data: reactionRows, error: reactionsError } = await supabase
-    .from("matchup_comment_votes")
-    .select("comment_id, user_id, value")
-    .in(
-      "comment_id",
-      rows.map((row) => row.id)
-    );
-  if (reactionsError) throw reactionsError;
-  const reactions = (reactionRows ?? []) as ReactionRow[];
-
-  const reactionsByComment = new Map<string, ReactionRow[]>();
-  for (const reaction of reactions) {
-    const list = reactionsByComment.get(reaction.comment_id) ?? [];
-    list.push(reaction);
-    reactionsByComment.set(reaction.comment_id, list);
-  }
+  if (rows.length === 0) return { comments: [], hasMore: false };
 
   // Nicknames come from the public_profiles view (migration 0005): profiles
   // itself only lets a user read their own row.
@@ -153,7 +145,7 @@ export async function getComments(
   }
 
   const comments: Comment[] = rows.map((row) => {
-    const rowReactions = reactionsByComment.get(row.id) ?? [];
+    const rowReactions = row.matchup_comment_votes;
     const forCount = rowReactions.filter((r) => r.value === "for").length;
     const againstCount = rowReactions.filter((r) => r.value === "against").length;
     const mine = userId === null ? undefined : rowReactions.find((r) => r.user_id === userId);
