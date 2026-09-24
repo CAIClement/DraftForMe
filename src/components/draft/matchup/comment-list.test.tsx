@@ -93,6 +93,14 @@ describe("CommentList", () => {
     expect(screen.getByRole("button", { name: /Pas pertinent/ })).toHaveAttribute("aria-pressed", "false");
   });
 
+  it("offers no reaction buttons on the caller's own comment, but still shows its counts", () => {
+    render(<CommentList comments={[comment({ isMine: true, forCount: 4, againstCount: 2 })]} matchup={MATCHUP} />);
+    expect(screen.queryByRole("button", { name: /Pertinent/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Pas pertinent/ })).not.toBeInTheDocument();
+    expect(screen.getByText("Pertinent (4)")).toBeInTheDocument();
+    expect(screen.getByText("Pas pertinent (2)")).toBeInTheDocument();
+  });
+
   it("labels the reaction buttons with their counts for screen readers", () => {
     render(<CommentList comments={[comment({ forCount: 3, againstCount: 1 })]} matchup={MATCHUP} />);
     expect(screen.getByRole("button", { name: "Pertinent (3)" })).toBeInTheDocument();

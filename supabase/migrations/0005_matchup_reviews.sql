@@ -176,7 +176,19 @@ create policy "matchup_comments_delete_own" on public.matchup_comments for delet
 -- foreign key when the account itself is gone.
 
 create policy "matchup_comment_votes_read_all" on public.matchup_comment_votes for select using (true);
-create policy "matchup_comment_votes_all_own" on public.matchup_comment_votes for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+-- The with check (insert and update) also refuses a reaction on one's own
+-- comment: reactions are other players' opinion of a comment, per the privacy
+-- policy. A comment anonymized by account deletion (user_id null) matches no
+-- caller, so it can still be reacted to.
+create policy "matchup_comment_votes_all_own" on public.matchup_comment_votes for all
+  using (auth.uid() = user_id)
+  with check (
+    auth.uid() = user_id
+    and not exists (
+      select 1 from public.matchup_comments c
+      where c.id = comment_id and c.user_id = auth.uid()
+    )
+  );
 
 -- Insert-only, and on purpose no select policy at all: not even the reporter
 -- can list reports back, which keeps a reporter's identity from leaking

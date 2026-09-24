@@ -35,7 +35,7 @@ function ReactionForm({
 }) {
   const [state, formAction, pending] = useActionState(reactToComment, INITIAL);
   const symbol = value === "for" ? "▲" : "▼";
-  const ariaLabel = value === "for" ? `Pertinent (${count})` : `Pas pertinent (${count})`;
+  const ariaLabel = reactionLabel(value, count);
 
   return (
     <div className="inline-flex flex-col items-start">
@@ -61,6 +61,21 @@ function ReactionForm({
         </p>
       )}
     </div>
+  );
+}
+
+function reactionLabel(value: "for" | "against", count: number) {
+  return value === "for" ? `Pertinent (${count})` : `Pas pertinent (${count})`;
+}
+
+function ReactionCount({ value, count }: { value: "for" | "against"; count: number }) {
+  return (
+    <span className="px-1.5 text-ink-faint">
+      <span aria-hidden="true">
+        {value === "for" ? "▲" : "▼"} {count}
+      </span>
+      <span className="sr-only">{reactionLabel(value, count)}</span>
+    </span>
   );
 }
 
@@ -185,20 +200,31 @@ export function CommentList({
           )}
 
           <div className="mt-2 flex items-center gap-3 text-xs">
-            <ReactionForm
-              matchup={matchup}
-              commentId={comment.id}
-              value="for"
-              active={comment.myReaction === "for"}
-              count={comment.forCount}
-            />
-            <ReactionForm
-              matchup={matchup}
-              commentId={comment.id}
-              value="against"
-              active={comment.myReaction === "against"}
-              count={comment.againstCount}
-            />
+            {comment.isMine ? (
+              // Reacting to one's own comment is refused (the database policy
+              // agrees), so the author only reads the score.
+              <>
+                <ReactionCount value="for" count={comment.forCount} />
+                <ReactionCount value="against" count={comment.againstCount} />
+              </>
+            ) : (
+              <>
+                <ReactionForm
+                  matchup={matchup}
+                  commentId={comment.id}
+                  value="for"
+                  active={comment.myReaction === "for"}
+                  count={comment.forCount}
+                />
+                <ReactionForm
+                  matchup={matchup}
+                  commentId={comment.id}
+                  value="against"
+                  active={comment.myReaction === "against"}
+                  count={comment.againstCount}
+                />
+              </>
+            )}
             {comment.isMine && editingId !== comment.id && (
               <>
                 <button type="button" onClick={() => setEditingId(comment.id)} className="text-ink-faint hover:text-ink">
