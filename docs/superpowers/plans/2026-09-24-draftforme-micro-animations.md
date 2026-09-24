@@ -14,7 +14,7 @@
 
 - Branch: `feat/micro-animations` (already created from `main`). Never commit on `main`.
 - Colours only through tokens (`.claude/rules/ui.md`): every class below uses existing token names (`accent`, `ink`, `surface`, `surface-sunk`, ...). Do not introduce a hex value or a stock Tailwind colour.
-- Hover transitions use exactly `transition-colors duration-200`, the convention already used in eight places. Do not invent another duration.
+- Hover transitions use exactly `transition-colors duration-200`, the convention already used in seven places. Do not invent another duration.
 - **Why there are no new unit tests:** these are CSS class additions with no behaviour. No existing test asserts on any of these classes (the only `toHaveClass` in the suite is on `RiotDisclaimer`), and a test asserting that a string contains `transition-colors` would only restate the diff. Each task instead runs the existing tests for the files it touches, so a typo that breaks rendering is caught; Task 6 verifies the result in the browser via computed styles.
 - The suite passes at every commit (`CLAUDE.md`).
 - Commit messages end with the line `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`.

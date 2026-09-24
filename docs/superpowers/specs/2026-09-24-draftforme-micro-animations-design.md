@@ -17,7 +17,7 @@ The site already has a motion system, added with the draft board:
   to a new width).
 - A `prefers-reduced-motion` block that zeroes every transition and animation
   duration and stops loops.
-- A hover convention: `transition-colors duration-200`, used in eight places
+- A hover convention: `transition-colors duration-200`, used in seven places
   (`ButtonLink`, header, footer, account menu, legal links, account pages).
 
 So the draft board's big moments are already animated. What is left is
