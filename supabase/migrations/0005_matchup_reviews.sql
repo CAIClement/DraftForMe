@@ -73,6 +73,10 @@ begin
     raise exception 'comment_rate_limited' using errcode = 'P0001';
   end if;
 
+  -- The windows above trust created_at, so the client never chooses it: a
+  -- backdated insert would otherwise fall outside every window and dodge the cap.
+  new.created_at := now();
+  new.updated_at := now();
   return new;
 end;
 $$;
@@ -80,6 +84,52 @@ $$;
 create trigger matchup_comments_rate_limit
   before insert on public.matchup_comments
   for each row execute function public.enforce_comment_rate_limit();
+
+-- An author may edit a comment's body, nothing else. created_at is locked so a
+-- comment cannot be backdated out of the rate-limit windows; the matchup key
+-- is locked so a comment cannot be moved to another matchup; user_id is
+-- locked except for becoming null, because the on delete set null foreign key
+-- anonymizes a deleted account's comments through an UPDATE that must pass.
+-- updated_at is maintained here so the application never has to set it.
+create function public.lock_matchup_comment_columns()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  new.created_at := old.created_at;
+  new.role := old.role;
+  new.champion_low_id := old.champion_low_id;
+  new.champion_high_id := old.champion_high_id;
+  if new.user_id is not null then
+    new.user_id := old.user_id;
+  end if;
+  new.updated_at := now();
+  return new;
+end;
+$$;
+
+create trigger matchup_comments_lock_columns
+  before update on public.matchup_comments
+  for each row execute function public.lock_matchup_comment_columns();
+
+-- Changing a vote (castVote's upsert) keeps its original created_at and
+-- stamps updated_at, so neither depends on what the client sends.
+create function public.touch_matchup_vote()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  new.created_at := old.created_at;
+  new.updated_at := now();
+  return new;
+end;
+$$;
+
+create trigger matchup_votes_touch
+  before update on public.matchup_votes
+  for each row execute function public.touch_matchup_vote();
 
 create table public.matchup_comment_votes (
   id uuid primary key default gen_random_uuid(),
