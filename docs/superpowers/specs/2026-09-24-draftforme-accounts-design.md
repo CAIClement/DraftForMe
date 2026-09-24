@@ -115,6 +115,8 @@ Vitest, next to the code, with the Supabase client mocked where a route or actio
 ## Owner actions (not done by Claude)
 
 - [ ] Create a Discord application (discord.com/developers) and a Google OAuth client (Google Cloud console), with the Supabase callback URL as redirect URI.
-- [ ] Enable both providers in the Supabase dashboard with their client IDs and secrets, and add the site's URLs (local and production) to the allowed redirect URLs.
+- [ ] Enable both providers in the Supabase dashboard with their client IDs and secrets, and add the site's URLs to the allowed redirect URLs **as wildcards** (`http://localhost:3000/**` and the production equivalent): `redirectTo` carries `?next=...`, and a non-matching URL makes Supabase silently fall back to the Site URL.
 - [ ] Apply migration 0004 to production when ready.
+- [ ] Check the Supabase project's region and accept Supabase's DPA (standard contractual clauses), then add one sentence to the privacy policy's "Compte" section on that transfer, as for Vercel (GDPR art. 13.1.f). Supabase Pte. Ltd. is in Singapore, which has no EU adequacy decision.
+- [ ] Check whether Supabase Auth records IP addresses and browsers (`auth.audit_log_entries`, `auth.sessions`); if it does, list them in the "Compte" section.
 - [ ] Before the site goes public: everything in the legal pages checklist (`2026-09-23-draftforme-legal-pages-design.md`), plus a re-read of the privacy policy's "Compte" section against what production actually stores.
