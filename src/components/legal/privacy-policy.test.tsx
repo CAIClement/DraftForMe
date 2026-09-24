@@ -83,6 +83,13 @@ describe("PrivacyPolicy", () => {
     expect(screen.getByText(/votre pseudo est affiché publiquement à côté de vos commentaires/)).toBeInTheDocument();
   });
 
+  it("says votes and reactions are public and can be linked to the nickname", () => {
+    render(<PrivacyPolicy info={noContact} />);
+    expect(screen.getByText(/Vos votes et vos réactions sont publics/)).toBeInTheDocument();
+    expect(screen.getByText(/identifiant technique de votre compte, que n'importe qui peut consulter/)).toBeInTheDocument();
+    expect(screen.getByText(/rattachés à votre pseudo si vous avez commenté/)).toBeInTheDocument();
+  });
+
   it("describes what happens to each kind of avis when the account is deleted", () => {
     render(<PrivacyPolicy info={noContact} />);
     expect(screen.getByText(/vos votes, vos réactions et vos signalements sont supprimés avec lui/)).toBeInTheDocument();

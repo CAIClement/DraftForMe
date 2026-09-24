@@ -47,6 +47,11 @@ describe("TermsOfUse", () => {
     );
   });
 
+  it("says votes, reactions and comments are public", () => {
+    render(<TermsOfUse info={SITE_INFO} />);
+    expect(screen.getByText(/Vos votes, vos réactions et vos commentaires sont publics/)).toBeInTheDocument();
+  });
+
   it("says an account is needed to leave a review", () => {
     render(<TermsOfUse info={SITE_INFO} />);
     expect(screen.getByText(/un compte est nécessaire pour donner votre avis/)).toBeInTheDocument();

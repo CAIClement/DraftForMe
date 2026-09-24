@@ -38,9 +38,10 @@ export function TermsOfUse({ info }: { info: SiteInfo }) {
         <p>
           Vous pouvez voter une fois par matchup et par compte, et laisser plusieurs commentaires : ils suivent la même
           règle que le pseudo (ni usurpation, ni propos injurieux, haineux ou contraires à la loi), et sont limités pour
-          éviter de poster trop vite. Vous pouvez modifier ou supprimer vos commentaires à tout moment. Ces avis
-          reflètent l&apos;opinion des joueurs qui les publient : comme les recommandations, ils ne sont pas une
-          garantie, et ils n&apos;influencent pas les recommandations du site.
+          éviter de poster trop vite. Vos votes, vos réactions et vos commentaires sont publics. Vous pouvez modifier
+          ou supprimer vos commentaires à tout moment. Ces avis reflètent l&apos;opinion des joueurs qui les publient :
+          comme les recommandations, ils ne sont pas une garantie, et ils n&apos;influencent pas les recommandations du
+          site.
         </p>
         <p>
           Un signalement est transmis à l&apos;éditeur, qui modère le site lui-même et peut retirer un commentaire ou

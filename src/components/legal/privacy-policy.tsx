@@ -120,7 +120,9 @@ export function PrivacyPolicy({ info }: { info: SiteInfo }) {
           éventuels signalements (spam, insultant, hors sujet ou autre), que seul l&apos;éditeur peut lire.
         </p>
         <p>
-          Quand vous commentez, votre pseudo est affiché publiquement à côté de vos commentaires.
+          Quand vous commentez, votre pseudo est affiché publiquement à côté de vos commentaires. Vos votes et vos
+          réactions sont publics : ils sont enregistrés avec l&apos;identifiant technique de votre compte, que
+          n&apos;importe qui peut consulter, et peuvent donc être rattachés à votre pseudo si vous avez commenté.
         </p>
         <p>
           Finalité : publier les avis de la communauté sur les matchups et permettre la modération. Base légale :
