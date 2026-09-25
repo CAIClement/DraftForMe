@@ -1,13 +1,12 @@
 "use client";
 
 import { useReducer, useRef, useState } from "react";
-import { Alternatives } from "./alternatives";
 import { ChampionPicker } from "./champion-picker";
+import { ComparisonTable } from "./comparison-table";
 import { DraftSlot } from "./draft-slot";
 import { PriorityControl, PriorityUnavailable } from "./priority-control";
 import { RefinePrompt } from "./refine-prompt";
 import { RiftMap } from "./rift-map";
-import { Verdict } from "./verdict";
 import { DEFAULT_EXAMPLE } from "@/lib/draft/default-example";
 import {
   allyPickIds,
@@ -63,6 +62,12 @@ export function DraftBoard({
   // else. It never enters the draft and never triggers a request.
   const [previewId, setPreviewId] = useState<string | null>(null);
 
+  // Which row of the table is open. `null` means the first one. Kept apart
+  // from `recommendations` so selecting never reorders the table, and reset
+  // whenever a new answer arrives: an old choice does not carry over to a
+  // draft it was not made for.
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+
   // Only the newest request may write state. Without this, two in-flight
   // requests resolve in arbitrary order and the slower one wins, leaving a
   // recommendation on screen that does not match the visible board.
@@ -113,6 +118,7 @@ export function DraftBoard({
       const payload = (await response.json()) as { recommendations: Recommendation[] };
       if (id !== requestId.current) return;
       setRecommendations(payload.recommendations);
+      setSelectedId(null);
     } catch {
       if (id !== requestId.current) return;
       setError("Impossible de mettre à jour la recommandation. Le résultat affiché est le précédent.");
@@ -138,15 +144,16 @@ export function DraftBoard({
     }, PRIORITY_DEBOUNCE_MS);
   }
 
-  const [top, ...rest] = recommendations;
+  const [top] = recommendations;
   const playerFactor = top?.explanation.factors.find((factor) => factor.key === "player");
 
   // A preview only ever points at an entry from the list already on screen
   // -- it is a look, not a fetch -- so a stale id (the previewed alternative
   // got promoted or the list changed under it) simply falls back to `top`
-  // rather than showing nothing.
+  // rather than showing nothing. The same fallback applies to a selection.
   const previewed = previewId === null ? undefined : recommendations.find((entry) => entry.championId === previewId);
-  const shown = previewed ?? top;
+  const selected = selectedId === null ? undefined : recommendations.find((entry) => entry.championId === selectedId);
+  const shown = previewed ?? selected ?? top;
 
   const recommended =
     shown === undefined
@@ -275,10 +282,8 @@ export function DraftBoard({
         </p>
       )}
 
-      {/* The recommended champion's name is also rendered as plain text in the
-          "your lane" column slot above (see `column`), so its own label here
-          disambiguates a text query the same way the two columns and the map
-          disambiguate their shared slot names. */}
+      {/* Labelled so tests and assistive tech can tell the table's rows apart
+          from the columns' and the map's buttons. */}
       <div
         role="group"
         aria-label="Recommandation"
@@ -287,26 +292,24 @@ export function DraftBoard({
       >
         {top ? (
           <>
-            <Verdict recommendation={top} role={draft.yourRole} enemyChampionId={directOpponent(draft)} />
+            <ComparisonTable
+              recommendations={recommendations}
+              selectedId={(selected ?? top).championId}
+              role={draft.yourRole}
+              enemyChampionId={directOpponent(draft)}
+              onPreview={setPreviewId}
+              onSelect={(championId) => {
+                setPreviewId(null);
+                // Answers nothing new: the server already scored this exact
+                // draft, so choosing a row only changes what is shown.
+                setSelectedId(championId);
+              }}
+            />
             {playerFactor?.available ? (
               <PriorityControl value={draft.priority} onChange={changePriority} />
             ) : (
               <PriorityUnavailable />
             )}
-            <Alternatives
-              recommendations={rest}
-              onPreview={setPreviewId}
-              onSelect={(championId) => {
-                setPreviewId(null);
-                // Reorders what the server already sent; it asks for nothing new
-                // because the server has already answered this exact draft.
-                setRecommendations((current) => {
-                  const chosen = current.find((entry) => entry.championId === championId);
-                  if (chosen === undefined) return current;
-                  return [chosen, ...current.filter((entry) => entry.championId !== championId)];
-                });
-              }}
-            />
             <RefinePrompt />
           </>
         ) : (
