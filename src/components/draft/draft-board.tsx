@@ -25,6 +25,26 @@ export type BoardChampion = { id: string; name: string; imageUrl?: string };
 
 const PRIORITY_DEBOUNCE_MS = 250;
 
+// "Play this lane". Drawn inline rather than pulled from an icon library for
+// one glyph; `currentColor` lets the button's hover colour reach it.
+function PlayerIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      width="15"
+      height="15"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+    >
+      <circle cx="12" cy="8" r="4" />
+      <path d="M4 21c0-4 4-6 8-6s8 2 8 6" />
+    </svg>
+  );
+}
+
 export function DraftBoard({
   champions,
   initialDraft,
@@ -188,16 +208,17 @@ export function DraftBoard({
                   own it doubled the column's height and made five lanes read as
                   ten. It cannot be nested inside the slot -- that slot is itself
                   a button, and a button inside a button is invalid. Its
-                  accessible name says what it does; the visible label is short
-                  because the row it sits in already names the lane. */}
+                  accessible name and tooltip say what it does; the icon alone
+                  is the visible label. */}
               {side === "ally" && !isYourLane && (
                 <button
                   type="button"
                   onClick={() => apply({ type: "setYourRole", role })}
                   aria-label={`Jouer ${ROLE_LABELS[role].toLowerCase()}`}
-                  className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded-md border border-rule bg-surface px-1.5 py-1 text-[8px] font-extrabold uppercase tracking-[0.1em] text-ink-faint hover:border-accent hover:text-accent"
+                  title={`Jouer ${ROLE_LABELS[role].toLowerCase()}`}
+                  className="absolute right-1.5 top-1/2 grid h-[26px] w-[26px] -translate-y-1/2 place-items-center rounded-md border border-rule bg-surface text-ink-faint hover:border-accent hover:text-accent"
                 >
-                  Vous ?
+                  <PlayerIcon />
                 </button>
               )}
             </div>
@@ -209,7 +230,7 @@ export function DraftBoard({
 
   return (
     <div className="rounded-xl border border-rule bg-surface p-4">
-      <div className="grid gap-4 sm:grid-cols-[186px_1fr_186px]">
+      <div className="grid gap-4 sm:grid-cols-[170px_1fr_170px]">
         {column("ally")}
 
         <section

@@ -201,4 +201,14 @@ describe("DraftBoard", () => {
 
     expect(fetchSpy).not.toHaveBeenCalled();
   });
+
+  it("offers each other allied lane through a silhouette icon, not a text button", () => {
+    render(<DraftBoard champions={champions} initialDraft={solved} initialRecommendations={initial} />);
+
+    const claim = screen.getByRole("button", { name: "Jouer top" });
+
+    expect(claim).toHaveAttribute("title", "Jouer top");
+    expect(claim.querySelector("svg")).not.toBeNull();
+    expect(claim).not.toHaveTextContent("Vous");
+  });
 });
