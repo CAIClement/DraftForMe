@@ -119,7 +119,7 @@ export function ComparisonTable({
                   onClick={() => onSelect(id)}
                   onMouseEnter={() => onPreview(id)}
                   onMouseLeave={() => onPreview(null)}
-                  className={`cursor-pointer border-b border-rule-soft ${
+                  className={`cursor-pointer border-b border-rule-soft transition-colors duration-200 ${
                     selected ? "bg-accent-wash" : "hover:bg-surface-sunk"
                   }`}
                 >
