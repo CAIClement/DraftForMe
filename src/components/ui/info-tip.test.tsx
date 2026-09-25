@@ -127,4 +127,18 @@ describe("InfoTip", () => {
 
     expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
   });
+
+  it("closes when focus moves to another tip", () => {
+    render(
+      <div>
+        <InfoTip label="Matchup" text="Part de 50, l'adversaire direct compte double." />
+        <InfoTip label="Score" text="Note sur 100." />
+      </div>
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Qu'est-ce que Matchup ?" }));
+    fireEvent.focusIn(screen.getByRole("button", { name: "Qu'est-ce que Score ?" }));
+
+    expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
+  });
 });

@@ -7,9 +7,9 @@ const POPOVER_WIDTH = 240;
 /**
  * An "i" that explains a label. Opened by click rather than hover so it works
  * on touch screens and from the keyboard; closed by a second click, Escape, a
- * click elsewhere, or a scroll/resize. Because a click elsewhere closes it,
- * opening another one closes this one: at most one is open at a time without
- * shared state.
+ * click elsewhere, focus moving elsewhere, or a scroll/resize. Because those
+ * close it, opening another one (by click or by tabbing to it) closes this
+ * one: at most one is open at a time without shared state.
  *
  * The popover is `fixed`-positioned from the button's own bounding rect
  * (computed when it opens) rather than `absolute`, so it escapes a scrolling
@@ -38,8 +38,13 @@ export function InfoTip({ label, text, align = "start" }: { label: string; text:
       if (!root.current?.contains(event.target as Node)) setOpen(false);
     }
 
+    function onFocusIn(event: FocusEvent) {
+      if (!root.current?.contains(event.target as Node)) setOpen(false);
+    }
+
     document.addEventListener("keydown", onKeyDown);
     document.addEventListener("mousedown", onMouseDown);
+    document.addEventListener("focusin", onFocusIn);
     // A fixed popover doesn't follow its button, so any scroll or resize
     // would leave it floating over the wrong spot; closing it is simplest.
     window.addEventListener("scroll", close, true);
@@ -47,6 +52,7 @@ export function InfoTip({ label, text, align = "start" }: { label: string; text:
     return () => {
       document.removeEventListener("keydown", onKeyDown);
       document.removeEventListener("mousedown", onMouseDown);
+      document.removeEventListener("focusin", onFocusIn);
       window.removeEventListener("scroll", close, true);
       window.removeEventListener("resize", close);
     };
