@@ -24,8 +24,8 @@ export function PrivacyPolicy({ info }: { info: SiteInfo }) {
       <LegalSection title="Données traitées">
         <p>
           Si vous n&apos;avez pas de compte, aucune donnée vous concernant n&apos;est enregistrée dans la base de{" "}
-          {info.siteName}. Deux traitements techniques ont lieu pour tous les visiteurs ; la section « Compte »
-          décrit ce qui s&apos;y ajoute si vous vous connectez.
+          {info.siteName}. Deux traitements techniques ont lieu pour tous les visiteurs ; les sections « Compte » et
+          « Avis » décrivent ce qui s&apos;y ajoute si vous vous connectez.
         </p>
         <h3 className="pt-2 font-medium text-ink">Journaux de l&apos;hébergeur</h3>
         <p>
@@ -112,10 +112,39 @@ export function PrivacyPolicy({ info }: { info: SiteInfo }) {
         </p>
       </LegalSection>
 
-      <LegalSection title="Évolutions à venir">
+      <LegalSection title="Avis">
         <p>
-          Des avis sur les matchups sont prévus. Cette politique sera mise à jour avant leur ouverture pour décrire les
-          données qu&apos;ils impliquent.
+          Si vous donnez votre avis sur un matchup, {info.siteName} enregistre les éléments suivants, chacun associé à
+          votre compte : votre choix de vote, le texte de vos commentaires (vous pouvez en laisser plusieurs par
+          matchup), vos réactions (pour ou contre) sur les commentaires des autres joueurs, et le motif de vos
+          éventuels signalements (spam, insultant, hors sujet ou autre), que seul l&apos;éditeur peut lire.
+        </p>
+        <p>
+          Quand vous commentez, votre pseudo est affiché publiquement à côté de vos commentaires. Vos votes et vos
+          réactions sont publics : ils sont enregistrés avec l&apos;identifiant technique de votre compte, que
+          n&apos;importe qui peut consulter, et peuvent donc être rattachés à votre pseudo si vous avez commenté.
+        </p>
+        <p>
+          Finalité : publier les avis de la communauté sur les matchups et permettre la modération. Base légale :
+          l&apos;exécution du service que vous demandez en votant, en commentant ou en réagissant (article 6.1.b du
+          RGPD) ; l&apos;intérêt légitime de l&apos;éditeur pour les signalements. Durée de conservation : vos votes,
+          vos réactions et vos signalements sont conservés au plus tard jusqu&apos;à la suppression de votre compte ;
+          vos commentaires, jusqu&apos;à ce que vous les supprimiez ou que l&apos;éditeur les retire, y compris après
+          la suppression de votre compte.
+        </p>
+        <p>
+          Tant que votre compte existe, vous pouvez modifier ou supprimer vos commentaires, et changer votre vote ou
+          vos réactions. Le site ne permet pas de retirer un vote ou une réaction, seulement d&apos;en changer : pour en
+          effacer un sans supprimer votre compte, demandez-le à l&apos;éditeur, comme indiqué dans la section « Vos
+          droits ».
+        </p>
+        <p>
+          Si vous supprimez votre compte, vos votes, vos réactions et vos signalements sont supprimés avec lui. Vos
+          commentaires, en revanche, restent visibles : c&apos;est le compte qui est supprimé, pas le contenu que
+          d&apos;autres joueurs sont venus lire ; ils ne sont plus associés à votre compte et leur auteur apparaît
+          comme « Utilisateur supprimé ». Si vous voulez qu&apos;ils disparaissent, supprimez-les avant de supprimer
+          votre compte : ensuite, vous ne pourrez plus le faire vous-même et devrez le demander à l&apos;éditeur, comme
+          indiqué dans la section « Vos droits ».
         </p>
       </LegalSection>
     </LegalPage>

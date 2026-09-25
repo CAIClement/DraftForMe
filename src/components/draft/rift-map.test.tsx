@@ -62,4 +62,27 @@ describe("RiftMap", () => {
 
     expect(onSlotClick).toHaveBeenCalledWith("enemy", "top");
   });
+
+  // The ping is centred and hidden by its keyframes only while they run. Without
+  // resting classes it reappears after the animation, offset down and to the
+  // right, which the owner reported as stray "targets" next to every pick.
+  it("leaves the landing ping centred and invisible once it has played", () => {
+    render(<RiftMap state={state} champions={champions} recommended={null} onSlotClick={() => {}} />);
+
+    const ping = screen.getByRole("button", { name: "Mid adverse : Zed" }).querySelector(".pin-ping");
+
+    expect(ping).not.toBeNull();
+    expect(ping).toHaveClass("-translate-x-1/2", "-translate-y-1/2", "opacity-0");
+  });
+
+  // The portrait is a rounded square; a circular ring around it read as a
+  // second, misaligned shape.
+  it("draws an occupied pin's ring in the portrait's shape", () => {
+    render(<RiftMap state={state} champions={champions} recommended={null} onSlotClick={() => {}} />);
+
+    const pin = screen.getByRole("button", { name: "Mid adverse : Zed" });
+
+    expect(pin).toHaveClass("rounded-lg");
+    expect(pin).not.toHaveClass("rounded-full");
+  });
 });

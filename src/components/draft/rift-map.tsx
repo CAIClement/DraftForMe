@@ -106,14 +106,16 @@ export function RiftMap({
               onClick={() => onSlotClick(side, role)}
               aria-label={anchorLabel(side, role, champion?.name ?? championId, isYourLane, recommended?.championName ?? null)}
               style={{ left: `${position.x}%`, top: `${position.y}%` }}
-              className={`pin-drop absolute -translate-x-1/2 -translate-y-1/2 rounded-full ${
+              className={`pin-drop absolute -translate-x-1/2 -translate-y-1/2 ${
                 pinName === null
                   ? // `bg-paper/70` would be silently inert: this project's colour tokens are
                     // bare `var(--x)` with no `<alpha-value>` channel, so Tailwind emits no
                     // rule at all for an opacity modifier on one. The arbitrary value does
                     // emit, and keeps the tint on the same element the design put it on.
-                    "border-2 border-dashed border-ink-faint bg-[color-mix(in_srgb,var(--paper)_70%,transparent)] p-2"
-                  : ring
+                    "rounded-full border-2 border-dashed border-ink-faint bg-[color-mix(in_srgb,var(--paper)_70%,transparent)] p-2"
+                  : // Same corners as `ChampionAvatar` (`rounded-lg`): a circle around a
+                    // square portrait read as a second, misaligned shape.
+                    `rounded-lg ${ring}`
               }`}
             >
               {pinName === null ? (
@@ -128,9 +130,14 @@ export function RiftMap({
                       so this ring needs nothing extra from the button to centre
                       itself. It mirrors the button's own left/top + -translate-1/2
                       centring trick against the button's box instead of the map's. */}
+                  {/* The keyframes set transform and opacity only while they run,
+                      and the animation has no fill mode. These resting classes are
+                      what the span falls back to afterwards: centred and invisible.
+                      Without them it reappeared at full opacity, offset by half its
+                      size -- the stray "targets" next to every placed pick. */}
                   <span
                     aria-hidden="true"
-                    className={`pin-ping absolute left-1/2 top-1/2 h-full w-full rounded-full ring-2 ${ringColorClass}`}
+                    className={`pin-ping absolute left-1/2 top-1/2 h-full w-full -translate-x-1/2 -translate-y-1/2 rounded-lg opacity-0 ring-2 ${ringColorClass}`}
                   />
                   <ChampionAvatar name={pinName} imageUrl={pinImage} size={isYourLane ? 40 : 32} />
                 </>

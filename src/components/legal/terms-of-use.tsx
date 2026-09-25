@@ -15,8 +15,8 @@ export function TermsOfUse({ info }: { info: SiteInfo }) {
 
       <LegalSection title="Accès au service">
         <p>
-          Le site est gratuit. Ses outils sont accessibles sans inscription ; un compte n&apos;est nécessaire pour
-          aucune d&apos;entre elles aujourd&apos;hui. L&apos;éditeur peut modifier, suspendre ou arrêter le site à
+          Le site est gratuit. Ses outils sont accessibles sans inscription ; un compte est nécessaire pour donner
+          votre avis sur les matchups. L&apos;éditeur peut modifier, suspendre ou arrêter le site à
           tout moment, sans préavis ; aucune disponibilité n&apos;est garantie.
         </p>
       </LegalSection>
@@ -31,6 +31,27 @@ export function TermsOfUse({ info }: { info: SiteInfo }) {
             Mon compte
           </Link>
           .
+        </p>
+      </LegalSection>
+
+      <LegalSection title="Avis et commentaires">
+        <p>
+          Vous pouvez voter une fois par matchup et par compte, et laisser plusieurs commentaires : ils suivent la même
+          règle que le pseudo (ni usurpation, ni propos injurieux, haineux ou contraires à la loi), et sont limités pour
+          éviter de poster trop vite. Vos votes, vos réactions et vos commentaires sont publics. Tant que votre compte
+          existe, vous pouvez modifier ou supprimer vos commentaires, et changer votre vote ou vos réactions, mais pas
+          les retirer depuis le site. Ces avis reflètent l&apos;opinion des joueurs qui les publient : comme les
+          recommandations, ils ne sont pas une garantie, et ils n&apos;influencent pas les recommandations du site.
+        </p>
+        <p>
+          Un signalement est enregistré et seul l&apos;éditeur peut le lire ; l&apos;éditeur modère le site lui-même et
+          peut retirer un commentaire ou supprimer un compte qui enfreint ces règles. Si vous supprimez votre compte,
+          vos commentaires ne sont pas supprimés avec lui : ils ne sont plus associés à votre compte et leur auteur
+          apparaît comme « Utilisateur supprimé » (voir la{" "}
+          <Link href="/confidentialite" className={LEGAL_LINK_CLASS}>
+            politique de confidentialité
+          </Link>
+          ).
         </p>
       </LegalSection>
 

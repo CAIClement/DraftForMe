@@ -1,4 +1,5 @@
 import { Plus } from "lucide-react";
+import { Reveal } from "@/components/motion/reveal";
 import { Eyebrow, SectionTitle } from "./eyebrow";
 
 const QUESTIONS = [
@@ -26,12 +27,12 @@ export function FaqSection() {
   return (
     <section aria-labelledby="faq-title" className="px-4 py-20 sm:px-6 sm:py-28">
       <div className="mx-auto grid max-w-6xl items-start gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20">
-        <div>
+        <Reveal>
           <Eyebrow>FAQ</Eyebrow>
           <SectionTitle id="faq-title" lead="Questions fréquentes" />
-        </div>
+        </Reveal>
 
-        <div className="border-t border-rule">
+        <Reveal delay={120} className="border-t border-rule">
           {QUESTIONS.map((item, index) => (
             <details key={item.q} open={index === 0} className="group border-b border-rule">
               <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 py-5 text-base font-semibold transition-colors duration-200 hover:text-accent [&::-webkit-details-marker]:hidden">
@@ -44,7 +45,7 @@ export function FaqSection() {
               <p className="max-w-[62ch] pb-5 text-[15px] leading-relaxed text-ink-muted">{item.a}</p>
             </details>
           ))}
-        </div>
+        </Reveal>
       </div>
     </section>
   );

@@ -58,12 +58,17 @@ function enemyColumn() {
   return within(screen.getByRole("group", { name: "En face" }));
 }
 
-// The recommended champion's name is rendered twice: once as plain text in
-// the "your lane" column slot, once in the Verdict below. A bare getByText
-// is ambiguous whenever the two coincide, which every assertion here about
-// which recommendation won does. Scoping to this panel disambiguates it.
+// The recommendation panel holds the comparison table. Champion names live in
+// the rows' accessible names ("Galio, score 88"), not as visible text.
 function recommendationPanel() {
   return within(screen.getByRole("group", { name: "Recommandation" }));
+}
+
+// Row accessible names, top to bottom. The "i" buttons do not match.
+function rowNames() {
+  return recommendationPanel()
+    .getAllByRole("button", { name: /, score \d+$/ })
+    .map((button) => button.getAttribute("aria-label"));
 }
 
 // Two placements, so two requests, without depending on the picker's internals.
@@ -101,8 +106,8 @@ describe("DraftBoard request handling", () => {
     resolvers[1](ok("Briar"));
     resolvers[0](ok("Anivia"));
 
-    await waitFor(() => expect(recommendationPanel().getByText("Briar")).toBeInTheDocument());
-    expect(screen.queryByText("Anivia")).not.toBeInTheDocument();
+    await waitFor(() => expect(rowNames()).toEqual(["Briar, score 90"]));
+    expect(recommendationPanel().queryByRole("button", { name: /^Anivia,/ })).not.toBeInTheDocument();
   });
 
   it("does not leave a stale error banner over a newer success", async () => {
@@ -123,7 +128,7 @@ describe("DraftBoard request handling", () => {
     resolvers[1](ok("Briar"));
     resolvers[0](new Response("", { status: 500 }));
 
-    await waitFor(() => expect(recommendationPanel().getByText("Briar")).toBeInTheDocument());
+    await waitFor(() => expect(rowNames()).toEqual(["Briar, score 90"]));
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 

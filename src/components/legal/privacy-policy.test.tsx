@@ -1,9 +1,15 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { SITE_INFO, type SiteInfo } from "@/lib/legal/site-info";
 import { PrivacyPolicy } from "./privacy-policy";
 
 const noContact: SiteInfo = { ...SITE_INFO, contactEmail: "" };
+
+function sectionTitled(title: string): HTMLElement {
+  const section = screen.getByRole("heading", { level: 2, name: title }).closest("section");
+  if (!section) throw new Error(`No section titled ${title}`);
+  return section;
+}
 
 describe("PrivacyPolicy", () => {
   it("has every expected section", () => {
@@ -15,7 +21,7 @@ describe("PrivacyPolicy", () => {
       "Compte",
       "Vos droits",
       "Cookies",
-      "Évolutions à venir"
+      "Avis"
     ]) {
       expect(screen.getByRole("heading", { level: 2, name: title })).toBeInTheDocument();
     }
@@ -31,8 +37,9 @@ describe("PrivacyPolicy", () => {
   it("describes the account data, its basis, its retention and the processors", () => {
     render(<PrivacyPolicy info={noContact} />);
 
-    expect(screen.getByText(/article 6\.1\.b du RGPD/)).toBeInTheDocument();
-    expect(screen.getByText(/jusqu'à la suppression de votre compte/)).toBeInTheDocument();
+    const account = within(sectionTitled("Compte"));
+    expect(account.getByText(/article 6\.1\.b du RGPD/)).toBeInTheDocument();
+    expect(account.getByText(/jusqu'à la suppression de votre compte/)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /politique de confidentialité de Discord/ })).toHaveAttribute(
       "href",
       "https://discord.com/privacy"
@@ -51,6 +58,68 @@ describe("PrivacyPolicy", () => {
   it("no longer announces accounts as upcoming", () => {
     render(<PrivacyPolicy info={noContact} />);
     expect(screen.queryByText(/création de comptes/)).not.toBeInTheDocument();
+  });
+
+  it("no longer announces matchup reviews as upcoming", () => {
+    render(<PrivacyPolicy info={noContact} />);
+    expect(screen.queryByText(/sont prévus/)).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Évolutions à venir" })).not.toBeInTheDocument();
+  });
+
+  it("describes what an avis stores, including reactions and report reasons", () => {
+    render(<PrivacyPolicy info={noContact} />);
+    expect(screen.getByText(/votre choix de vote/)).toBeInTheDocument();
+    expect(screen.getByText(/vos réactions \(pour ou contre\)/)).toBeInTheDocument();
+    expect(screen.getByText(/motif de vos éventuels signalements/)).toBeInTheDocument();
+    expect(screen.getByText(/seul l'éditeur peut lire/)).toBeInTheDocument();
+
+    const avis = within(sectionTitled("Avis"));
+    expect(avis.getByText(/article 6\.1\.b du RGPD/)).toBeInTheDocument();
+  });
+
+  it("gives votes, reactions and reports a different retention from comments", () => {
+    render(<PrivacyPolicy info={noContact} />);
+    const avis = within(sectionTitled("Avis"));
+    expect(
+      avis.getByText(/vos votes, vos réactions et vos signalements sont conservés au plus tard jusqu'à la suppression de votre compte/)
+    ).toBeInTheDocument();
+    expect(
+      avis.getByText(
+        /vos commentaires, jusqu'à ce que vous les supprimiez ou que l'éditeur les retire, y compris après la suppression de votre compte/
+      )
+    ).toBeInTheDocument();
+    expect(avis.queryByText(/jusqu'à la suppression de votre compte ou jusqu'à ce que/)).not.toBeInTheDocument();
+  });
+
+  it("limits self-service edits to while the account exists and points to the rights section otherwise", () => {
+    render(<PrivacyPolicy info={noContact} />);
+    const avis = within(sectionTitled("Avis"));
+    expect(avis.getByText(/Tant que votre compte existe, vous pouvez modifier ou supprimer vos commentaires/)).toBeInTheDocument();
+    expect(avis.getByText(/ne permet pas de retirer un vote ou une réaction, seulement d'en changer/)).toBeInTheDocument();
+    expect(avis.getByText(/pour en effacer un sans supprimer votre compte, demandez-le à l'éditeur/)).toBeInTheDocument();
+    expect(avis.getByText(/supprimez-les avant de supprimer votre compte/)).toBeInTheDocument();
+    expect(avis.getByText(/vous ne pourrez plus le faire vous-même/)).toBeInTheDocument();
+    expect(avis.getAllByText(/à l'éditeur, comme indiqué dans la section « Vos droits »/)).toHaveLength(2);
+    expect(avis.queryByText(/à tout moment/)).not.toBeInTheDocument();
+  });
+
+  it("says the nickname is shown publicly next to comments", () => {
+    render(<PrivacyPolicy info={noContact} />);
+    expect(screen.getByText(/votre pseudo est affiché publiquement à côté de vos commentaires/)).toBeInTheDocument();
+  });
+
+  it("says votes and reactions are public and can be linked to the nickname", () => {
+    render(<PrivacyPolicy info={noContact} />);
+    expect(screen.getByText(/Vos votes et vos réactions sont publics/)).toBeInTheDocument();
+    expect(screen.getByText(/identifiant technique de votre compte, que n'importe qui peut consulter/)).toBeInTheDocument();
+    expect(screen.getByText(/rattachés à votre pseudo si vous avez commenté/)).toBeInTheDocument();
+  });
+
+  it("describes what happens to each kind of avis when the account is deleted", () => {
+    render(<PrivacyPolicy info={noContact} />);
+    expect(screen.getByText(/vos votes, vos réactions et vos signalements sont supprimés avec lui/)).toBeInTheDocument();
+    expect(screen.getByText(/supprimé, pas le contenu/)).toBeInTheDocument();
+    expect(screen.getByText(/« Utilisateur supprimé »/)).toBeInTheDocument();
   });
 
   it("describes both technical flows with their processor's policy", () => {

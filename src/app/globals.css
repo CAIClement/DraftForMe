@@ -37,6 +37,15 @@
 
   --shadow: rgb(0 0 0 / 0.45);
 
+  /* Darkens a portrait under an overlay icon (the draft slots' "remove" cross).
+     The paper colour, translucent. */
+  --scrim: rgb(10 20 40 / 0.7);
+
+  /* The home page's light effects: glows, halo, sheen. The accent and spark
+     colours, translucent. */
+  --glow-accent: rgb(200 170 110 / 0.22);
+  --glow-spark: rgb(10 200 185 / 0.16);
+
   /* The two draft sides. Lifted off the stock blue/red so they still read as
      team colours against the navy ground rather than sinking into it. */
   --team-ally: #4f9bf5;
@@ -171,6 +180,164 @@ html {
 
 .factor-bar-fill {
   transition: width var(--motion) var(--ease-out);
+}
+
+/* The home page's motion. The hero plays on load with CSS alone (`rise`,
+   `word-rise`, `card-pop`), so hydration never hides what is already on
+   screen. Below it, `Reveal` sets `data-reveal` and these rules play once.
+   Every entrance uses `backwards`: the resting state is the visible one. */
+@keyframes reveal-up {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes card-pop {
+  from {
+    opacity: 0;
+    transform: perspective(900px) rotateX(14deg) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Sweeps during the first 40 % of the cycle, then rests: a glint every few
+   seconds rather than a constant shimmer. */
+@keyframes sheen {
+  0% {
+    background-position: 150% 0;
+  }
+  40%,
+  100% {
+    background-position: -100% 0;
+  }
+}
+
+@keyframes halo {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+  50% {
+    box-shadow: 0 0 28px 0 var(--glow-accent);
+  }
+}
+
+@keyframes glow-drift {
+  from {
+    transform: rotate(0deg) scale(1);
+  }
+  to {
+    transform: rotate(25deg) scale(1.15);
+  }
+}
+
+@keyframes hex-float {
+  0% {
+    opacity: 0;
+    transform: translateY(40px) rotate(45deg);
+  }
+  20% {
+    opacity: 0.7;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-320px) rotate(225deg);
+  }
+}
+
+.rise {
+  animation: reveal-up 600ms var(--ease-out) var(--reveal-delay, 0ms) backwards;
+}
+
+.word-rise {
+  display: inline-block;
+  animation: reveal-up 520ms var(--ease-overshoot) var(--reveal-delay, 0ms) backwards;
+}
+
+.card-pop {
+  animation: card-pop 700ms var(--ease-overshoot) var(--reveal-delay, 0ms) backwards;
+}
+
+/* No `overflow: hidden`: the glint moves by `background-position` inside a
+   pseudo-element that already matches the box, and clipping would cut the
+   focus ring of a button inside. */
+.sheen {
+  position: relative;
+}
+
+.sheen::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(100deg, transparent 30%, var(--glow-accent) 50%, transparent 70%);
+  background-size: 250% 100%;
+  background-position: 150% 0;
+  animation: sheen 5s ease-in-out 1.4s infinite;
+  pointer-events: none;
+}
+
+.halo {
+  animation: halo 3.5s ease-in-out infinite;
+}
+
+.hextech-glow {
+  position: absolute;
+  inset: -40%;
+  background:
+    radial-gradient(circle at 30% 30%, var(--glow-spark), transparent 40%),
+    radial-gradient(circle at 70% 60%, var(--glow-accent), transparent 45%);
+  animation: glow-drift 9s ease-in-out infinite alternate;
+}
+
+.hextech-diamond {
+  position: absolute;
+  bottom: 0;
+  width: 8px;
+  height: 8px;
+  border: 1px solid var(--spark);
+  opacity: 0;
+  animation: hex-float 6s linear var(--float-delay, 0ms) infinite;
+}
+
+[data-reveal="pending"] {
+  opacity: 0;
+}
+
+[data-reveal="shown"] {
+  animation: reveal-up 600ms var(--ease-out) var(--reveal-delay, 0ms) backwards;
+}
+
+/* Factor bars fill from the left once their card is revealed. Scoped to
+   `data-reveal`, so the draft tool's bars behave exactly as before. */
+[data-reveal] .factor-bar-fill {
+  transform-origin: left;
+  transition:
+    transform 900ms var(--ease-out) calc(var(--reveal-delay, 0ms) + 200ms),
+    width var(--motion) var(--ease-out);
+}
+
+[data-reveal="pending"] .factor-bar-fill {
+  transform: scaleX(0);
+}
+
+/* Under reduced motion the global block already collapses durations; this
+   also drops the entrance delays, so nothing waits invisible. */
+@media (prefers-reduced-motion: reduce) {
+  .rise,
+  .word-rise,
+  .card-pop,
+  [data-reveal] {
+    animation-delay: 0ms !important;
+  }
 }
 
 /* Error messages fade in rather than popping. `backwards` for the same reason

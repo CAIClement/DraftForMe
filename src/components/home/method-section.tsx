@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
+import { Reveal } from "@/components/motion/reveal";
 import { Eyebrow, SectionTitle } from "./eyebrow";
 
 const STEPS = [
@@ -26,10 +27,10 @@ export function MethodSection() {
     >
       <div className="mx-auto max-w-6xl">
         <div className="flex flex-wrap items-end justify-between gap-6">
-          <div>
+          <Reveal>
             <Eyebrow>Comment ça marche</Eyebrow>
             <SectionTitle id="method-title" lead="Deux informations suffisent." />
-          </div>
+          </Reveal>
           <Link
             href="/draft"
             className="mb-4 inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-accent underline decoration-transparent underline-offset-4 transition-colors duration-200 hover:decoration-current"
@@ -41,11 +42,11 @@ export function MethodSection() {
 
         <ol className="mt-8 grid gap-4 md:grid-cols-3">
           {STEPS.map((step, index) => (
-            <li key={step.title} className="rounded-2xl border border-rule bg-surface p-6">
+            <Reveal as="li" key={step.title} delay={index * 120} className="rounded-2xl border border-rule bg-surface p-6">
               <span className="text-sm font-semibold tabular-nums text-accent">Étape {index + 1}</span>
               <h3 className="mb-2 mt-3 text-lg font-semibold tracking-tight">{step.title}</h3>
               <p className="text-sm leading-relaxed text-ink-muted">{step.body}</p>
-            </li>
+            </Reveal>
           ))}
         </ol>
       </div>

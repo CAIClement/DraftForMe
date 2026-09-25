@@ -1,10 +1,18 @@
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
-type TableDefinition<Row, Insert, Update> = {
+type Relationship = {
+  foreignKeyName: string;
+  columns: string[];
+  isOneToOne?: boolean;
+  referencedRelation: string;
+  referencedColumns: string[];
+};
+
+type TableDefinition<Row, Insert, Update, Relationships extends Relationship[] = []> = {
   Row: Row;
   Insert: Insert;
   Update: Update;
-  Relationships: [];
+  Relationships: Relationships;
 };
 
 export type Database = {
@@ -199,8 +207,99 @@ export type Database = {
           created_at: string;
         }>
       >;
+      matchup_votes: TableDefinition<
+        {
+          id: string;
+          role: string;
+          champion_low_id: string;
+          champion_high_id: string;
+          user_id: string;
+          choice: string;
+          created_at: string;
+          updated_at: string;
+        },
+        {
+          id?: string;
+          role: string;
+          champion_low_id: string;
+          champion_high_id: string;
+          user_id: string;
+          choice: string;
+          created_at?: string;
+          updated_at?: string;
+        },
+        Partial<{
+          id: string;
+          role: string;
+          champion_low_id: string;
+          champion_high_id: string;
+          user_id: string;
+          choice: string;
+          created_at: string;
+          updated_at: string;
+        }>
+      >;
+      matchup_comments: TableDefinition<
+        {
+          id: string;
+          role: string;
+          champion_low_id: string;
+          champion_high_id: string;
+          user_id: string | null;
+          body: string;
+          created_at: string;
+          updated_at: string;
+        },
+        {
+          id?: string;
+          role: string;
+          champion_low_id: string;
+          champion_high_id: string;
+          user_id: string;
+          body: string;
+          created_at?: string;
+          updated_at?: string;
+        },
+        Partial<{
+          id: string;
+          role: string;
+          champion_low_id: string;
+          champion_high_id: string;
+          user_id: string | null;
+          body: string;
+          created_at: string;
+          updated_at: string;
+        }>
+      >;
+      matchup_comment_votes: TableDefinition<
+        { id: string; comment_id: string; user_id: string; value: string; created_at: string },
+        { id?: string; comment_id: string; user_id: string; value: string; created_at?: string },
+        Partial<{ id: string; comment_id: string; user_id: string; value: string; created_at: string }>,
+        // Lets getComments embed a comment's reactions (migration 0005's foreign key).
+        [
+          {
+            foreignKeyName: "matchup_comment_votes_comment_id_fkey";
+            columns: ["comment_id"];
+            isOneToOne: false;
+            referencedRelation: "matchup_comments";
+            referencedColumns: ["id"];
+          }
+        ]
+      >;
+      matchup_comment_reports: TableDefinition<
+        { id: string; comment_id: string; reporter_user_id: string; reason: string; created_at: string },
+        { id?: string; comment_id: string; reporter_user_id: string; reason: string; created_at?: string },
+        Partial<{ id: string; comment_id: string; reporter_user_id: string; reason: string; created_at: string }>
+      >;
     };
-    Views: Record<string, never>;
+    Views: {
+      // Owner-rights view over profiles exposing only comment authors' nicknames
+      // (migration 0005); read-only, so no Insert/Update.
+      public_profiles: {
+        Row: { user_id: string; display_name: string };
+        Relationships: [];
+      };
+    };
     Functions: {
       delete_my_account: { Args: Record<PropertyKey, never>; Returns: undefined };
     };

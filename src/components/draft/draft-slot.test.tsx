@@ -38,4 +38,42 @@ describe("DraftSlot", () => {
     expect(screen.queryByRole("button")).not.toBeInTheDocument();
     expect(screen.getByText(/vous/i)).toBeInTheDocument();
   });
+
+  // Icon-only: the name leaves the screen but not the accessibility tree or
+  // the tooltip, so the existing "Retirer <name>" queries keep working.
+  it("shows an occupied slot's champion by portrait only", () => {
+    render(
+      <DraftSlot
+        side="enemy"
+        role="top"
+        champion={{ id: "darius", name: "Darius" }}
+        isYourLane={false}
+        onOpen={vi.fn()}
+        onClear={vi.fn()}
+      />
+    );
+
+    const slot = screen.getByRole("button", { name: "Retirer Darius" });
+
+    expect(screen.queryByText("Darius")).not.toBeInTheDocument();
+    expect(slot).toHaveAttribute("title", "Retirer Darius");
+    expect(screen.getByText("Top")).toBeInTheDocument();
+  });
+
+  it("shows your lane's recommendation by portrait, with the role marked as yours", () => {
+    render(
+      <DraftSlot
+        side="ally"
+        role="mid"
+        champion={{ id: "ahri", name: "Ahri" }}
+        isYourLane
+        onOpen={vi.fn()}
+        onClear={vi.fn()}
+      />
+    );
+
+    expect(screen.queryByText("Ahri")).not.toBeInTheDocument();
+    expect(screen.getByText("Mid · vous")).toBeInTheDocument();
+    expect(screen.getByTitle("Ahri")).toBeInTheDocument();
+  });
 });

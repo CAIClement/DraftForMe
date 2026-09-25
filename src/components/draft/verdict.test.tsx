@@ -81,3 +81,25 @@ describe("Verdict", () => {
     expect(weights.reduce((sum, weight) => sum + weight, 0)).toBe(100);
   });
 });
+
+describe("Verdict's community link", () => {
+  it("links to the canonical matchup when the direct opponent is known", () => {
+    render(<Verdict recommendation={build()} role="mid" enemyChampionId="zed" />);
+    expect(screen.getByRole("link", { name: "Avis de la communauté" })).toHaveAttribute("href", "/duel/mid/galio-vs-zed");
+  });
+
+  it("omits the link when there is no direct opponent yet", () => {
+    render(<Verdict recommendation={build()} role="mid" enemyChampionId={null} />);
+    expect(screen.queryByRole("link", { name: "Avis de la communauté" })).not.toBeInTheDocument();
+  });
+
+  it("omits the link when the enemy champion is the same as the recommended one", () => {
+    render(<Verdict recommendation={build()} role="mid" enemyChampionId="galio" />);
+    expect(screen.queryByRole("link", { name: "Avis de la communauté" })).not.toBeInTheDocument();
+  });
+
+  it("omits the link when the role is not known", () => {
+    render(<Verdict recommendation={build()} enemyChampionId="zed" />);
+    expect(screen.queryByRole("link", { name: "Avis de la communauté" })).not.toBeInTheDocument();
+  });
+});

@@ -56,12 +56,17 @@ function allyColumn() {
   return within(screen.getByRole("group", { name: "Votre équipe" }));
 }
 
-// The recommended champion's name is rendered twice: once as plain text in
-// the "your lane" column slot, once in the Verdict below. A bare getByText
-// is ambiguous whenever the two coincide, which every test that checks "the
-// recommendation changed" does. Scoping to this panel disambiguates it.
+// The recommendation panel holds the comparison table. Champion names live in
+// the rows' accessible names ("Galio, score 88"), not as visible text.
 function recommendationPanel() {
   return within(screen.getByRole("group", { name: "Recommandation" }));
+}
+
+// Row accessible names, top to bottom. The "i" buttons do not match.
+function rowNames() {
+  return recommendationPanel()
+    .getAllByRole("button", { name: /, score \d+$/ })
+    .map((button) => button.getAttribute("aria-label"));
 }
 
 afterEach(() => {
@@ -74,7 +79,7 @@ describe("DraftBoard", () => {
 
     render(<DraftBoard champions={champions} initialDraft={solved} initialRecommendations={initial} />);
 
-    expect(recommendationPanel().getByText("Galio")).toBeInTheDocument();
+    expect(rowNames()[0]).toBe("Galio, score 88");
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
@@ -153,7 +158,7 @@ describe("DraftBoard", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Jouer top" }));
 
-    await waitFor(() => expect(recommendationPanel().getByText("Darius")).toBeInTheDocument());
+    await waitFor(() => expect(rowNames()[0]).toBe("Darius, score 90"));
     expect(JSON.parse(String(fetchSpy.mock.calls[0][1]?.body)).role).toBe("top");
   });
 
@@ -172,7 +177,7 @@ describe("DraftBoard", () => {
     fireEvent.click(screen.getByRole("button", { name: "Retirer Zed" }));
 
     await waitFor(() => expect(screen.getByRole("alert")).toBeInTheDocument());
-    expect(recommendationPanel().getByText("Galio")).toBeInTheDocument();
+    expect(rowNames()[0]).toBe("Galio, score 88");
   });
 
   it("clears the error banner once a later request succeeds", async () => {
@@ -186,19 +191,74 @@ describe("DraftBoard", () => {
     fetchSpy.mockResolvedValue(ok("Darius"));
     fireEvent.click(screen.getByRole("button", { name: "Jouer top" }));
 
-    await waitFor(() => expect(recommendationPanel().getByText("Darius")).toBeInTheDocument());
+    await waitFor(() => expect(rowNames()[0]).toBe("Darius, score 90"));
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 
   // A preview is a look, not a decision. If it fired a request, hovering the
-  // alternatives list would hammer the API and could even reorder itself.
-  it("fires no request when an alternative is previewed", () => {
+  // table would hammer the API and could even reorder itself.
+  it("fires no request when a row is previewed", () => {
     const fetchSpy = vi.spyOn(globalThis, "fetch");
 
     render(<DraftBoard champions={champions} initialDraft={solved} initialRecommendations={initial} />);
 
-    fireEvent.mouseEnter(screen.getByRole("button", { name: /lissandra/i }));
+    const row = recommendationPanel().getByRole("button", { name: "Lissandra, score 81" }).closest("tr");
+    if (row === null) throw new Error("row not found");
+    fireEvent.mouseEnter(row);
 
     expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("offers each other allied lane through a silhouette icon, not a text button", () => {
+    render(<DraftBoard champions={champions} initialDraft={solved} initialRecommendations={initial} />);
+
+    const claim = screen.getByRole("button", { name: "Jouer top" });
+
+    expect(claim).toHaveAttribute("title", "Jouer top");
+    expect(claim.querySelector("svg")).not.toBeNull();
+    expect(claim).not.toHaveTextContent("Vous");
+  });
+
+  // A comparison table whose rows jump on click cannot be compared. Selecting
+  // only moves the highlight and what the map shows on your lane.
+  it("selects a row without reordering the table or requesting anything", () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+
+    render(<DraftBoard champions={champions} initialDraft={solved} initialRecommendations={initial} />);
+
+    fireEvent.click(recommendationPanel().getByRole("button", { name: "Diana, score 74" }));
+
+    expect(rowNames()).toEqual(["Galio, score 88", "Lissandra, score 81", "Diana, score 74"]);
+    expect(recommendationPanel().getByRole("button", { name: "Diana, score 74" })).toHaveAttribute(
+      "aria-expanded",
+      "true"
+    );
+    expect(
+      within(screen.getByRole("group", { name: "Carte de la Faille" })).getByRole("button", {
+        name: "Votre lane, Mid : Diana recommandé"
+      })
+    ).toBeInTheDocument();
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("goes back to the first row when a new answer arrives", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify({ recommendations: [rec("Orianna", 90), rec("Diana", 74)] }), { status: 200 })
+    );
+
+    render(<DraftBoard champions={champions} initialDraft={solved} initialRecommendations={initial} />);
+
+    fireEvent.click(recommendationPanel().getByRole("button", { name: "Diana, score 74" }));
+    fireEvent.click(screen.getByRole("button", { name: "Jouer top" }));
+
+    await waitFor(() => expect(rowNames()[0]).toBe("Orianna, score 90"));
+    expect(recommendationPanel().getByRole("button", { name: "Orianna, score 90" })).toHaveAttribute(
+      "aria-expanded",
+      "true"
+    );
+    expect(recommendationPanel().getByRole("button", { name: "Diana, score 74" })).toHaveAttribute(
+      "aria-expanded",
+      "false"
+    );
   });
 });
