@@ -42,7 +42,7 @@ A new client component, `src/components/draft/comparison-table.tsx`, replaces `V
 | Score | Rounded total | `totalScore` |
 | Force dans le patch | Rounded factor score | factor `meta` |
 | Matchup | Rounded factor score | factor `counter` |
-| Winrate | `52,4 %` | `winRate` |
+| Winrate | `52.4 %`, same `toFixed(1)` format as `Verdict` | `winRate` |
 | Parties | `12 400` (fr-FR grouping) | `games` |
 
 There is no "Votre pool" column: the player factor is unavailable for every visitor until accounts ship.
