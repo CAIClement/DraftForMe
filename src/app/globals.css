@@ -37,6 +37,10 @@
 
   --shadow: rgb(0 0 0 / 0.45);
 
+  /* Darkens a portrait under an overlay icon (the draft slots' "remove" cross).
+     The paper colour, translucent. */
+  --scrim: rgb(10 20 40 / 0.7);
+
   /* The home page's light effects: glows, halo, sheen. The accent and spark
      colours, translucent. */
   --glow-accent: rgb(200 170 110 / 0.22);

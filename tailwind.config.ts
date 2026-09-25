@@ -26,7 +26,8 @@ const config: Config = {
         "band-muted": "var(--band-muted)",
         "band-rule": "var(--band-rule)",
         "team-ally": "var(--team-ally)",
-        "team-enemy": "var(--team-enemy)"
+        "team-enemy": "var(--team-enemy)",
+        scrim: "var(--scrim)"
       }
     }
   },
