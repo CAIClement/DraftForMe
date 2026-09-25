@@ -1,5 +1,15 @@
 # Current work
 
+## feat/draft-comparison-table
+Started: 2026-09-25
+Spec: docs/superpowers/specs/2026-09-25-draftforme-draft-comparison-table-design.md
+Plan: docs/superpowers/plans/2026-09-25-draftforme-draft-comparison-table.md
+
+- Done: plan Tasks 1-7 (subagent-driven), whole-branch review, then its fixes (InfoTip fixed-positioned so the table's scroll box no longer clips it; closes on focus moving away; three extra table tests). `npm run ci` green (395 tests). Engine, API, seed, ml, home page untouched.
+- Browser check on `npm run dev` (/draft): landing ping ends centred at opacity 0 (measured, offset 0 px); row click opens that row, rows keep their order, map lane shows the chosen champion, no request fired; Matchup "i" opens inside the viewport and closes on Escape; at 375 px no page-level horizontal scroll and the tip stays on screen. Slots show portrait + role, "Retirer X" tooltip, silhouette button.
+- Not checked live: the reset of the selection after a new answer. `/api/recommend` returned 500 because `.env.local` points at a local Supabase (127.0.0.1:54321) that was not running; the page served its cached example. Covered by `draft-board.test.tsx`.
+- Next: ship (merge or PR), owner's choice. Nothing pushed.
+
 ## feat/home-animations
 Started: 2026-09-24
 Spec: docs/superpowers/specs/2026-09-24-draftforme-home-animations-design.md
