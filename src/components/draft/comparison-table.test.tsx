@@ -60,7 +60,9 @@ function renderTable(overrides: Partial<Parameters<typeof ComparisonTable>[0]> =
 
 function cellsOf(name: string, score: number) {
   const row = screen.getByRole("button", { name: `${name}, score ${score}` }).closest("tr");
-  return Array.from(row?.querySelectorAll("td") ?? []).map((cell) => cell.textContent);
+  // Normalises the locale's thousands separator (its exact character varies
+  // by ICU version) to a plain space.
+  return Array.from(row?.querySelectorAll("td") ?? []).map((cell) => cell.textContent?.replace(/\s/g, " ") ?? "");
 }
 
 describe("ComparisonTable", () => {
@@ -77,10 +79,7 @@ describe("ComparisonTable", () => {
   it("shows score, patch strength, matchup, winrate and games per row", () => {
     renderTable();
 
-    // "12 400" uses a narrow no-break space (U+202F) between thousands, as
-    // Node's fr-FR ICU data formats it (`Intl.NumberFormat("fr-FR")`, the
-    // same formatter `VerdictDetail` already uses), not a plain space.
-    expect(cellsOf("Galio", 88).slice(1)).toEqual(["88", "72", "85", "51.3 %", "12 400"]);
+    expect(cellsOf("Galio", 88).slice(1)).toEqual(["88", "72", "85", "51.3 %", "12 400"]);
   });
 
   it("opens the selected row's detail and only that one", () => {
