@@ -6,7 +6,11 @@ import type { Recommendation } from "@/lib/recommendation/types";
 function rec(
   name: string,
   score: number,
-  { matchup = true, winRate = 51.3 as number | null }: { matchup?: boolean; winRate?: number | null } = {}
+  {
+    matchup = true,
+    winRate = 51.3 as number | null,
+    games = 12400 as number | null
+  }: { matchup?: boolean; winRate?: number | null; games?: number | null } = {}
 ): Recommendation {
   return {
     championId: name.toLowerCase(),
@@ -20,7 +24,7 @@ function rec(
     winRate,
     pickRate: 4.1,
     banRate: 2.8,
-    games: 12400,
+    games,
     totalRanked: 64,
     explanation: {
       summary: "",
@@ -104,6 +108,19 @@ describe("ComparisonTable", () => {
     expect(onSelect).toHaveBeenCalledWith("diana");
   });
 
+  it("selects a row when clicking a non-button cell", () => {
+    const { onSelect } = renderTable();
+    const row = screen.getByRole("button", { name: "Diana, score 74" }).closest("tr");
+    if (row === null) throw new Error("row not found");
+    const scoreCell = row.querySelectorAll("td")[1];
+    if (scoreCell === undefined) throw new Error("score cell not found");
+
+    fireEvent.click(scoreCell);
+
+    expect(onSelect).toHaveBeenCalledTimes(1);
+    expect(onSelect).toHaveBeenCalledWith("diana");
+  });
+
   it("previews a row on hover and withdraws it on leave", () => {
     const { onPreview } = renderTable();
     const row = screen.getByRole("button", { name: "Lissandra, score 81" }).closest("tr");
@@ -124,6 +141,16 @@ describe("ComparisonTable", () => {
     expect(onPreview).toHaveBeenLastCalledWith("lissandra");
   });
 
+  it("withdraws the preview when the row's button blurs", () => {
+    const { onPreview } = renderTable();
+    const button = screen.getByRole("button", { name: "Lissandra, score 81" });
+
+    fireEvent.focus(button);
+    fireEvent.blur(button);
+
+    expect(onPreview).toHaveBeenLastCalledWith(null);
+  });
+
   // The site never shows an invented number: an unassessed matchup or an
   // unknown winrate leaves its cell empty, not "0" and not a dash.
   it("leaves a cell empty when its value is missing", () => {
@@ -135,6 +162,14 @@ describe("ComparisonTable", () => {
     expect(patch).toBe("72");
     expect(matchup).toBe("");
     expect(winRate).toBe("");
+  });
+
+  it("leaves the games cell empty when games is missing", () => {
+    renderTable({ recommendations: [rec("Galio", 88, { games: null })] });
+
+    const [, , , , , games] = cellsOf("Galio", 88);
+
+    expect(games).toBe("");
   });
 
   it("explains each column on demand", () => {
