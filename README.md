@@ -20,16 +20,16 @@ Le moteur de recommandation (`src/lib/recommendation/`) classe les champions d'u
 
 Le poids de chaque critère s'adapte à la situation (par exemple, le matchup ne compte qu'une fois un pick adverse connu) et il est affiché à côté du résultat.
 
-**Les données** portent sur l'EUW, en Emerald et au-dessus. Les statistiques actuelles proviennent d'OP.GG (patch 16.3). Leur remplacement par des statistiques calculées à partir de l'API Riot, sur le patch en cours, est en préparation ([spec](docs/superpowers/specs/2026-09-18-draftforme-site-stats-refresh-design.md)).
+**Les données** portent sur l'EUW, en Emerald et au-dessus. Les statistiques incluses dans le dépôt proviennent d'OP.GG (patch 16.3) : c'est un instantané historique, pas une mesure du patch en cours. Leur remplacement par des statistiques calculées à partir de l'API Riot est décrit dans cette [spec](docs/superpowers/specs/2026-09-18-draftforme-site-stats-refresh-design.md).
 
 ## Côté recherche
 
 Le dossier `ml/` contient deux projets menés pour savoir si un modèle pouvait faire mieux que les règles écrites à la main.
 
-1. **Collecte** (`ml/collect/`). Des parties classées EUW du patch en cours sont récupérées via l'API officielle de Riot, à parts égales entre les dix rangs, dans une base SQLite reprise automatiquement après une interruption. Objectif : 30 000 parties.
+1. **Collecte** (`ml/collect/`). Des parties classées EUW du patch 16.18 ont été récupérées via l'API officielle de Riot, à parts égales entre les dix rangs, dans une base SQLite reprise automatiquement après une interruption. Le jeu final contient 26 185 parties.
 2. **Modèle de victoire** (`ml/win/`). Un modèle prédit le vainqueur d'une draft. Il est comparé une seule fois, sur des parties mises de côté, à trois références : le moteur du site, les winrates des parties collectées, et les statistiques publiques seules.
 
-**Premier résultat, sur un essai de 11 000 parties :** les statistiques publiques prédisent le vainqueur aussi bien que tout ce qui a été appris sur les drafts, et le modèle ne les bat pas. Toutes les approches restent proches du pile ou face (log loss d'environ 0,69), ce qui confirme qu'une composition seule en dit peu sur l'issue d'une partie. La conclusion pratique : garder les statistiques du site à jour vaut plus qu'un modèle. Le verdict officiel sera rendu sur les 30 000 parties.
+**Résultat final :** entraîné sur 18 337 parties, sélectionné sur 3 943 et évalué une seule fois sur 3 905 parties mises de côté du patch 16.18, le modèle ne bat ni le moteur actuel ni les statistiques publiques seules (log loss de 0,6911 pour le modèle, contre 0,6909 et 0,6911). Le site conserve donc son moteur actuel. La méthode, les intervalles d'incertitude et les résultats complets figurent dans la [spec du modèle](docs/superpowers/specs/2026-09-17-draftforme-win-model-design.md#results).
 
 Le détail est dans les specs : [collecte](docs/superpowers/specs/2026-09-17-draftforme-match-collection-design.md) et [modèle de victoire](docs/superpowers/specs/2026-09-17-draftforme-win-model-design.md).
 
@@ -55,7 +55,7 @@ NEXT_PUBLIC_SUPABASE_URL=https://<projet>.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=<clé anon>
 ```
 
-Appliquez le schéma (`supabase/migrations/`) et les données de départ (`supabase/seed.sql`). Avec une base Supabase locale (Docker requis), une seule commande fait les deux :
+Vérifiez la cible Supabase avant toute commande qui écrit. Utilisez une instance locale ou un projet dédié au développement, jamais la production pour ce démarrage. Appliquez le schéma (`supabase/migrations/`) et les données de départ (`supabase/seed.sql`). Avec une base Supabase locale (Docker requis), une seule commande fait les deux :
 
 ```bash
 supabase db reset

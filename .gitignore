@@ -1,7 +1,9 @@
 .superpowers/
 .next/
 node_modules/
-.env.local
+*.env*
+!.env.example
+!*.env.example
 coverage/
 supabase/.branches/
 tsconfig.tsbuildinfo
@@ -20,6 +22,9 @@ ml/artifacts/matches*.sqlite-wal
 ml/artifacts/matches*.sqlite-shm
 ml/artifacts/win*/
 .vercel
+
+# Captured third-party debug pages.
+data/debug_profile.html
 
 # Sibling git worktrees checked out under .claude/ (see CLAUDE.md's Workflow
 # note); each is its own checkout with its own node_modules and must never be
